@@ -1,0 +1,23 @@
+{
+  "name": "@workspace/api",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@workspace/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  },
+  "exports": {
+    "./services/*": "./src/services/*.ts",
+    "./adapters/*": "./src/adapters/*.ts",
+    "./factory": "./src/factory.ts"
+  }
+}
+

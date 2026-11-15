@@ -1,0 +1,24 @@
+{
+  "name": "@workspace/i18n",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "i18next": "^24.2.2",
+    "react": "^19.3.1",
+    "react-i18next": "^15.4.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "~6.0.2"
+  },
+  "exports": {
+    "./config": "./src/config.ts",
+    "./types": "./src/types.ts",
+    "./locales/*": "./src/locales/*.json"
+  }
+}
+

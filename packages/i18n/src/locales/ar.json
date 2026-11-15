@@ -1,0 +1,30 @@
+{
+  "common": {
+    "appName": "مفتاحي",
+    "search": "بحث",
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ ما",
+    "retry": "إعادة المحاولة"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "products": "المنتجات",
+    "cart": "سلة التسوق",
+    "account": "الحساب"
+  },
+  "products": {
+    "title": "مفاتيح وتراخيص رقمية",
+    "subtitle": "تسليم فوري لأفضل الألعاب والبرامج والاشتراكات",
+    "addToCart": "أضف إلى السلة",
+    "outOfStock": "نفدت الكمية",
+    "instantDelivery": "تسليم فوري",
+    "regionGlobal": "عالمي",
+    "regionGcc": "الخليج العربي",
+    "regionEg": "مصر",
+    "platform": "المنصة",
+    "category": "الفئة",
+    "price": "السعر",
+    "noProductsFound": "لم يتم العثور على منتجات"
+  }
+}
+

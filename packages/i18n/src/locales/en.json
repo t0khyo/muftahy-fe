@@ -1,0 +1,30 @@
+{
+  "common": {
+    "appName": "Muftahy",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again"
+  },
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "cart": "Cart",
+    "account": "Account"
+  },
+  "products": {
+    "title": "Digital Keys & Licenses",
+    "subtitle": "Instant delivery for top games, software, and subscriptions",
+    "addToCart": "Add to cart",
+    "outOfStock": "Out of stock",
+    "instantDelivery": "Instant delivery",
+    "regionGlobal": "Global",
+    "regionGcc": "GCC",
+    "regionEg": "Egypt",
+    "platform": "Platform",
+    "category": "Category",
+    "price": "Price",
+    "noProductsFound": "No products found"
+  }
+}
+
