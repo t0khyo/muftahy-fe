@@ -2,8 +2,8 @@ import * as React from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { isSupportedLanguage, type SupportedLanguage } from '@workspace/i18n/config'
-import { Footer } from '../components/footer'
-import { Header } from '../components/header'
+import { SiteFooter } from '../components/site-footer/site-footer'
+import { SiteHeader } from '../components/site-header/site-header'
 
 export function RootLayout() {
   const { lang } = useParams<{ lang: string }>()
@@ -27,12 +27,18 @@ export function RootLayout() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <Header />
-      <main className="flex-1">
+    <div key={currentLang} className="flex min-h-screen flex-col bg-background text-foreground">
+      {/* Scroll sentinel for header IntersectionObserver border detection */}
+      <div
+        id="nav-sentinel"
+        className="h-[1px] w-full pointer-events-none -mb-[1px]"
+        aria-hidden="true"
+      />
+      <SiteHeader />
+      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         <Outlet />
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
+import { MemoryRouter } from 'react-router'
 import { i18n } from '@workspace/i18n/config'
 import type { Product } from '@workspace/domain/schemas/product'
 import { ThemeProvider } from '../../app/theme-provider'
@@ -57,7 +58,9 @@ function renderWithProviders(
   return render(
     <ThemeProvider defaultTheme="light">
       <I18nextProvider i18n={i18n}>
-        <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>{ui}</MemoryRouter>
+        </QueryClientProvider>
       </I18nextProvider>
     </ThemeProvider>,
   )

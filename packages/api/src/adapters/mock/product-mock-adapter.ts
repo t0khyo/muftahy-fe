@@ -1,4 +1,8 @@
-import type { Product, ProductListFilter } from '@workspace/domain/schemas/product'
+import type {
+  Product,
+  ProductCollection,
+  ProductListFilter,
+} from '@workspace/domain/schemas/product'
 import type { ProductService } from '../../services/product-service'
 
 export const MOCK_PRODUCTS: Product[] = [
@@ -125,6 +129,83 @@ export const MOCK_PRODUCTS: Product[] = [
     featured: false,
     deliveryType: 'instant',
   },
+  {
+    id: 'prod-006',
+    slug: 'office-2024-home-business',
+    title: {
+      en: 'Microsoft Office 2024 Home & Business',
+      ar: 'مايكروسوفت أوفيس 2024 للمنازل والأعمال',
+    },
+    description: {
+      en: 'Classic 2024 versions of Word, Excel, PowerPoint, and Outlook for 1 PC or Mac.',
+      ar: 'النسخ الكلاسيكية 2024 من وورد وإكسل وباوربوينت وأوتلوك لجهاز واحد.',
+    },
+    price: {
+      amountMinor: 125000, // 1250.00 EGP
+      currency: 'EGP',
+    },
+    originalPrice: {
+      amountMinor: 180000,
+      currency: 'EGP',
+    },
+    category: 'software',
+    platform: 'microsoft',
+    region: 'global',
+    coverImage: '/images/products/office-2024.webp',
+    inStock: true,
+    featured: true,
+    deliveryType: 'instant',
+  },
+  {
+    id: 'prod-007',
+    slug: 'elden-ring-shadow-erdtree',
+    title: {
+      en: 'Elden Ring: Shadow of the Erdtree Edition',
+      ar: 'إلدن رينج: نسخة شادو أوف ذا إردتري',
+    },
+    description: {
+      en: 'Includes the base game and the critically acclaimed expansion set in the Land of Shadow.',
+      ar: 'تتضمن اللعبة الأساسية والتوسعة الشهيرة في أرض الظلال.',
+    },
+    price: {
+      amountMinor: 185000, // 1850.00 EGP
+      currency: 'EGP',
+    },
+    originalPrice: {
+      amountMinor: 240000,
+      currency: 'EGP',
+    },
+    category: 'games',
+    platform: 'steam',
+    region: 'global',
+    coverImage: '/images/products/elden-ring.webp',
+    inStock: true,
+    featured: true,
+    deliveryType: 'instant',
+  },
+  {
+    id: 'prod-008',
+    slug: 'black-myth-wukong',
+    title: {
+      en: 'Black Myth: Wukong (PC / Steam)',
+      ar: 'بلاك ميث: ووكونغ (حاسوب / ستيم)',
+    },
+    description: {
+      en: 'An action RPG rooted in Chinese mythology exploring the legend of Sun Wukong.',
+      ar: 'لعبة أكشن وتقمص أدوار مستوحاة من الأساطير الصينية وأسطورة سون ووكونغ.',
+    },
+    price: {
+      amountMinor: 160000, // 1600.00 EGP
+      currency: 'EGP',
+    },
+    category: 'games',
+    platform: 'steam',
+    region: 'global',
+    coverImage: '/images/products/wukong.webp',
+    inStock: true,
+    featured: true,
+    deliveryType: 'instant',
+  },
 ]
 
 export class MockProductAdapter implements ProductService {
@@ -156,6 +237,23 @@ export class MockProductAdapter implements ProductService {
     }
 
     return result
+  }
+
+  async listByCollection(collection: ProductCollection): Promise<Product[]> {
+    switch (collection) {
+      case 'best-sellers':
+        return this.products.filter((p) => p.featured || p.inStock).slice(0, 8)
+      case 'deals':
+        return this.products
+          .filter(
+            (p) =>
+              p.originalPrice &&
+              p.originalPrice.amountMinor > p.price.amountMinor,
+          )
+          .slice(0, 8)
+      case 'new':
+        return [...this.products].reverse().slice(0, 8)
+    }
   }
 
   async getBySlug(slug: string): Promise<Product | null> {

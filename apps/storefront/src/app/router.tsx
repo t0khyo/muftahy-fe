@@ -1,11 +1,16 @@
 import { createBrowserRouter, Navigate } from 'react-router'
+import { CatchAllRedirect } from './catch-all-redirect'
+import { CartRoute } from '../routes/cart-route'
+import { DesignRoute } from '../routes/design-route'
+import { HomeRoute } from '../routes/home'
 import { ProductsRoute } from '../routes/products-route'
+import { SearchRoute } from '../routes/search-route'
 import { RootLayout } from './root-layout'
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/en/products" replace />,
+    element: <Navigate to="/en" replace />,
   },
   {
     path: '/:lang',
@@ -13,15 +18,27 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="products" replace />,
+        element: <HomeRoute />,
       },
       {
         path: 'products',
         element: <ProductsRoute />,
       },
       {
+        path: 'search',
+        element: <SearchRoute />,
+      },
+      {
+        path: 'cart',
+        element: <CartRoute />,
+      },
+      {
+        path: 'design',
+        element: <DesignRoute />,
+      },
+      {
         path: '*',
-        element: <Navigate to="products" replace />,
+        element: <CatchAllRedirect />,
       },
     ],
   },
@@ -30,4 +47,3 @@ export const router = createBrowserRouter([
     element: <Navigate to="/en/products" replace />,
   },
 ])
-

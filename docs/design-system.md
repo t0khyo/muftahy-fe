@@ -107,7 +107,18 @@ Rules that keep it true:
 - **Latin and digits:** Inter variable (`@fontsource-variable/inter`). **Arabic:** Tajawal 400, 500, 700 (`@fontsource/tajawal`). Self-host; import only the weights used.
 - Stack: `"Inter Variable", "Tajawal", system-ui, sans-serif`. Inter lacks Arabic glyphs so Arabic falls through to Tajawal, and digits stay Western in both languages.
 - Weights: 400 body, 500 labels and buttons, 700 headings.
-- Scale (use only these): caption 12px, small 14px, body 16px, title 19px, heading 23px, display 28px, hero 40px (clamp on mobile; hero headlines only).
+- Scale (Standard Grid, Base 16px):
+  | Size (Standard Grid) | REM (Base 16px) | HTML Element | Token / Utility |
+  | :--- | :--- | :--- | :--- |
+  | 64px | 4rem | `<h1>` | `--text-h1` / `text-h1` |
+  | 48px | 3rem | `<h2>` | `--text-h2` / `text-h2` |
+  | 40px | 2.5rem | `<h3>` | `--text-h3` / `text-h3` |
+  | 32px | 2rem | `<h4>` | `--text-h4` / `text-h4` |
+  | 24px | 1.5rem | `<h5>` | `--text-h5` / `text-h5` |
+  | 20px | 1.25rem | `<h6>` | `--text-h6` / `text-h6` |
+  | 16px | 1rem | `<p>` | `--text-p` / `text-p` (`text-body`) |
+  | 12px | 0.75rem | `<small>` | `--text-small` / `text-small` (`<small>`) |
+  | 10px | 0.625rem | `<span class="xs">` | `--text-xs` / `text-xs` (`.xs`) |
 - Line height: Latin 1.5 body / 1.2 headings; Arabic 1.7 body / 1.4 headings.
 - Arabic reads smaller: start with `html[lang="ar"] { font-size: 106.25%; }` and tune visually. No letter-spacing, uppercase, italics, or faux bold on Arabic.
 - Prices, codes, and numeric columns use `tabular-nums`. Mixed-direction text (English name inside Arabic) uses `<bdi>` or `dir="auto"`.

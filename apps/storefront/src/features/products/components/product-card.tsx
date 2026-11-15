@@ -1,89 +1,428 @@
-import { useTranslation } from 'react-i18next'
-import { Badge } from '@workspace/ui/components/badge'
-import { Button } from '@workspace/ui/components/button'
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
+import { cn } from '@workspace/ui/lib/utils';
+import type { Product } from '@workspace/domain/schemas/product';
+import { AddToCartButton } from './add-to-cart-button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
-import { formatMoneyFromMinor } from '@workspace/domain/formatters/money'
-import type { Product } from '@workspace/domain/schemas/product'
+  IconBox,
+  IconCircleCheck,
+  IconRefresh,
+  IconShield,
+  IconSparkles,
+  IconStarFilled,
+  IconStarOutline,
+  IconTag,
+  IconUserCheck,
+} from './icons';
+import { formatPrice } from './utils';
+import { PlatformsRow } from './platforms-row';
+import type {
+  Platform,
+  ProductBadge,
+  ProductCardData,
+  ProductCardPlan,
+  ProductCardTranslations,
+  ProductType,
+} from './types';
 
-export interface ProductCardProps {
-  product: Product
-  onAddToCart?: (product: Product) => void
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface BadgePillProps {
+  badge: ProductBadge;
+  label: string;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const { t, i18n } = useTranslation(['products', 'common'])
-  const currentLang = i18n.language === 'ar' ? 'ar' : 'en'
-
-  const title = product.title[currentLang] ?? product.title.en
-  const description = product.description[currentLang] ?? product.description.en
-  const formattedPrice = formatMoneyFromMinor(
-    product.price.amountMinor,
-    product.price.currency,
-    currentLang,
-  )
-
-  const formattedOriginalPrice = product.originalPrice
-    ? formatMoneyFromMinor(
-        product.originalPrice.amountMinor,
-        product.originalPrice.currency,
-        currentLang,
-      )
-    : null
+function BadgePill({ badge, label }: BadgePillProps) {
+  const iconClass = 'h-3 w-3 shrink-0';
+  const Icon = badge === 'warranty' ? IconShield : badge === 'offer' ? IconTag : IconSparkles;
 
   return (
-    <Card className="flex flex-col justify-between transition-shadow hover:shadow-md">
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2 pb-2">
-          <Badge variant="outline" className="text-xs uppercase">
-            {product.platform}
-          </Badge>
-          <Badge
-            variant={product.deliveryType === 'instant' ? 'secondary' : 'outline'}
-            className="text-xs"
-          >
-            {product.deliveryType === 'instant'
-              ? t('instantDelivery', { ns: 'products' })
-              : product.deliveryType}
-          </Badge>
-        </div>
-        <CardTitle className="line-clamp-2 text-start">{title}</CardTitle>
-        <CardDescription className="line-clamp-3 text-start">
-          {description}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-2">
-        <div className="flex items-baseline gap-2">
-          <span className="font-heading text-xl font-bold text-foreground">
-            {formattedPrice}
-          </span>
-          {formattedOriginalPrice && (
-            <span className="text-xs text-muted-foreground line-through">
-              {formattedOriginalPrice}
-            </span>
-          )}
-        </div>
-      </CardContent>
-
-      <CardFooter className="pt-2">
-        <Button
-          className="w-full"
-          disabled={!product.inStock}
-          onClick={() => onAddToCart?.(product)}
-        >
-          {product.inStock
-            ? t('addToCart', { ns: 'products' })
-            : t('outOfStock', { ns: 'products' })}
-        </Button>
-      </CardFooter>
-    </Card>
-  )
+    <span
+      aria-label={label}
+      className={cn(
+        'absolute start-2 top-2 z-10',
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
+        'bg-offer-badge-bg text-offer-badge-foreground',
+        'text-[10px] font-semibold leading-none ring-1 ring-offer-badge/30'
+      )}
+    >
+      <Icon className={iconClass} />
+      {label}
+    </span>
+  );
 }
 
+interface TypeChipProps {
+  label: string;
+  productType: ProductType;
+}
+
+function TypeChip({ label, productType }: TypeChipProps) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5',
+        'text-[11px] font-medium text-muted-foreground'
+      )}
+    >
+      {productType === 'subscription' ? (
+        <IconRefresh className='h-3 w-3 shrink-0' />
+      ) : (
+        <IconSparkles className='h-3 w-3 shrink-0' />
+      )}
+      {label}
+    </span>
+  );
+}
+
+interface ActivationChipProps {
+  label: string;
+}
+
+function ActivationChip({ label }: ActivationChipProps) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5',
+        'text-[11px] font-medium text-muted-foreground'
+      )}
+    >
+      <IconUserCheck className='h-3 w-3 shrink-0' />
+      {label}
+    </span>
+  );
+}
+
+interface StarRatingProps {
+  average: number;
+  count: number;
+  locale: string;
+  label: string;
+}
+
+function StarRating({ average, count, locale, label }: StarRatingProps) {
+  const stars = [1, 2, 3, 4, 5];
+  const normalizedLocale = locale === 'ar' ? 'ar-u-nu-latn' : 'en-US';
+  const formattedAvg = new Intl.NumberFormat(normalizedLocale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(average);
+  const formattedCount = new Intl.NumberFormat(normalizedLocale).format(count);
+
+  return (
+    <div className='flex items-center gap-1.5' aria-label={label} role='img'>
+      <span className='flex items-center gap-0.5'>
+        {stars.map((star) => {
+          const filled = star <= Math.round(average);
+          return (
+            <span key={star} aria-hidden='true'>
+              {filled ? (
+                <IconStarFilled className='h-3.5 w-3.5 text-star-filled' />
+              ) : (
+                <IconStarOutline className='h-3.5 w-3.5 text-muted-foreground/40' />
+              )}
+            </span>
+          );
+        })}
+      </span>
+      <span className='text-[11px] text-muted-foreground tabular-nums'>
+        ({formattedAvg} · {formattedCount})
+      </span>
+    </div>
+  );
+}
+
+// ─── Main Product Card ────────────────────────────────────────────────────────
+
+export interface BaseProductCardProps {
+  locale?: string;
+  translations?: ProductCardTranslations;
+  priority?: boolean;
+  className?: string;
+  renderLink?: (props: {
+    href: string;
+    className: string;
+    children: React.ReactNode;
+  }) => React.ReactNode;
+  renderImage?: (props: {
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+    className: string;
+    priority?: boolean;
+  }) => React.ReactNode;
+}
+
+export type ProductCardProps = BaseProductCardProps &
+  (
+    | {
+        card: ProductCardData;
+        product?: never;
+        onAddToCart?: (plan: ProductCardPlan) => void;
+      }
+    | {
+        product: Product;
+        card?: never;
+        onAddToCart?: (product: Product) => void;
+      }
+  );
+
+export function ProductCard(props: ProductCardProps) {
+  const { t, i18n } = useTranslation(['products', 'common']);
+  const currentLang = props.locale ?? (i18n.language === 'ar' ? 'ar' : 'en');
+  const isRtl = currentLang === 'ar';
+
+  // Support both `card` (template format) and `product` (domain model)
+  const isDomainProduct = 'product' in props && Boolean(props.product);
+  const domainProduct = isDomainProduct ? props.product : null;
+
+  const card: ProductCardData = React.useMemo(() => {
+    if (domainProduct) {
+      const p = domainProduct;
+      const title = p.title[isRtl ? 'ar' : 'en'] ?? p.title.en;
+      const desc = p.description[isRtl ? 'ar' : 'en'] ?? p.description.en;
+      const priceNum = (p.price.amountMinor / 100).toFixed(2);
+
+      const platformsMap: Platform[] =
+        p.platform === 'steam'
+          ? ['windows', 'mac']
+          : p.platform === 'microsoft' || p.platform === 'pc'
+            ? ['windows']
+            : ['web'];
+
+      return {
+        slug: p.slug,
+        name: title,
+        imageUrl: p.coverImage,
+        imageAlt: title,
+        badge: p.featured ? 'offer' : null,
+        productType: p.category === 'subscriptions' ? 'subscription' : 'service',
+        activationType: 'ready_account',
+        ratingAverage: 4.9,
+        ratingCount: 128,
+        platforms: platformsMap,
+        startingPrice: priceNum,
+        startingPlanDuration: p.deliveryType === 'instant' ? (isRtl ? 'تسليم فوري' : 'Instant') : (isRtl ? 'شهر' : 'month'),
+        startingPlanDurationEn: p.deliveryType === 'instant' ? 'Instant' : 'month',
+        trustNote: desc || (isRtl ? 'ضمان التسليم الفوري' : 'Instant Delivery Guaranteed'),
+        plans: [
+          {
+            id: p.id,
+            label: title,
+            duration: p.deliveryType === 'instant' ? (isRtl ? 'ترخيص فوري' : 'Instant License') : (isRtl ? 'اشتراك' : 'Subscription'),
+            price: priceNum,
+            activationType: 'ready_account',
+          },
+        ],
+      };
+    }
+    const c = props.card!;
+    if (isRtl && c.nameAr) {
+      return { ...c, name: c.nameAr };
+    }
+    return c;
+  }, [domainProduct, props.card, isRtl]);
+
+  const isInStock = domainProduct ? domainProduct.inStock : true;
+
+  // Badge label
+  const badgeLabels = {
+    warranty: props.translations?.badge?.warranty ?? (isRtl ? 'ضمان' : 'Warranty'),
+    offer: props.translations?.badge?.offer ?? (isRtl ? 'عرض خاص' : 'Special Offer'),
+    new: props.translations?.badge?.new ?? (isRtl ? 'جديد' : 'New'),
+  };
+  const badgeLabel = card.badge ? badgeLabels[card.badge] : null;
+
+  // Product type label
+  const productType = card.productType ?? 'subscription';
+  const productTypeLabel =
+    productType === 'subscription'
+      ? (props.translations?.type?.subscription ?? (isRtl ? 'اشتراك' : 'Subscription'))
+      : (props.translations?.type?.service ?? (isRtl ? 'خدمة' : 'Service'));
+
+  // Activation type label
+  const activationType = card.activationType ?? card.plans[0]?.activationType ?? 'personal_invite';
+  const activationLabel =
+    activationType === 'personal_invite'
+      ? (props.translations?.activation?.personalInvite ?? (isRtl ? 'دعوة شخصية' : 'Personal Invite'))
+      : (props.translations?.activation?.readyAccount ?? (isRtl ? 'حساب جاهز' : 'Ready Account'));
+
+  const duration = isRtl
+    ? card.startingPlanDuration || card.plans[0]?.duration || 'شهر'
+    : card.startingPlanDurationEn ||
+      card.startingPlanDuration ||
+      card.plans[0]?.duration ||
+      'month';
+
+  const defaultCurrency = domainProduct
+    ? (domainProduct.price.currency === 'USD' ? '$' : (isRtl ? 'ج.م' : domainProduct.price.currency))
+    : (isRtl ? 'ج.م' : '$');
+  const currency = props.translations?.currency ?? defaultCurrency;
+  const startingFrom = props.translations?.startingFrom ?? (isRtl ? 'يبدأ من' : 'Starting from');
+  const addToCartLabel = !isInStock
+    ? t('outOfStock', { ns: 'products' })
+    : (props.translations?.addToCart ?? t('addToCart', { ns: 'products' }));
+  const addedLabel = props.translations?.addedToCart ?? (isRtl ? 'تمت الإضافة' : 'Added!');
+  const termWarranty =
+    props.translations?.termWarranty ?? card.trustNote ?? (isRtl ? 'ضمان المدة' : 'Term Warranty');
+
+  const ratingAriaLabel =
+    card.ratingAverage != null && card.ratingCount != null
+      ? props.translations?.ratingAriaLabel
+        ? props.translations.ratingAriaLabel(card.ratingAverage, card.ratingCount)
+        : `Rating ${card.ratingAverage} of 5 (${card.ratingCount} reviews)`
+      : undefined;
+
+  const productUrl = `/${currentLang}/products/${card.slug}`;
+
+  const handleAddToCart = (plan: ProductCardPlan) => {
+    if ('product' in props && props.product && props.onAddToCart) {
+      props.onAddToCart(props.product);
+    } else if ('card' in props && props.card && props.onAddToCart) {
+      props.onAddToCart(plan);
+    }
+  };
+
+  return (
+    <article
+      className={cn(
+        'group relative flex flex-col overflow-hidden rounded-3xl',
+        'border border-border bg-card p-0 text-card-foreground',
+        'shadow-xs transition-[box-shadow,transform] duration-200',
+        'hover:-translate-y-0.5 hover:shadow-md',
+        'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        props.className
+      )}
+    >
+      {/* 1 ── Image area */}
+      <div className='relative flex h-40 items-center justify-center bg-muted rounded-t-3xl overflow-hidden'>
+        {card.imageUrl ? (
+          props.renderImage ? (
+            props.renderImage({
+              src: card.imageUrl,
+              alt: card.imageAlt || card.name,
+              width: 88,
+              height: 88,
+              className: 'rounded-2xl object-cover',
+              priority: props.priority,
+            })
+          ) : (
+            <img
+              src={card.imageUrl}
+              alt={card.imageAlt || card.name}
+              width={88}
+              height={88}
+              loading={props.priority ? 'eager' : 'lazy'}
+              className='h-[88px] w-[88px] rounded-2xl object-cover'
+            />
+          )
+        ) : (
+          <IconBox className='h-14 w-14 text-muted-foreground/30' />
+        )}
+
+        {/* Badge pill */}
+        {card.badge && badgeLabel && <BadgePill badge={card.badge} label={badgeLabel} />}
+      </div>
+
+      {/* 2 ── Card body */}
+      <div className='flex flex-1 flex-col gap-3 p-4'>
+        {/* Chips row */}
+        <div className='flex flex-wrap items-center gap-1.5'>
+          <TypeChip label={productTypeLabel} productType={productType} />
+          <ActivationChip label={activationLabel} />
+        </div>
+
+        {/* Product name — stretched link anchor */}
+        <h2 className='text-[18px] font-semibold leading-snug min-h-[2.75rem] line-clamp-2 text-start'>
+          {props.renderLink ? (
+            props.renderLink({
+              href: productUrl,
+              className: cn(
+                'text-foreground outline-none',
+                'after:absolute after:inset-0 after:z-0 after:content-[""]',
+                'focus-visible:underline hover:text-primary'
+              ),
+              children: card.name,
+            })
+          ) : (
+            <Link
+              to={productUrl}
+              className={cn(
+                'text-foreground outline-none',
+                'after:absolute after:inset-0 after:z-0 after:content-[""]',
+                'focus-visible:underline hover:text-primary'
+              )}
+            >
+              {card.name}
+            </Link>
+          )}
+        </h2>
+
+        {/* Rating row */}
+        {card.ratingAverage != null && card.ratingCount != null && ratingAriaLabel && (
+          <StarRating
+            average={card.ratingAverage}
+            count={card.ratingCount}
+            locale={currentLang}
+            label={ratingAriaLabel}
+          />
+        )}
+
+        {/* Platforms row */}
+        {card.platforms && card.platforms.length > 0 && (
+          <PlatformsRow
+            platforms={card.platforms}
+            label={props.translations?.worksOn ?? (isRtl ? 'يعمل على:' : 'Works on:')}
+            platformLabels={props.translations?.platforms}
+          />
+        )}
+
+        {/* Spacer to push price + button to bottom */}
+        <div className='mt-auto flex flex-col gap-3 pt-1'>
+          {/* Price row */}
+          <div className='flex flex-wrap items-baseline gap-1 text-start'>
+            <span className='text-xs text-muted-foreground'>{startingFrom}</span>
+            <span className='text-2xl font-bold tabular-nums text-primary leading-none'>
+              {formatPrice(card.startingPrice, currentLang)}
+            </span>
+            <span className='text-sm text-muted-foreground'>{currency}</span>
+            <span className='text-xs text-muted-foreground'>/ {duration}</span>
+          </div>
+
+          {/* Add to Cart CTA button */}
+          <AddToCartButton
+            productName={card.name}
+            plans={card.plans}
+            locale={currentLang}
+            currency={currency}
+            label={addToCartLabel}
+            addedLabel={addedLabel}
+            disabled={!isInStock}
+            choosePlanTitle={props.translations?.choosePlan ?? (isRtl ? 'اختر خطة' : 'Choose a plan')}
+            choosePlanSubtitle={
+              props.translations?.choosePlanSubtitle ??
+              (isRtl ? 'حدد المدة الأنسب لاحتياجاتك' : 'Select the duration that best suits your needs')
+            }
+            activationPersonalInviteLabel={
+              props.translations?.activation?.personalInvite ?? (isRtl ? 'دعوة شخصية' : 'Personal Invite')
+            }
+            activationReadyAccountLabel={
+              props.translations?.activation?.readyAccount ?? (isRtl ? 'حساب جاهز' : 'Ready Account')
+            }
+            onAddToCart={handleAddToCart}
+          />
+
+          {/* Trust note */}
+          {termWarranty && (
+            <p className='flex items-center justify-center gap-1 text-center text-[11px] text-muted-foreground'>
+              <IconCircleCheck className='h-3 w-3 shrink-0 text-primary' />
+              <span>{termWarranty}</span>
+            </p>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}

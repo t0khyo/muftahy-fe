@@ -66,10 +66,19 @@ export const productSchema = z.object({
 
 export type Product = z.infer<typeof productSchema>
 
+export const productCollectionSchema = z.enum([
+  'best-sellers',
+  'deals',
+  'new',
+])
+
+export type ProductCollection = z.infer<typeof productCollectionSchema>
+
 export const productListFilterSchema = z.object({
   category: productCategorySchema.optional(),
   platform: productPlatformSchema.optional(),
   region: productRegionSchema.optional(),
+  collection: productCollectionSchema.optional(),
   search: z.string().optional(),
   featured: z.boolean().optional(),
 })

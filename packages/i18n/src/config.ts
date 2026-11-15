@@ -17,14 +17,26 @@ export const isSupportedLanguage = (lang: string): lang is SupportedLanguage => 
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)
 }
 
+export const getInitialLanguage = (): SupportedLanguage => {
+  if (typeof window !== 'undefined') {
+    const segment = window.location.pathname.split('/')[1]
+    if (segment && isSupportedLanguage(segment)) {
+      return segment
+    }
+  }
+  return DEFAULT_LANGUAGE
+}
+
+const initialLang = getInitialLanguage()
+
 if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({
     resources,
-    lng: DEFAULT_LANGUAGE,
+    lng: initialLang,
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: SUPPORTED_LANGUAGES,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'nav', 'products'],
+    ns: ['common', 'nav', 'header', 'footer', 'search', 'cart', 'products', 'design', 'home'],
     interpolation: {
       escapeValue: false,
     },
@@ -32,7 +44,12 @@ if (!i18n.isInitialized) {
       useSuspense: false,
     },
   })
+
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = initialLang
+    document.documentElement.dir = initialLang === 'ar' ? 'rtl' : 'ltr'
+  }
 }
 
 export { i18n }
-export type { SupportedLanguage } from './types.ts'
+export type { SupportedLanguage } from './types'

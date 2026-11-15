@@ -22,6 +22,22 @@ describe('MockProductAdapter', () => {
     expect(product?.slug).toBe('windows-11-pro')
   })
 
+  it('lists products by collection (best-sellers, deals, new)', async () => {
+    const bestSellers = await adapter.listByCollection('best-sellers')
+    expect(bestSellers.length).toBeGreaterThan(0)
+
+    const deals = await adapter.listByCollection('deals')
+    expect(deals.length).toBeGreaterThan(0)
+    expect(
+      deals.every(
+        (p) => p.originalPrice && p.originalPrice.amountMinor > p.price.amountMinor,
+      ),
+    ).toBe(true)
+
+    const newReleases = await adapter.listByCollection('new')
+    expect(newReleases.length).toBeGreaterThan(0)
+  })
+
   it('returns safe mock keys matching XXXXX-XXXXX-XXXXX pattern', async () => {
     const key = await adapter.getSampleLicenseKey('prod-001')
     expect(key).toBe('XXXXX-XXXXX-XXXXX')
