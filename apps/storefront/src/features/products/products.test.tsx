@@ -72,20 +72,31 @@ describe('ProductCard', () => {
 
     expect(screen.getByText('Steam $20 Card')).toBeInTheDocument()
     expect(screen.getByText('Digital card with instant delivery')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /add to cart/i })).toBeInTheDocument()
+    const btn = screen.getByRole('button', { name: /add to cart/i })
+    expect(btn).toBeInTheDocument()
+    // Icon is placed after the text (second child)
+    expect(btn.firstElementChild?.tagName.toLowerCase()).toBe('span')
+    expect(btn.lastElementChild?.tagName.toLowerCase()).toBe('svg')
     expect(document.documentElement.dir).toBe('ltr')
   })
 
-  it('renders correctly in Arabic (RTL) with Western digits', () => {
+  it('renders correctly in Arabic (RTL) with Western digits and swaps icon/text on click', async () => {
     renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'ar' })
 
     expect(screen.getByText('بطاقة ستيم 20 دولار')).toBeInTheDocument()
     expect(screen.getByText('بطاقة رقمية مع تسليم فوري')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /أضف إلى السلة/i })).toBeInTheDocument()
+    const btn = screen.getByRole('button', { name: /أضف إلى السلة/i })
+    expect(btn).toBeInTheDocument()
+    expect(btn.firstElementChild?.tagName.toLowerCase()).toBe('span')
+    expect(btn.lastElementChild?.tagName.toLowerCase()).toBe('svg')
 
     // Must use Western digits 20, not Eastern Arabic numerals
     expect(screen.getByText(/20\.00/)).toBeInTheDocument()
     expect(document.documentElement.dir).toBe('rtl')
+
+    // Click to add to cart
+    fireEvent.click(btn)
+    expect(screen.getByText('تمت الإضافة')).toBeInTheDocument()
   })
 
   it('renders out of stock state disabled', () => {

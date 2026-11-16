@@ -14,8 +14,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'مفتاح ترخيص ويندوز 11 بروفيشنال الأصلي',
     },
     description: {
-      en: 'Official lifetime license key for 1 PC with all enterprise and security features unlocked.',
-      ar: 'مفتاح ترخيص رسمي مدى الحياة لجهاز حاسوب واحد مع تفعيل كافة ميزات الأمان والأعمال.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 65000, // 650.00 EGP
@@ -41,8 +41,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'سايبر بانك 2077: النسخة الكاملة (حاسوب)',
     },
     description: {
-      en: 'An open-world, action-adventure RPG set in the megalopolis of Night City including Phantom Liberty.',
-      ar: 'لعبة تقمص أدوار وأكشن في عالم مفتوح بمدينة نايت سيتي متضمنة توسعة فانتوم ليبرتي.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 145000, // 1450.00 EGP
@@ -68,8 +68,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'اشتراك إكس بوكس جيم باس ألتيميت - 3 أشهر',
     },
     description: {
-      en: 'Play hundreds of high-quality console and PC games plus Xbox Cloud Gaming.',
-      ar: 'العب مئات الألعاب عالية الجودة على الكونسول والحاسوب بالإضافة إلى الألعاب السحابية.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 89000, // 890.00 EGP
@@ -91,8 +91,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'بطاقة رصيد ستيم 50 دولار أمريكي (عالمي)',
     },
     description: {
-      en: 'Add 50 USD directly to your Steam wallet to buy games, software, and hardware.',
-      ar: 'أضف 50 دولار مباشرة إلى محفظة ستيم الخاصة بك لشراء الألعاب والبرامج والعتاد.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 5000, // 50.00 USD
@@ -114,8 +114,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'بطاقة متجر بلايستيشن 100 ريال سعودي (حساب سعودي)',
     },
     description: {
-      en: 'Recharge your PlayStation Network wallet to purchase games, DLCs, and subscriptions.',
-      ar: 'اشحن محفظة بلايستيشن لشراء أحدث الألعاب والإضافات والاشتراكات.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 10000, // 100.00 SAR
@@ -137,8 +137,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'مايكروسوفت أوفيس 2024 للمنازل والأعمال',
     },
     description: {
-      en: 'Classic 2024 versions of Word, Excel, PowerPoint, and Outlook for 1 PC or Mac.',
-      ar: 'النسخ الكلاسيكية 2024 من وورد وإكسل وباوربوينت وأوتلوك لجهاز واحد.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 125000, // 1250.00 EGP
@@ -164,8 +164,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'إلدن رينج: نسخة شادو أوف ذا إردتري',
     },
     description: {
-      en: 'Includes the base game and the critically acclaimed expansion set in the Land of Shadow.',
-      ar: 'تتضمن اللعبة الأساسية والتوسعة الشهيرة في أرض الظلال.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 185000, // 1850.00 EGP
@@ -191,8 +191,8 @@ export const MOCK_PRODUCTS: Product[] = [
       ar: 'بلاك ميث: ووكونغ (حاسوب / ستيم)',
     },
     description: {
-      en: 'An action RPG rooted in Chinese mythology exploring the legend of Sun Wukong.',
-      ar: 'لعبة أكشن وتقمص أدوار مستوحاة من الأساطير الصينية وأسطورة سون ووكونغ.',
+      en: 'full warranty',
+      ar: 'ضمان المدة',
     },
     price: {
       amountMinor: 160000, // 1600.00 EGP

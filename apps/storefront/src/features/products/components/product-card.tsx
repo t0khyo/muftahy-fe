@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { cn } from '@workspace/ui/lib/utils';
 import type { Product } from '@workspace/domain/schemas/product';
+import { useCartStore } from '../../cart/stores/cart-store';
 import { AddToCartButton } from './add-to-cart-button';
 import {
   IconBox,
@@ -10,8 +11,6 @@ import {
   IconRefresh,
   IconShield,
   IconSparkles,
-  IconStarFilled,
-  IconStarOutline,
   IconTag,
   IconUserCheck,
 } from './icons';
@@ -91,45 +90,6 @@ function ActivationChip({ label }: ActivationChipProps) {
       <IconUserCheck className='h-3 w-3 shrink-0' />
       {label}
     </span>
-  );
-}
-
-interface StarRatingProps {
-  average: number;
-  count: number;
-  locale: string;
-  label: string;
-}
-
-function StarRating({ average, count, locale, label }: StarRatingProps) {
-  const stars = [1, 2, 3, 4, 5];
-  const normalizedLocale = locale === 'ar' ? 'ar-u-nu-latn' : 'en-US';
-  const formattedAvg = new Intl.NumberFormat(normalizedLocale, {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(average);
-  const formattedCount = new Intl.NumberFormat(normalizedLocale).format(count);
-
-  return (
-    <div className='flex items-center gap-1.5' aria-label={label} role='img'>
-      <span className='flex items-center gap-0.5'>
-        {stars.map((star) => {
-          const filled = star <= Math.round(average);
-          return (
-            <span key={star} aria-hidden='true'>
-              {filled ? (
-                <IconStarFilled className='h-3.5 w-3.5 text-star-filled' />
-              ) : (
-                <IconStarOutline className='h-3.5 w-3.5 text-muted-foreground/40' />
-              )}
-            </span>
-          );
-        })}
-      </span>
-      <span className='text-[11px] text-muted-foreground tabular-nums'>
-        ({formattedAvg} · {formattedCount})
-      </span>
-    </div>
   );
 }
 
@@ -268,20 +228,29 @@ export function ProductCard(props: ProductCardProps) {
   const termWarranty =
     props.translations?.termWarranty ?? card.trustNote ?? (isRtl ? 'ضمان المدة' : 'Term Warranty');
 
-  const ratingAriaLabel =
-    card.ratingAverage != null && card.ratingCount != null
-      ? props.translations?.ratingAriaLabel
-        ? props.translations.ratingAriaLabel(card.ratingAverage, card.ratingCount)
-        : `Rating ${card.ratingAverage} of 5 (${card.ratingCount} reviews)`
-      : undefined;
-
   const productUrl = `/${currentLang}/products/${card.slug}`;
 
   const handleAddToCart = (plan: ProductCardPlan) => {
-    if ('product' in props && props.product && props.onAddToCart) {
-      props.onAddToCart(props.product);
-    } else if ('card' in props && props.card && props.onAddToCart) {
-      props.onAddToCart(plan);
+    if ('product' in props && props.product) {
+      if (props.onAddToCart) {
+        props.onAddToCart(props.product);
+      } else {
+        useCartStore.getState().addItem({
+          id: props.product.id,
+          name: props.product.title[isRtl ? 'ar' : 'en'] ?? props.product.title.en,
+          priceMinor: props.product.price.amountMinor,
+        });
+      }
+    } else if ('card' in props && props.card) {
+      if (props.onAddToCart) {
+        props.onAddToCart(plan);
+      } else {
+        useCartStore.getState().addItem({
+          id: plan.id,
+          name: card.name,
+          priceMinor: Math.round(parseFloat(plan.price) * 100),
+        });
+      }
     }
   };
 
@@ -360,16 +329,6 @@ export function ProductCard(props: ProductCardProps) {
           )}
         </h2>
 
-        {/* Rating row */}
-        {card.ratingAverage != null && card.ratingCount != null && ratingAriaLabel && (
-          <StarRating
-            average={card.ratingAverage}
-            count={card.ratingCount}
-            locale={currentLang}
-            label={ratingAriaLabel}
-          />
-        )}
-
         {/* Platforms row */}
         {card.platforms && card.platforms.length > 0 && (
           <PlatformsRow
@@ -417,8 +376,8 @@ export function ProductCard(props: ProductCardProps) {
           {/* Trust note */}
           {termWarranty && (
             <p className='flex items-center justify-center gap-1 text-center text-[11px] text-muted-foreground'>
-              <IconCircleCheck className='h-3 w-3 shrink-0 text-primary' />
               <span>{termWarranty}</span>
+              <IconCircleCheck className='h-3 w-3 shrink-0 text-primary' />
             </p>
           )}
         </div>

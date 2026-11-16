@@ -52,6 +52,17 @@ export function CartButton({
 
   const items = useCartStore((s) => s.items)
   const count = useCartStore((s) => s.count)
+  const [isPulsing, setIsPulsing] = React.useState(false)
+  const prevCountRef = React.useRef(count)
+
+  React.useEffect(() => {
+    if (count > prevCountRef.current) {
+      setIsPulsing(true)
+      const timer = setTimeout(() => setIsPulsing(false), 500)
+      return () => clearTimeout(timer)
+    }
+    prevCountRef.current = count
+  }, [count])
 
   const dropdownRef = React.useRef<HTMLDivElement | null>(null)
   const triggerRef = React.useRef<HTMLButtonElement | null>(null)
@@ -117,7 +128,7 @@ export function CartButton({
         {/* 17px Shopping Bag Icon, stroke-width 1.5 */}
         <svg
           aria-hidden="true"
-          className="h-[17px] w-[17px] shrink-0"
+          className={`h-[17px] w-[17px] shrink-0 transition-transform duration-200 ${isPulsing ? 'scale-110 text-primary' : ''}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -134,7 +145,7 @@ export function CartButton({
         {count > 0 && (
           <span
             aria-hidden="true"
-            className="absolute end-1 top-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-foreground px-0.5 text-[10px] font-bold leading-none text-background tabular-nums"
+            className={`absolute end-1 top-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-foreground px-0.5 text-[10px] font-bold leading-none text-background tabular-nums transition-all duration-200 ${isPulsing ? 'scale-125 bg-primary text-primary-foreground' : ''}`}
           >
             {badgeText}
           </span>

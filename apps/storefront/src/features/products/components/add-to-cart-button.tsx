@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cn } from '@workspace/ui/lib/utils';
-import { IconCheck, IconShoppingCartPlus } from './icons';
+import { IconCheck, IconShoppingBag } from './icons';
 import { PlanPicker } from './plan-picker';
 import type { ProductCardPlan } from './types';
 
@@ -84,13 +84,13 @@ export function AddToCartButton({
       >
         {justAdded ? (
           <>
-            <IconCheck className='size-4 shrink-0' />
             <span>{addedLabel}</span>
+            <IconCheck className='size-4 shrink-0 transition-transform duration-150 animate-in zoom-in-75' />
           </>
         ) : (
           <>
-            <IconShoppingCartPlus className='size-4 shrink-0' />
             <span>{label}</span>
+            <IconShoppingBag className='size-4 shrink-0 transition-transform duration-150' />
           </>
         )}
       </button>

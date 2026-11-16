@@ -33,14 +33,6 @@ export function ProductCardSkeleton({ className }: { className?: string }) {
           <Bone className='h-4 w-3/4' />
         </div>
 
-        {/* Rating */}
-        <div className='flex items-center gap-1.5'>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Bone key={i} className='h-3.5 w-3.5 rounded-full' />
-          ))}
-          <Bone className='h-3 w-16' />
-        </div>
-
         {/* Platforms */}
         <div className='flex items-center gap-1'>
           <Bone className='h-3 w-14' />
