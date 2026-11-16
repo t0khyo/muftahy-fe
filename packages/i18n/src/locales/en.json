@@ -147,6 +147,23 @@
       "trustSupport": "Activation Support",
       "seasonalBadge": "Ramadan Deals • Up to 50% Off"
     },
+    "browse": {
+      "title": "Browse Catalog",
+      "subtitle": "Explore keys, licenses, and subscriptions across your favorite platforms.",
+      "allPlatforms": "All Platforms",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
+      "categories": {
+        "games": "Games",
+        "gamesDesc": "PC & console activation keys",
+        "software": "Software",
+        "softwareDesc": "Operating systems & office suites",
+        "subscriptions": "Subscriptions",
+        "subscriptionsDesc": "Monthly passes & cloud gaming",
+        "giftCards": "Gift Cards",
+        "giftCardsDesc": "Store credit & wallet top-ups"
+      }
+    },
     "categories": {
       "title": "Explore Categories",
       "games": "Games",
@@ -196,8 +213,26 @@
       "subtitle": "Curated software and workflow toolkits for creators and professionals."
     },
     "howItWorks": {
-      "title": "How It Works",
-      "subtitle": "Get genuine keys and software licenses in 3 simple steps."
+      "title": "How it works",
+      "subtitle": "From choosing to using, in three simple steps.",
+      "helpLink": "Need help activating? Read the guides",
+      "steps": {
+        "step1": {
+          "number": "01",
+          "title": "Choose your product",
+          "description": "Pick the game, license, or subscription, and check the platform and region."
+        },
+        "step2": {
+          "number": "02",
+          "title": "Pay securely",
+          "description": "Complete your order in a few taps."
+        },
+        "step3": {
+          "number": "03",
+          "title": "Receive it instantly",
+          "description": "Your key or account details appear on screen and in your account, ready to use."
+        }
+      }
     },
     "socialProof": {
       "title": "Social Proof & Verified Reviews",

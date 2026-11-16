@@ -2,6 +2,7 @@ import type { ProductCollection } from '@workspace/domain/schemas/product'
 
 export type HomeSectionType =
   | 'hero'
+  | 'browse'
   | 'category-tiles'
   | 'platform-strip'
   | 'product-rail'
@@ -37,6 +38,21 @@ export interface HeroSectionConfig extends BaseSectionConfig {
   badgeKey?: string
   badgeHref?: string
   trustClaims?: HeroTrustClaim[]
+}
+
+export interface BrowseCategoryTile {
+  id: 'games' | 'software' | 'subscriptions' | 'gift-cards';
+  labelKey: string;
+  descKey: string;
+  href: string;
+  icon: 'gamepad' | 'app-window' | 'credit-card' | 'gift';
+}
+
+export interface BrowseSectionConfig extends BaseSectionConfig {
+  type: 'browse';
+  titleKey?: string;
+  subtitleKey?: string;
+  categories?: BrowseCategoryTile[];
 }
 
 export interface CategoryTileItem {
@@ -118,6 +134,7 @@ export interface SupportSectionConfig extends BaseSectionConfig {
 
 export type HomeSection =
   | HeroSectionConfig
+  | BrowseSectionConfig
   | CategoryTilesSectionConfig
   | PlatformStripSectionConfig
   | ProductRailSectionConfig
@@ -158,47 +175,11 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       subtitleKey: 'bundles.subtitle',
     },
     {
-      id: 'categories',
-      type: 'category-tiles',
+      id: 'browse',
+      type: 'browse',
       enabled: true,
-      items: [
-        {
-          id: 'games',
-          labelKey: 'games',
-          href: '/:lang/categories/games',
-          icon: 'gamepad',
-        },
-        {
-          id: 'software',
-          labelKey: 'software',
-          href: '/:lang/categories/software',
-          icon: 'app-window',
-        },
-        {
-          id: 'gift-cards',
-          labelKey: 'giftCards',
-          href: '/:lang/categories/gift-cards',
-          icon: 'gift',
-        },
-        {
-          id: 'subscriptions',
-          labelKey: 'subscriptions',
-          href: '/:lang/categories/subscriptions',
-          icon: 'credit-card',
-        },
-      ],
-    },
-    {
-      id: 'platforms',
-      type: 'platform-strip',
-      enabled: true,
-      items: [
-        { id: 'playstation', name: 'PlayStation', href: '/:lang/platforms/playstation' },
-        { id: 'xbox', name: 'Xbox', href: '/:lang/platforms/xbox' },
-        { id: 'steam', name: 'Steam', href: '/:lang/platforms/steam' },
-        { id: 'nintendo', name: 'Nintendo', href: '/:lang/platforms/nintendo' },
-        { id: 'pc', name: 'PC', href: '/:lang/platforms/pc' },
-      ],
+      titleKey: 'browse.title',
+      subtitleKey: 'browse.subtitle',
     },
     {
       id: 'how-it-works',

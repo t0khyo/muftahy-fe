@@ -6,6 +6,7 @@ import {
   type ProductRailSectionConfig,
 } from '../home.config'
 import { HeroSection } from './hero-section'
+import { BrowseSection } from './browse-section'
 import { CategoryTiles } from './category-tiles'
 import { PlatformStrip } from './platform-strip'
 import { TrustStrip } from './trust-strip'
@@ -52,6 +53,15 @@ export function HomePage({
           case 'hero':
             return (
               <HeroSection
+                key={section.id}
+                config={section}
+                className={bandBg}
+              />
+            )
+
+          case 'browse':
+            return (
+              <BrowseSection
                 key={section.id}
                 config={section}
                 className={bandBg}

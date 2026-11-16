@@ -66,19 +66,18 @@ describe('Home Page Skeleton', () => {
     expect(h1Elements).toHaveLength(1)
     expect(h1Elements[0]).toHaveTextContent(/all your digital products at fair prices/i)
 
-    // Sections in order (9 active sections by default)
+    // Sections in order (8 active sections by default with unified Browse block)
     const sections = container.querySelectorAll('main#main > div > section')
-    expect(sections).toHaveLength(9)
+    expect(sections).toHaveLength(8)
 
     expect(sections[0].id).toBe('hero')
     expect(sections[1].id).toBe('best-sellers')
     expect(sections[2].id).toBe('bundles')
-    expect(sections[3].id).toBe('categories')
-    expect(sections[4].id).toBe('platforms')
-    expect(sections[5].id).toBe('how-it-works')
-    expect(sections[6].id).toBe('social-proof')
-    expect(sections[7].id).toBe('faq')
-    expect(sections[8].id).toBe('support')
+    expect(sections[3].id).toBe('browse')
+    expect(sections[4].id).toBe('how-it-works')
+    expect(sections[5].id).toBe('social-proof')
+    expect(sections[6].id).toBe('faq')
+    expect(sections[7].id).toBe('support')
 
     // Each section has aria-labelledby
     sections.forEach((section) => {
@@ -118,7 +117,6 @@ describe('Home Page Skeleton', () => {
     expect(sections[5]).toHaveClass('bg-secondary/40')
     expect(sections[6]).toHaveClass('bg-background')
     expect(sections[7]).toHaveClass('bg-secondary/40')
-    expect(sections[8]).toHaveClass('bg-background')
   })
 
   it('renders hero with one primary button, one quiet text link, and visual placeholder block', () => {
@@ -137,24 +135,34 @@ describe('Home Page Skeleton', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
-  it('renders category tiles (2 cols mobile, 4 desktop) with direction-aware arrows', () => {
-    renderHomePage('/en')
+  it('renders unified Browse block with heading, subtitle, category bento tiles and platform pills', async () => {
+    const { container } = renderHomePage('/en')
+    const browseSection = container.querySelector<HTMLElement>('#browse')!
+    expect(browseSection).toBeInTheDocument()
 
-    expect(screen.getByText(/explore categories/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /games/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /software/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /gift cards/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /subscriptions/i })).toBeInTheDocument()
+    expect(within(browseSection).getByText(/browse catalog/i)).toBeInTheDocument()
+    expect(within(browseSection).getByText(/explore keys, licenses, and subscriptions/i)).toBeInTheDocument()
+
+    // 4 Category tiles
+    expect(within(browseSection).getByRole('link', { name: /^games/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /^software/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /^gift cards/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /^subscriptions/i })).toBeInTheDocument()
+
+    // Platform pill row with All Platforms
+    expect(within(browseSection).getByRole('link', { name: /all platforms/i })).toBeInTheDocument()
   })
 
-  it('renders platform text pills without brand logos or colors', () => {
-    renderHomePage('/en')
+  it('renders unified Browse block in Arabic RTL', async () => {
+    const { container } = renderHomePage('/ar')
+    const browseSection = container.querySelector<HTMLElement>('#browse')!
+    expect(browseSection).toBeInTheDocument()
 
-    expect(screen.getByRole('link', { name: 'PlayStation' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Xbox' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Steam' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Nintendo' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'PC' })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('heading', { name: /تصفح المنتجات/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /^ألعاب/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /^برمجيات/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /جميع المنصات/i })).toBeInTheDocument()
+    expect(document.documentElement.dir).toBe('rtl')
   })
 
   it('renders trust strip with 4 neutral placeholder items when enabled', () => {
@@ -293,7 +301,7 @@ describe('Home Page Skeleton', () => {
 
     // Other home sections still rendered their content!
     expect(screen.getByTestId('bundles-skeleton')).toBeInTheDocument()
-    expect(screen.getByTestId('how-it-works-skeleton')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /how it works/i })).toBeInTheDocument()
     expect(screen.getByTestId('social-proof-skeleton')).toBeInTheDocument()
     expect(screen.getByTestId('support-skeleton')).toBeInTheDocument()
 
@@ -301,14 +309,11 @@ describe('Home Page Skeleton', () => {
     expect(screen.getByText(/frequently asked questions/i)).toBeInTheDocument()
   })
 
-  it('renders all skeleton placeholder sections (bundles, how-it-works, social-proof, support)', () => {
+  it('renders all skeleton placeholder sections (bundles, social-proof, support)', () => {
     renderHomePage('/en')
 
     expect(screen.getByTestId('bundles-skeleton')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /bundles \(productivity-led\)/i })).toBeInTheDocument()
-
-    expect(screen.getByTestId('how-it-works-skeleton')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /how it works/i })).toBeInTheDocument()
 
     expect(screen.getByTestId('social-proof-skeleton')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /social proof/i })).toBeInTheDocument()
@@ -317,8 +322,37 @@ describe('Home Page Skeleton', () => {
     expect(screen.getByRole('heading', { name: /support & activation assistance/i })).toBeInTheDocument()
   })
 
+  it('renders How It Works section in Apple-store visual language with 3 steps and help link', () => {
+    const { container } = renderHomePage('/en')
+    const howItWorks = container.querySelector<HTMLElement>('#how-it-works')!
+    expect(howItWorks).toBeInTheDocument()
+
+    // Centered heading and subline
+    expect(within(howItWorks).getByRole('heading', { name: /^how it works$/i })).toBeInTheDocument()
+    expect(
+      within(howItWorks).getByText(/from choosing to using, in three simple steps\./i),
+    ).toBeInTheDocument()
+
+    // 3 steps
+    expect(within(howItWorks).getAllByText(/choose your product/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(howItWorks).getAllByText(/pay securely/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(howItWorks).getAllByText(/receive it instantly/i).length).toBeGreaterThanOrEqual(1)
+
+    // Western digits numbers
+    expect(within(howItWorks).getAllByText('01').length).toBeGreaterThanOrEqual(1)
+    expect(within(howItWorks).getAllByText('02').length).toBeGreaterThanOrEqual(1)
+    expect(within(howItWorks).getAllByText('03').length).toBeGreaterThanOrEqual(1)
+
+    // Activation help link pointing to #faq
+    const helpLink = within(howItWorks).getByRole('link', {
+      name: /need help activating\? read the guides/i,
+    })
+    expect(helpLink).toBeInTheDocument()
+    expect(helpLink).toHaveAttribute('href', '#faq')
+  })
+
   it('renders correctly in Arabic (RTL) with proper dir attribute and translations', async () => {
-    renderHomePage('/ar')
+    const { container } = renderHomePage('/ar')
 
     expect(document.documentElement.dir).toBe('rtl')
     expect(document.documentElement.lang).toBe('ar')
@@ -328,13 +362,26 @@ describe('Home Page Skeleton', () => {
       /كل منتجاتك الرقمية بأسعار معقولة/i,
     )
 
-    // Arabic categories
-    expect(screen.getByText(/استكشف الفئات/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /ألعاب/i })).toBeInTheDocument()
+    // Arabic browse block
+    const browseSection = container.querySelector<HTMLElement>('#browse')!
+    expect(within(browseSection).getByRole('heading', { name: /تصفح المنتجات/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /^ألعاب/i })).toBeInTheDocument()
+
+    // Arabic How It Works section
+    const howItWorks = container.querySelector<HTMLElement>('#how-it-works')!
+    expect(within(howItWorks).getByRole('heading', { name: /خطوات الشراء/i })).toBeInTheDocument()
+    expect(
+      within(howItWorks).getByText(/من الاختيار إلى الاستخدام في ثلاث خطوات بسيطة\./i),
+    ).toBeInTheDocument()
+    expect(within(howItWorks).getAllByText(/اختر منتجك/i).length).toBeGreaterThanOrEqual(1)
+    expect(
+      within(howItWorks).getByRole('link', {
+        name: /تحتاج مساعدة في التفعيل؟ اقرأ الأدلة/i,
+      }),
+    ).toHaveAttribute('href', '#faq')
 
     // Arabic skeleton sections
     expect(screen.getByRole('heading', { name: /حزم البرامج والإنتاجية/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /كيف تتم عملية الشراء/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /آراء وتقييمات العملاء/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /الدعم الفني والمساعدة/i })).toBeInTheDocument()
 
