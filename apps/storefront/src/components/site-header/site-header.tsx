@@ -33,6 +33,9 @@ export function SiteHeader({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
   const [isCartOpen, setIsCartOpen] = React.useState(false)
+  const searchClosedAtRef = React.useRef(0)
+
+  const isAnyPanelOpen = isMobileMenuOpen || isSearchOpen || isCartOpen
 
   // IntersectionObserver to detect scroll position without scroll listeners
   React.useEffect(() => {
@@ -58,10 +61,15 @@ export function SiteHeader({
   }, [])
 
   const handleCloseSearch = React.useCallback(() => {
+    searchClosedAtRef.current = Date.now()
     setIsSearchOpen(false)
   }, [])
 
   const handleToggleMobileMenu = React.useCallback(() => {
+    // Prevent immediate re-trigger if search was just closed (guards against touch/mousedown event races)
+    if (Date.now() - searchClosedAtRef.current < 400) {
+      return
+    }
     setIsSearchOpen(false)
     setIsCartOpen(false)
     setIsMobileMenuOpen((prev) => !prev)
@@ -70,6 +78,14 @@ export function SiteHeader({
   const handleCloseMobileMenu = React.useCallback(() => {
     setIsMobileMenuOpen(false)
   }, [])
+
+  const handleMenuToggleClick = React.useCallback(() => {
+    if (isSearchOpen) {
+      handleCloseSearch()
+    } else {
+      handleToggleMobileMenu()
+    }
+  }, [isSearchOpen, handleCloseSearch, handleToggleMobileMenu])
 
   const handleToggleCart = React.useCallback(() => {
     setIsSearchOpen(false)
@@ -100,7 +116,7 @@ export function SiteHeader({
           transitionTimingFunction: 'var(--header-ease)',
         }}
         className={`w-full z-40 ${
-          isSearchOpen ? 'bg-background' : 'header-glass'
+          isAnyPanelOpen ? 'bg-background' : isScrolled ? 'header-glass' : 'bg-background'
         } ${
           sticky ? 'sticky top-0' : 'relative'
         } ${
@@ -135,9 +151,9 @@ export function SiteHeader({
               </div>
             )}
 
-            {/* Search Trigger & Panel (Hidden on mobile when search or menu is open) */}
+            {/* Search Trigger & Panel */}
             {SITE_HEADER_CONFIG.searchEnabled && !isMobileMenuOpen && (
-              <div className={isSearchOpen ? 'hidden lg:inline-flex' : 'inline-flex'}>
+              <div className="inline-flex">
                 <SearchPanel
                   isOpen={isSearchOpen}
                   onOpen={handleOpenSearch}
@@ -148,7 +164,13 @@ export function SiteHeader({
 
             {/* Cart Button (Hidden on mobile when search or menu is open; visible on desktop) */}
             {!isMobileMenuOpen && (
-              <div className={isSearchOpen ? 'hidden lg:inline-flex' : 'inline-flex'}>
+              <div
+                className={`inline-flex transition-opacity duration-200 ${
+                  isSearchOpen
+                    ? 'max-lg:invisible max-lg:opacity-0 max-lg:pointer-events-none max-lg:w-0 max-lg:overflow-hidden'
+                    : 'visible opacity-100'
+                }`}
+              >
                 <CartButton
                   isOpen={isCartOpen}
                   onToggle={handleToggleCart}
@@ -161,7 +183,7 @@ export function SiteHeader({
             <div className="lg:hidden">
               <MenuToggle
                 isOpen={isMobileMenuOpen || isSearchOpen}
-                onToggle={isSearchOpen ? handleCloseSearch : handleToggleMobileMenu}
+                onToggle={handleMenuToggleClick}
                 controlsId={isSearchOpen ? 'search-sheet' : 'mobile-menu'}
               />
             </div>

@@ -143,37 +143,6 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       trustClaims: DEFAULT_HERO_TRUST_CLAIMS,
     },
     {
-      id: 'trust',
-      type: 'trust-strip',
-      enabled: true,
-      items: [
-        {
-          id: 'instant-delivery',
-          titleKey: 'instantDelivery',
-          descKey: 'instantDeliveryDesc',
-          icon: 'zap',
-        },
-        {
-          id: 'secure-payment',
-          titleKey: 'securePayment',
-          descKey: 'securePaymentDesc',
-          icon: 'shield-check',
-        },
-        {
-          id: 'customer-support',
-          titleKey: 'customerSupport',
-          descKey: 'customerSupportDesc',
-          icon: 'headphones',
-        },
-        {
-          id: 'region-clarity',
-          titleKey: 'regionClarity',
-          descKey: 'regionClarityDesc',
-          icon: 'globe',
-        },
-      ],
-    },
-    {
       id: 'best-sellers',
       type: 'product-rail',
       enabled: true,

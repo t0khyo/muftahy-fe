@@ -266,9 +266,12 @@ describe('SiteHeader Component', () => {
     const logoContainer = container.querySelector('header > div > div:first-child')
     expect(logoContainer).toHaveClass('max-lg:invisible')
 
-    // Clicking the MenuToggle ('X') closes search
+    // Clicking the MenuToggle ('X') closes search and never opens mobile menu
+    fireEvent.mouseDown(menuToggle)
     fireEvent.click(menuToggle)
     expect(container.querySelector('#search-sheet')).not.toBeInTheDocument()
+    expect(container.querySelector('#mobile-menu')).not.toBeInTheDocument()
+    expect(menuToggle).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('aligns search sheet content container width with header container', () => {
@@ -299,5 +302,34 @@ describe('SiteHeader Component', () => {
     // Open cart in RTL
     fireEvent.click(cartButton)
     expect(screen.getAllByText(/حقيبتك/i).length).toBeGreaterThan(0)
+  })
+
+  it('guarantees zero transparency (bg-background, no header-glass) when mobile menu or cart is open', () => {
+    const { container } = renderSiteHeader('/en/products')
+    const header = container.querySelector('header')
+
+    // 1. Open mobile menu
+    const hamburger = screen.getByRole('button', { name: /open menu/i })
+    fireEvent.click(hamburger)
+    expect(header).toHaveClass('bg-background')
+    expect(header).not.toHaveClass('header-glass')
+
+    const mobileMenu = container.querySelector('#mobile-menu')
+    expect(mobileMenu).toBeInTheDocument()
+    expect(mobileMenu).toHaveClass('bg-background')
+    expect(mobileMenu).not.toHaveClass('header-glass')
+
+    // Close mobile menu
+    fireEvent.click(screen.getByRole('button', { name: /close menu/i }))
+
+    // 2. Open cart
+    const cartButton = screen.getByRole('button', { name: /cart/i })
+    fireEvent.click(cartButton)
+    expect(header).toHaveClass('bg-background')
+    expect(header).not.toHaveClass('header-glass')
+
+    const cartDropdown = screen.getByRole('dialog', { name: /your bag/i })
+    expect(cartDropdown).toHaveClass('bg-background')
+    expect(cartDropdown).not.toHaveClass('header-glass')
   })
 })

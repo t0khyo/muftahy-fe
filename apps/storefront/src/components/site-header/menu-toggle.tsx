@@ -5,6 +5,7 @@ export interface MenuToggleProps {
   onToggle: () => void
   controlsId?: string
   className?: string
+  ariaLabel?: string
 }
 
 export function MenuToggle({
@@ -12,11 +13,14 @@ export function MenuToggle({
   onToggle,
   controlsId = 'mobile-menu',
   className = '',
+  ariaLabel: customAriaLabel,
 }: MenuToggleProps) {
   const { t } = useTranslation(['header'])
-  const label = isOpen
-    ? t('closeMenu', { ns: 'header' })
-    : t('openMenu', { ns: 'header' })
+  const label =
+    customAriaLabel ??
+    (isOpen
+      ? t('closeMenu', { ns: 'header' })
+      : t('openMenu', { ns: 'header' }))
 
   return (
     <button

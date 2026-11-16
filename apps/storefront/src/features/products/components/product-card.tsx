@@ -15,7 +15,6 @@ import {
   IconUserCheck,
 } from './icons';
 import { formatPrice } from './utils';
-import { PlatformsRow } from './platforms-row';
 import type {
   Platform,
   ProductBadge,
@@ -328,15 +327,6 @@ export function ProductCard(props: ProductCardProps) {
             </Link>
           )}
         </h2>
-
-        {/* Platforms row */}
-        {card.platforms && card.platforms.length > 0 && (
-          <PlatformsRow
-            platforms={card.platforms}
-            label={props.translations?.worksOn ?? (isRtl ? 'يعمل على:' : 'Works on:')}
-            platformLabels={props.translations?.platforms}
-          />
-        )}
 
         {/* Spacer to push price + button to bottom */}
         <div className='mt-auto flex flex-col gap-3 pt-1'>

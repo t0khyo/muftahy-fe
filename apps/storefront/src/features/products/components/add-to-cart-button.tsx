@@ -27,7 +27,7 @@ export function AddToCartButton({
   locale = 'en',
   currency = '$',
   label = 'Add to Cart',
-  addedLabel = 'Added!',
+  addedLabel = 'Added',
   choosePlanTitle = 'Choose a plan',
   choosePlanSubtitle = 'Select the duration that best suits your needs',
   cancelLabel,

@@ -71,7 +71,7 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
         transitionDuration: 'var(--header-duration-base, 300ms)',
         transitionTimingFunction: 'var(--header-ease)',
       }}
-      className="fixed inset-x-0 bottom-0 z-40 lg:hidden header-glass overflow-y-auto px-6 py-6 flex flex-col justify-between"
+      className="fixed inset-x-0 bottom-0 z-40 lg:hidden bg-background overflow-y-auto px-6 py-6 flex flex-col justify-between animate-in fade-in duration-200"
     >
       <div className="space-y-6">
         {/* Large Nav Links with Staggered Animation */}

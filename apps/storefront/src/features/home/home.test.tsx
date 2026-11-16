@@ -66,20 +66,19 @@ describe('Home Page Skeleton', () => {
     expect(h1Elements).toHaveLength(1)
     expect(h1Elements[0]).toHaveTextContent(/all your digital products at fair prices/i)
 
-    // Sections in order (10 active sections by default)
+    // Sections in order (9 active sections by default)
     const sections = container.querySelectorAll('main#main > div > section')
-    expect(sections).toHaveLength(10)
+    expect(sections).toHaveLength(9)
 
     expect(sections[0].id).toBe('hero')
-    expect(sections[1].id).toBe('trust')
-    expect(sections[2].id).toBe('best-sellers')
-    expect(sections[3].id).toBe('bundles')
-    expect(sections[4].id).toBe('categories')
-    expect(sections[5].id).toBe('platforms')
-    expect(sections[6].id).toBe('how-it-works')
-    expect(sections[7].id).toBe('social-proof')
-    expect(sections[8].id).toBe('faq')
-    expect(sections[9].id).toBe('support')
+    expect(sections[1].id).toBe('best-sellers')
+    expect(sections[2].id).toBe('bundles')
+    expect(sections[3].id).toBe('categories')
+    expect(sections[4].id).toBe('platforms')
+    expect(sections[5].id).toBe('how-it-works')
+    expect(sections[6].id).toBe('social-proof')
+    expect(sections[7].id).toBe('faq')
+    expect(sections[8].id).toBe('support')
 
     // Each section has aria-labelledby
     sections.forEach((section) => {
@@ -120,7 +119,6 @@ describe('Home Page Skeleton', () => {
     expect(sections[6]).toHaveClass('bg-background')
     expect(sections[7]).toHaveClass('bg-secondary/40')
     expect(sections[8]).toHaveClass('bg-background')
-    expect(sections[9]).toHaveClass('bg-secondary/40')
   })
 
   it('renders hero with one primary button, one quiet text link, and visual placeholder block', () => {
@@ -161,9 +159,39 @@ describe('Home Page Skeleton', () => {
 
   it('renders trust strip with 4 neutral placeholder items when enabled', () => {
     const configWithTrust: HomeConfig = {
-      sections: DEFAULT_HOME_CONFIG.sections.map((s) =>
-        s.id === 'trust' ? { ...s, enabled: true } : s,
-      ),
+      sections: [
+        {
+          id: 'trust',
+          type: 'trust-strip',
+          enabled: true,
+          items: [
+            {
+              id: 'instant-delivery',
+              titleKey: 'instantDelivery',
+              descKey: 'instantDeliveryDesc',
+              icon: 'zap',
+            },
+            {
+              id: 'secure-payment',
+              titleKey: 'securePayment',
+              descKey: 'securePaymentDesc',
+              icon: 'shield-check',
+            },
+            {
+              id: 'customer-support',
+              titleKey: 'customerSupport',
+              descKey: 'customerSupportDesc',
+              icon: 'headphones',
+            },
+            {
+              id: 'region-clarity',
+              titleKey: 'regionClarity',
+              descKey: 'regionClarityDesc',
+              icon: 'globe',
+            },
+          ],
+        },
+      ],
     }
     renderHomePage('/en', configWithTrust)
 

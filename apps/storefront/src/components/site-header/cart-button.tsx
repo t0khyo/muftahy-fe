@@ -158,12 +158,12 @@ export function CartButton({
           ref={dropdownRef}
           role="dialog"
           aria-label={t('yourBag', { ns: 'header' })}
-          className="hidden lg:block absolute end-0 top-[calc(100%+8px)] w-[340px] z-50 rounded-2xl header-glass border border-border/40 shadow-2xl p-5 text-start animate-in fade-in zoom-in-95 duration-200"
+          className="hidden lg:block absolute end-0 top-[calc(100%+8px)] w-[340px] z-50 rounded-2xl bg-background border border-border/60 shadow-2xl p-5 text-start animate-in fade-in zoom-in-95 duration-200"
         >
           {/* Top arrow caret pointing to bag icon */}
           <div
             aria-hidden="true"
-            className="absolute -top-1.5 end-3 h-3 w-3 rotate-45 border-t border-l border-border/40 bg-background/90"
+            className="absolute -top-1.5 end-3 h-3 w-3 rotate-45 border-t border-l border-border/60 bg-background"
           />
 
           {items.length === 0 ? (
@@ -310,7 +310,7 @@ export function CartButton({
         >
           <SheetContent
             side={isRtl ? 'left' : 'right'}
-            className="w-full sm:max-w-md header-glass flex flex-col justify-between"
+            className="w-full sm:max-w-md bg-background flex flex-col justify-between"
           >
             <div>
               <SheetHeader>

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useProducts } from '../../features/products/hooks/use-products'
 import { getLocalizedNavLinks, getNavKey } from './nav-links'
@@ -20,6 +20,7 @@ export function SearchPanel({
   const { lang } = useParams<{ lang: string }>()
   const currentLang = lang || 'en'
   const isAr = currentLang === 'ar'
+  const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation(['header', 'nav', 'common'])
 
@@ -36,6 +37,14 @@ export function SearchPanel({
 
   // Quick links derived from nav links
   const quickLinks = React.useMemo(() => getLocalizedNavLinks(currentLang), [currentLang])
+
+  // Close on route change
+  React.useEffect(() => {
+    if (isOpen) {
+      onClose()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search])
 
   // Auto-focus when opened & handle body scroll lock
   React.useEffect(() => {
@@ -68,10 +77,14 @@ export function SearchPanel({
   React.useEffect(() => {
     if (!isOpen) return
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node | null
-      if (sheetRef.current && !sheetRef.current.contains(target)) {
-        onClose()
+      const target = e.target as HTMLElement | null
+      if (
+        (sheetRef.current && sheetRef.current.contains(target)) ||
+        target?.closest?.('header')
+      ) {
+        return
       }
+      onClose()
     }
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside)
@@ -108,7 +121,11 @@ export function SearchPanel({
         aria-label={isOpen ? t('closeSearch', { ns: 'header' }) : t('search', { ns: 'header' })}
         aria-expanded={isOpen}
         aria-controls="search-sheet"
-        className="cursor-pointer relative z-40 inline-flex h-11 w-11 lg:w-9 items-center justify-center text-foreground/80 transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className={`cursor-pointer relative z-40 inline-flex h-11 w-11 lg:w-9 items-center justify-center text-foreground/80 transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity duration-200 ${
+          isOpen
+            ? 'max-lg:invisible max-lg:opacity-0 max-lg:pointer-events-none max-lg:w-0 max-lg:overflow-hidden'
+            : 'visible opacity-100'
+        }`}
       >
         <svg
           aria-hidden="true"
