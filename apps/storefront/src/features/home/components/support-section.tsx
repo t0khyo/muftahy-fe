@@ -82,28 +82,21 @@ export function SupportSection({ config, className = '' }: SupportSectionProps) 
         <div className="max-w-2xl mx-auto rounded-3xl p-6 sm:p-8 lg:p-10 bg-card border-0 shadow-none text-center sm:text-start flex flex-col gap-6 lg:gap-8">
           {/* Main Action Row */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 justify-between">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-start">
-              {/* 56px Rounded Icon Container */}
-              <div className="size-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <FaWhatsapp size={28} className="text-primary" />
-              </div>
-
-              <div>
-                <h3 className="text-xl sm:text-2xl font-semibold text-foreground">
-                  {t('support.whatsapp.title' as never, {
-                    ns: 'home',
-                    defaultValue: isRtl ? 'تحدث مع الدعم' : 'Chat with support',
-                  })}
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground mt-1 leading-relaxed max-w-md">
-                  {t('support.whatsapp.description' as never, {
-                    ns: 'home',
-                    defaultValue: isRtl
-                      ? 'احصل على مساعدة في التفعيل أو طلبك أو أي سؤال.'
-                      : 'Get help with activation, your order, or any question.',
-                  })}
-                </p>
-              </div>
+            <div className="text-center sm:text-start">
+              <h3 className="text-xl sm:text-2xl font-semibold text-foreground">
+                {t('support.whatsapp.title' as never, {
+                  ns: 'home',
+                  defaultValue: isRtl ? 'تحدث مع الدعم' : 'Chat with support',
+                })}
+              </h3>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1 leading-relaxed max-w-md">
+                {t('support.whatsapp.description' as never, {
+                  ns: 'home',
+                  defaultValue: isRtl
+                    ? 'احصل على مساعدة في التفعيل أو طلبك أو أي سؤال.'
+                    : 'Get help with activation, your order, or any question.',
+                })}
+              </p>
             </div>
 
             {/* Primary Action Button */}
