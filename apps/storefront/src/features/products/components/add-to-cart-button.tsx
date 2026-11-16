@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cn } from '@workspace/ui/lib/utils';
-import { IconCheck, IconShoppingBag } from './icons';
+import { Check, ShoppingBag } from 'lucide-react';
 import { PlanPicker } from './plan-picker';
 import type { ProductCardPlan } from './types';
 
@@ -85,12 +85,12 @@ export function AddToCartButton({
         {justAdded ? (
           <>
             <span>{addedLabel}</span>
-            <IconCheck className='size-4 shrink-0 transition-transform duration-150 animate-in zoom-in-75' />
+            <Check className='size-4 shrink-0 transition-transform duration-150 animate-in zoom-in-75' />
           </>
         ) : (
           <>
             <span>{label}</span>
-            <IconShoppingBag className='size-4 shrink-0 transition-transform duration-150' />
+            <ShoppingBag className='size-4 shrink-0 transition-transform duration-150' />
           </>
         )}
       </button>

@@ -19,6 +19,7 @@
     "@workspace/i18n": "workspace:*",
     "@workspace/ui": "workspace:*",
     "i18next": "^24.2.2",
+    "lucide-react": "^1.70.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.54.2",

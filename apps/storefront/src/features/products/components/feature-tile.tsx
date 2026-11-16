@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@workspace/ui/lib/utils';
 import {
   IconPlatformSteam,
@@ -143,18 +144,10 @@ export function FeatureTile({
             className='group/link inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md'
           >
             <span>{learnMoreText}</span>
-            <svg
+            <ChevronRight
               aria-hidden='true'
               className='size-4 transition-transform group-hover/link:translate-x-0.5 rtl:rotate-180 rtl:group-hover/link:-translate-x-0.5'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <path d='m9 18 6-6-6-6' />
-            </svg>
+            />
           </Link>
         </div>
       </div>

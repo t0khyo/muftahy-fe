@@ -4,8 +4,8 @@ import { Link } from 'react-router';
 import { cn } from '@workspace/ui/lib/utils';
 import type { Product } from '@workspace/domain/schemas/product';
 import { useCartStore } from '../../cart/stores/cart-store';
+import { Box } from 'lucide-react';
 import { AddToCartButton } from './add-to-cart-button';
-import { IconBox } from './icons';
 import { formatPrice } from './utils';
 import type {
   Platform,
@@ -267,7 +267,7 @@ export function ProductCard(props: ProductCardProps) {
             aria-label={card.imageAlt || card.name}
             className='flex items-center justify-center transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none'
           >
-            <IconBox className='size-12 sm:size-14 text-primary' aria-hidden='true' />
+            <Box className='size-12 sm:size-14 text-primary' aria-hidden='true' />
           </div>
         )}
 

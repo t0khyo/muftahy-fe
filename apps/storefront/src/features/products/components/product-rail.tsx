@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { ChevronRight } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import type { ProductCollection } from '@workspace/domain/schemas/product'
 import { useProductCollection } from '../hooks/use-product-collection'
@@ -54,18 +55,10 @@ export function ProductRail({
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group inline-flex items-center gap-1"
           >
             <span>{t('rails.viewAll', { ns: 'home', defaultValue: 'View all' })}</span>
-            <svg
+            <ChevronRight
               aria-hidden="true"
               className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
+            />
           </Link>
         </div>
 
