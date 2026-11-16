@@ -19,10 +19,9 @@ UI components, display types, and static sample data for the product catalog. Th
 - `PlanPicker(props: PlanPickerProps)` — modal bottom-sheet for selecting among multiple plans before adding to cart. Closes on Escape or backdrop click.
 - `PlatformsRow(props: PlatformsRowProps)` — normalizes `Platform[]` to `DisplayPlatform[]` and renders icon pills with CSS tooltips.
 - `ProductGrid(props: ProductGridProps)` — responsive grid (1–4 columns) that fetches products via `useProducts` and renders a `ProductCard` per product.
-- `ProductRail(props: ProductRailProps)` — horizontally scrollable snap rail for a named `ProductCollection`. Shows `ProductRailSkeleton` while loading and `ProductCardPlaceholder` for each loaded product.
+- `ProductRail(props: ProductRailProps)` — horizontally scrollable snap rail for a named `ProductCollection`. Shows `ProductRailSkeleton` while loading and `ProductCard` for each loaded product.
 - `ProductCardSkeleton` — full-card loading skeleton mirroring `ProductCard` layout.
-- `ProductCardPlaceholder(props: ProductCardPlaceholderProps)` — minimal shimmer card used inside rails; intended to be replaced by `ProductCard` when the full card design is complete.
-- `ProductRailSkeleton(props: ProductRailSkeletonProps)` — row of `ProductCardPlaceholder` skeletons shown while a rail loads.
+- `ProductRailSkeleton(props: ProductRailSkeletonProps)` — row of `ProductCardSkeleton` skeletons shown while a rail loads.
 - `formatPrice(raw, locale): string` — formats a numeric price string using `Intl.NumberFormat` with Western digits for both Arabic and English locales.
 - `SAMPLE_PRODUCTS: ProductCardData[]` — static sample data (Canva Pro, Google AI Pro, Microsoft 365) used by `DesignPage` for component showcasing. Contains obviously placeholder keys only.
 
@@ -31,7 +30,6 @@ UI components, display types, and static sample data for the product catalog. Th
 - `ProductCard` accepts either `card` or `product` prop — never both simultaneously (enforced by TypeScript discriminated union).
 - `formatPrice` always uses `ar-u-nu-latn` for Arabic locale to ensure Western digits (0-9) are rendered.
 - `PlatformsRow` normalizes `'mac'` and `'ios'` to the unified `'apple'` display platform.
-- `ProductCardPlaceholder` is a temporary component; `ProductRail` currently renders it instead of `ProductCard`. To upgrade, replace `<ProductCardPlaceholder product={product} />` with `<ProductCard product={product} />` in `product-rail.tsx`.
 - All mock/sample product keys and codes are obviously fake (no real license keys appear in source).
 
 ## Side Effects

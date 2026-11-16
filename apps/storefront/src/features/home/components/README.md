@@ -19,7 +19,7 @@ Presentational section components that compose the home page (`/:lang`). Each co
 
 - Sections render in the **exact order** they appear in `HomeConfig.sections`; alternating band background is computed from the array index.
 - Sections with `enabled: false` are completely omitted from the render tree.
-- `renderProductRail` is required for `'product-rail'` sections to render; if not provided, those sections are silently skipped.
+- `renderProductRail` defaults to `<ProductRail {...props} />` for `'product-rail'` sections, but can be overridden via `HomePageProps`.
 - All copy is sourced from the `'home'` i18n namespace — no hardcoded English or Arabic strings in component markup.
 - CTA `href` values in `DEFAULT_HOME_CONFIG` use the `/:lang/` placeholder which is replaced at runtime by the route segment.
 

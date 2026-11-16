@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { Card, CardContent } from '@workspace/ui/components/card'
-import { Skeleton } from '@workspace/ui/components/skeleton'
+import { useProductCollection } from '../../products/hooks/use-product-collection'
+import { ProductCard } from '../../products/components/product-card'
+import { ProductCardSkeleton } from '../../products/components/product-card-skeleton'
 import type { BundlesSectionConfig } from '../home.config'
 
 export interface BundlesSectionProps {
@@ -10,6 +11,7 @@ export interface BundlesSectionProps {
 
 export function BundlesSection({ config, className = '' }: BundlesSectionProps) {
   const { t } = useTranslation(['home', 'common'])
+  const { data: products, isLoading } = useProductCollection({ collection: 'deals' })
   const headingId = `${config.id}-heading`
 
   return (
@@ -33,36 +35,26 @@ export function BundlesSection({ config, className = '' }: BundlesSectionProps) 
           )}
         </div>
 
-        {/* 3 Bundle Skeleton Cards */}
-        <div
-          data-testid="bundles-skeleton"
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          {[1, 2, 3].map((item) => (
-            <Card
-              key={item}
-              className="overflow-hidden border border-border/60 bg-card rounded-2xl shadow-none"
-            >
-              <div className="aspect-16/9 w-full bg-muted p-4 flex items-center justify-center">
-                <Skeleton className="h-full w-full rounded-xl" />
-              </div>
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-4/5 rounded" />
-                  <Skeleton className="h-4 w-full rounded" />
-                </div>
-                <div className="pt-2 flex items-center justify-between border-t border-border/40">
-                  <Skeleton className="h-6 w-24 rounded" />
-                  <Skeleton className="h-9 w-28 rounded-lg" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Real Product Cards or Skeletons while loading */}
+        {isLoading || !products || products.length === 0 ? (
+          <div
+            data-testid="bundles-skeleton"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {[1, 2, 3].map((item) => (
+              <ProductCardSkeleton key={item} />
+            ))}
+          </div>
+        ) : (
+          <div
+            data-testid="bundles-content"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {products.slice(0, 3).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

@@ -214,6 +214,18 @@ describe('Home Page Skeleton', () => {
     expect(screen.getByText(/how can i get help if my key does not activate\?/i)).toBeInTheDocument()
   })
 
+  it('renders real ProductCard components in product rail and bundles', async () => {
+    renderHomePage('/en')
+
+    // Rail and bundles asynchronously resolve products and render real ProductCard articles
+    const articles = await screen.findAllByRole('article')
+    expect(articles.length).toBeGreaterThan(0)
+
+    // Add to cart buttons exist on product cards with Lucide shopping bag icon
+    const addToCartButtons = await screen.findAllByRole('button', { name: /add to cart/i })
+    expect(addToCartButtons.length).toBeGreaterThan(0)
+  })
+
   it('shows skeleton cards when a rail is loading', () => {
     vi.spyOn(useProductCollectionModule, 'useProductCollection').mockReturnValue({
       data: undefined,

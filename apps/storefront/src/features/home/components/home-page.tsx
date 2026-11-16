@@ -14,6 +14,7 @@ import { BundlesSection } from './bundles-section'
 import { HowItWorksSection } from './how-it-works-section'
 import { SocialProofSection } from './social-proof-section'
 import { SupportSection } from './support-section'
+import { ProductRail } from '../../products/components/product-rail'
 
 export interface HomePageProps {
   config?: HomeConfig
@@ -24,7 +25,7 @@ export interface HomePageProps {
 
 export function HomePage({
   config = DEFAULT_HOME_CONFIG,
-  renderProductRail,
+  renderProductRail = (props) => <ProductRail {...props} />,
 }: HomePageProps) {
   const { t } = useTranslation(['home', 'common'])
 

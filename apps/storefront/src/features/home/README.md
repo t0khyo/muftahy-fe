@@ -33,9 +33,9 @@ Ensure the collection exists in `ProductCollection` (`packages/domain`), then ad
 { id: 'my-rail', type: 'product-rail', enabled: true, collection: 'best-sellers', titleKey: 'bestSellers', viewAllHref: '/:lang/products?collection=best-sellers' }
 ```
 
-### Swapping the Card Placeholder
-
-Rails currently render `ProductCardPlaceholder`. To use the full `ProductCard`, replace `<ProductCardPlaceholder product={product} />` in `features/products/components/product-rail.tsx`.
+### Product Cards
+ 
+Rails render the full production `ProductCard` from `features/products/components/product-card.tsx`.
 
 ### Copy Keys
 

@@ -1,4 +1,4 @@
-import { ProductCardPlaceholder } from './product-card-placeholder'
+import { ProductCardSkeleton } from './product-card-skeleton'
 
 export interface ProductRailSkeletonProps {
   count?: number
@@ -14,9 +14,9 @@ export function ProductRailSkeleton({ count = 5 }: ProductRailSkeletonProps) {
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className="w-[calc(43.5%-12px)] sm:w-[calc(33.333%-12px)] lg:w-[calc(20%-13px)] shrink-0"
+          className="w-[260px] sm:w-[280px] shrink-0"
         >
-          <ProductCardPlaceholder />
+          <ProductCardSkeleton />
         </div>
       ))}
     </div>

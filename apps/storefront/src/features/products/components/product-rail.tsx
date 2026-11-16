@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@workspace/ui/components/button'
 import type { ProductCollection } from '@workspace/domain/schemas/product'
 import { useProductCollection } from '../hooks/use-product-collection'
-import { ProductCardPlaceholder } from './product-card-placeholder'
+import { ProductCard } from './product-card'
 import { ProductRailSkeleton } from './product-rail-skeleton'
 
 export interface ProductRailProps {
@@ -114,9 +114,9 @@ export function ProductRail({
             {products.map((product) => (
               <div
                 key={product.id}
-                className="w-[calc(43.5%-12px)] sm:w-[calc(33.333%-12px)] lg:w-[calc(20%-13px)] shrink-0 snap-start"
+                className="w-[260px] sm:w-[280px] shrink-0 snap-start flex"
               >
-                <ProductCardPlaceholder product={product} />
+                <ProductCard product={product} className="h-full w-full" />
               </div>
             ))}
           </div>
