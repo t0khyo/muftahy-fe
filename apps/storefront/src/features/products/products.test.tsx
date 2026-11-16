@@ -12,6 +12,7 @@ import { ProductCard } from './components/product-card'
 import { ProductGrid } from './components/product-grid'
 import { FeatureTile } from './components/feature-tile'
 import { formatPrice } from './components/utils'
+import { ProductsRoute } from '../../routes/products-route'
 
 const mockProduct: Product = {
   id: 'test-001',
@@ -43,7 +44,7 @@ const mockProduct: Product = {
 
 function renderWithProviders(
   ui: React.ReactElement,
-  { lang = 'en' }: { lang?: 'en' | 'ar' } = {},
+  { lang = 'en', initialEntries = ['/'] }: { lang?: 'en' | 'ar'; initialEntries?: string[] } = {},
 ) {
   i18n.changeLanguage(lang)
   document.documentElement.lang = lang
@@ -61,7 +62,7 @@ function renderWithProviders(
     <ThemeProvider defaultTheme="light">
       <I18nextProvider i18n={i18n}>
         <QueryClientProvider client={queryClient}>
-          <MemoryRouter>{ui}</MemoryRouter>
+          <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
         </QueryClientProvider>
       </I18nextProvider>
     </ThemeProvider>,
@@ -184,14 +185,99 @@ describe('ProductGrid', () => {
   it('fetches and renders products from the service', async () => {
     renderWithProviders(<ProductGrid />, { lang: 'en' })
 
-    // Loading state is rendered first
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+    // Loading skeleton is rendered first with accessible status role
+    expect(screen.getByRole('status')).toBeInTheDocument()
 
     // Wait for items to be loaded
     await waitFor(() => {
       expect(
         screen.getByText('Windows 11 Professional Retail Key'),
       ).toBeInTheDocument()
+    })
+  })
+})
+
+describe('ProductsRoute (Listing Page)', () => {
+  it('renders default heading, breadcrumbs, category row, and catalog products in English', async () => {
+    renderWithProviders(<ProductsRoute />, { lang: 'en' })
+
+    // Heading
+    expect(screen.getByRole('heading', { level: 1, name: /all products/i })).toBeInTheDocument()
+
+    // Breadcrumbs
+    const breadcrumbNav = screen.getByRole('navigation', { name: /breadcrumb/i })
+    expect(breadcrumbNav).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^home$/i })).toBeInTheDocument()
+    const currentBreadcrumb = breadcrumbNav.querySelector('[aria-current="page"]')
+    expect(currentBreadcrumb).toHaveTextContent(/products/i)
+
+    // Category row: 5 items
+    const categoryNav = screen.getByRole('navigation', { name: /^category$/i })
+    expect(categoryNav).toBeInTheDocument()
+    // "All" tile is active with aria-current="page"
+    const activeCategory = categoryNav.querySelector('[aria-current="page"]')
+    expect(activeCategory).toHaveTextContent(/all/i)
+
+    // Sidebar: does NOT have Category facet
+    const sidebar = screen.getByRole('complementary', { name: /filters/i })
+    expect(sidebar).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(sidebar).toHaveTextContent(/platform/i)
+      expect(sidebar).toHaveTextContent(/region/i)
+      expect(screen.getByText('Windows 11 Professional Retail Key')).toBeInTheDocument()
+      expect(screen.getByText('Cyberpunk 2077: Ultimate Edition (PC)')).toBeInTheDocument()
+    })
+  })
+
+  it('renders dynamic heading, category breadcrumb, and active category in Arabic when filtered', async () => {
+    renderWithProviders(<ProductsRoute />, {
+      lang: 'ar',
+      initialEntries: ['/ar/products?category=games'],
+    })
+
+    // Dynamic title is "الألعاب"
+    expect(screen.getByRole('heading', { level: 1, name: /الألعاب/i })).toBeInTheDocument()
+
+    // Breadcrumb has category leaf
+    const breadcrumbNav = screen.getByRole('navigation', { name: /مسار التنقل/i })
+    const currentBreadcrumb = breadcrumbNav.querySelector('[aria-current="page"]')
+    expect(currentBreadcrumb).toHaveTextContent(/الألعاب/i)
+
+    // Category row highlights Games ("الألعاب")
+    const categoryNav = screen.getByRole('navigation', { name: /الفئة/i })
+    const activeCategory = categoryNav.querySelector('[aria-current="page"]')
+    expect(activeCategory).toHaveTextContent(/الألعاب/i)
+
+    await waitFor(() => {
+      expect(screen.getByText('سايبر بانك 2077: النسخة الكاملة (حاسوب)')).toBeInTheDocument()
+    })
+  })
+
+  it('renders dynamic heading when arriving from search query', async () => {
+    renderWithProviders(<ProductsRoute />, {
+      lang: 'en',
+      initialEntries: ['/en/products?q=Cyberpunk'],
+    })
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: /results for "cyberpunk"/i }),
+    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getByText('Cyberpunk 2077: Ultimate Edition (PC)')).toBeInTheDocument()
+    })
+  })
+
+  it('renders empty state with Clear all button when no products match', async () => {
+    renderWithProviders(<ProductsRoute />, {
+      lang: 'en',
+      initialEntries: ['/en/products?minPrice=999999'],
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/no products match your filters/i)).toBeInTheDocument()
+      expect(screen.getAllByRole('button', { name: /clear all/i }).length).toBeGreaterThan(0)
     })
   })
 })

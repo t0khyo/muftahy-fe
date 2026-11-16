@@ -1,31 +1,50 @@
 import { useTranslation } from 'react-i18next'
 import { Button } from '@workspace/ui/components/button'
+import { cn } from '@workspace/ui/lib/utils'
 import type { Product, ProductListFilter } from '@workspace/domain/schemas/product'
 import { useProducts } from '../hooks/use-products'
 import { ProductCard } from './product-card'
+import { ProductCardSkeleton } from './product-card-skeleton'
 
 export interface ProductGridProps {
+  products?: Product[]
   filter?: ProductListFilter
   onAddToCart?: (product: Product) => void
+  className?: string
+  priorityCount?: number
 }
 
-export function ProductGrid({ filter, onAddToCart }: ProductGridProps) {
+export function ProductGrid({
+  products: directProducts,
+  filter,
+  onAddToCart,
+  className,
+  priorityCount = 4,
+}: ProductGridProps) {
   const { t } = useTranslation(['products', 'common'])
-  const { data: products, isLoading, isError, refetch } = useProducts({ filter })
+  const { data: result, isLoading, isError, refetch } = useProducts({
+    filter,
+    enabled: directProducts === undefined,
+  })
 
-  if (isLoading) {
+  const products = directProducts ?? result?.items
+
+  if (directProducts === undefined && isLoading) {
     return (
       <div
-        className="flex min-h-[300px] items-center justify-center p-8 text-muted-foreground"
+        className={cn('grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-5', className)}
         role="status"
         aria-live="polite"
+        aria-label={t('loading', { ns: 'common' })}
       >
-        <span>{t('loading', { ns: 'common' })}</span>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
       </div>
     )
   }
 
-  if (isError) {
+  if (directProducts === undefined && isError) {
     return (
       <div
         className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-8 text-center"
@@ -48,11 +67,12 @@ export function ProductGrid({ filter, onAddToCart }: ProductGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
-      {products.map((product) => (
+    <div className={cn('grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-5', className)}>
+      {products.map((product, idx) => (
         <ProductCard
           key={product.id}
           product={product}
+          priority={idx < priorityCount}
           onAddToCart={onAddToCart}
         />
       ))}

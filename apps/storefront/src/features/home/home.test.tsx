@@ -303,13 +303,13 @@ describe('Home Page Skeleton', () => {
     expect(screen.getByTestId('bundles-skeleton')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /how it works/i })).toBeInTheDocument()
     expect(screen.getByTestId('social-proof-skeleton')).toBeInTheDocument()
-    expect(screen.getByTestId('support-skeleton')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /need help\? contact us/i })).toBeInTheDocument()
 
     // Page still rendered all other sections
     expect(screen.getByText(/frequently asked questions/i)).toBeInTheDocument()
   })
 
-  it('renders all skeleton placeholder sections (bundles, social-proof, support)', () => {
+  it('renders all skeleton placeholder sections (bundles, social-proof)', () => {
     renderHomePage('/en')
 
     expect(screen.getByTestId('bundles-skeleton')).toBeInTheDocument()
@@ -317,9 +317,49 @@ describe('Home Page Skeleton', () => {
 
     expect(screen.getByTestId('social-proof-skeleton')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /social proof/i })).toBeInTheDocument()
+  })
 
-    expect(screen.getByTestId('support-skeleton')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /support & activation assistance/i })).toBeInTheDocument()
+  it('renders Support section in Apple-store visual language with WhatsApp card and topic chips', () => {
+    const { container } = renderHomePage('/en')
+    const support = container.querySelector<HTMLElement>('#support')!
+    expect(support).toBeInTheDocument()
+
+    // Heading and subline
+    expect(within(support).getByRole('heading', { name: /need help\? contact us/i })).toBeInTheDocument()
+    expect(within(support).getByText(/our support team is ready to help/i)).toBeInTheDocument()
+
+    // WhatsApp card
+    expect(within(support).getByRole('heading', { name: /chat with support/i })).toBeInTheDocument()
+    expect(within(support).getByText(/get help with activation, your order, or any question\./i)).toBeInTheDocument()
+    const ctaBtn = within(support).getByRole('link', { name: /chat on whatsapp/i })
+    expect(ctaBtn).toHaveAttribute('href', 'https://wa.me/1234567890')
+
+    // 3 topic chips
+    const activationChip = within(support).getByRole('link', { name: /activation help/i })
+    expect(activationChip.getAttribute('href')).toContain('https://wa.me/1234567890?text=')
+    expect(decodeURIComponent(activationChip.getAttribute('href')!)).toContain('Hello, I need help activating my product')
+
+    const orderChip = within(support).getByRole('link', { name: /order issue/i })
+    expect(decodeURIComponent(orderChip.getAttribute('href')!)).toContain('Hello, I have a question about my order')
+
+    const productChip = within(support).getByRole('link', { name: /product question/i })
+    expect(decodeURIComponent(productChip.getAttribute('href')!)).toContain('Hello, I have a question about a product')
+  })
+
+  it('does not render support section when whatsappNumber is not configured', () => {
+    const customConfig: HomeConfig = {
+      sections: [
+        {
+          id: 'support',
+          type: 'support',
+          enabled: true,
+          titleKey: 'support.title',
+          subtitleKey: 'support.subtitle',
+        },
+      ],
+    }
+    const { container } = renderHomePage('/en', customConfig)
+    expect(container.querySelector('#support')).toBeNull()
   })
 
   it('renders How It Works section in Apple-store visual language with 3 steps and help link', () => {
@@ -380,10 +420,19 @@ describe('Home Page Skeleton', () => {
       }),
     ).toHaveAttribute('href', '#faq')
 
+    // Arabic Support section
+    const support = container.querySelector<HTMLElement>('#support')!
+    expect(within(support).getByRole('heading', { name: /تحتاج مساعدة؟ تواصل معنا/i })).toBeInTheDocument()
+    expect(within(support).getByRole('heading', { name: /تحدث مع الدعم/i })).toBeInTheDocument()
+    expect(within(support).getByRole('link', { name: /(تواصل|محادثة) عبر واتساب/i })).toHaveAttribute(
+      'href',
+      'https://wa.me/1234567890',
+    )
+    expect(within(support).getByRole('link', { name: /مساعدة في التفعيل/i })).toBeInTheDocument()
+
     // Arabic skeleton sections
     expect(screen.getByRole('heading', { name: /حزم البرامج والإنتاجية/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /آراء وتقييمات العملاء/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /الدعم الفني والمساعدة/i })).toBeInTheDocument()
 
     // Arabic FAQ
     expect(screen.getByText(/الأسئلة الشائعة/i)).toBeInTheDocument()

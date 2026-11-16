@@ -9,10 +9,11 @@ export function SearchRoute() {
   const query = searchParams.get('q') || ''
   const { t } = useTranslation(['search', 'common'])
 
-  const { data: products, isLoading } = useProducts({
+  const { data: result, isLoading } = useProducts({
     filter: query ? { search: query } : undefined,
     enabled: true,
   })
+  const products = result?.items
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6">

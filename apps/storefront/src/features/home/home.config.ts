@@ -130,6 +130,8 @@ export interface SupportSectionConfig extends BaseSectionConfig {
   type: 'support'
   titleKey: string
   subtitleKey?: string
+  whatsappNumber?: string
+  hoursKey?: string
 }
 
 export type HomeSection =
@@ -213,6 +215,7 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       enabled: true,
       titleKey: 'support.title',
       subtitleKey: 'support.subtitle',
+      whatsappNumber: '1234567890',
     },
   ],
 }

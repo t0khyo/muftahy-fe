@@ -85,7 +85,8 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
   const { t } = useTranslation(['home', 'products', 'common'])
 
   // Fetch all products to compute real category counts and active platforms
-  const { data: products } = useProducts()
+  const { data: result } = useProducts()
+  const products = result?.items
 
   const productCounts = React.useMemo(() => {
     const counts: Record<string, number> = {

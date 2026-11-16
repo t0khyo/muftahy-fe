@@ -1,7 +1,10 @@
 import type {
+  FilterOptionCount,
   Product,
   ProductCollection,
+  ProductFilterCounts,
   ProductListFilter,
+  ProductListResult,
 } from '@workspace/domain/schemas/product'
 import type { ProductService } from '../../services/product-service'
 
@@ -211,20 +214,41 @@ export const MOCK_PRODUCTS: Product[] = [
 export class MockProductAdapter implements ProductService {
   private readonly products: Product[] = [...MOCK_PRODUCTS]
 
-  async list(filter?: ProductListFilter): Promise<Product[]> {
+  async list(filter?: ProductListFilter): Promise<ProductListResult> {
     let result = [...this.products]
 
     if (filter?.category) {
-      result = result.filter((p) => p.category === filter.category)
+      const categories = Array.isArray(filter.category) ? filter.category : [filter.category]
+      if (categories.length > 0) {
+        result = result.filter((p) => categories.includes(p.category))
+      }
     }
     if (filter?.platform) {
-      result = result.filter((p) => p.platform === filter.platform)
+      const platforms = Array.isArray(filter.platform) ? filter.platform : [filter.platform]
+      if (platforms.length > 0) {
+        result = result.filter((p) => platforms.includes(p.platform))
+      }
     }
     if (filter?.region) {
-      result = result.filter((p) => p.region === filter.region)
+      const regions = Array.isArray(filter.region) ? filter.region : [filter.region]
+      if (regions.length > 0) {
+        result = result.filter((p) => regions.includes(p.region))
+      }
     }
     if (filter?.featured !== undefined) {
       result = result.filter((p) => p.featured === filter.featured)
+    }
+    if (filter?.inStock) {
+      result = result.filter((p) => p.inStock)
+    }
+    if (filter?.onSale) {
+      result = result.filter((p) => Boolean(p.originalPrice && p.originalPrice.amountMinor > p.price.amountMinor))
+    }
+    if (filter?.priceMin !== undefined) {
+      result = result.filter((p) => (p.price.amountMinor / 100) >= filter.priceMin!)
+    }
+    if (filter?.priceMax !== undefined) {
+      result = result.filter((p) => (p.price.amountMinor / 100) <= filter.priceMax!)
     }
     if (filter?.search) {
       const q = filter.search.toLowerCase()
@@ -236,7 +260,82 @@ export class MockProductAdapter implements ProductService {
       )
     }
 
-    return result
+    // Sorting: Featured (default), Best selling, Price low-high, Price high-low, Newest
+    const sort = filter?.sort ?? 'featured'
+    switch (sort) {
+      case 'best-selling':
+        result.sort((a, b) => {
+          if (a.featured !== b.featured) return a.featured ? -1 : 1
+          if (a.inStock !== b.inStock) return a.inStock ? -1 : 1
+          return 0
+        })
+        break
+      case 'price-asc':
+        result.sort((a, b) => a.price.amountMinor - b.price.amountMinor)
+        break
+      case 'price-desc':
+        result.sort((a, b) => b.price.amountMinor - a.price.amountMinor)
+        break
+      case 'newest':
+        // Reverse original order
+        result = [...result].reverse()
+        break
+      case 'featured':
+      default:
+        // Default order preserves mock featured order
+        break
+    }
+
+    const total = result.length
+    const page = filter?.page ?? 1
+    const pageSize = filter?.pageSize ?? 24
+    const limit = page * pageSize
+    const items = result.slice(0, limit)
+    const hasMore = total > items.length
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      hasMore,
+    }
+  }
+
+  async getFilterCounts(_filter?: ProductListFilter): Promise<ProductFilterCounts> {
+    // Only count options that exist in products.
+    // If filter contains restrictions other than category, we can count available categories, etc.
+    // For pure faceted counts, calculate from all products or filtered base:
+    const base = [...this.products]
+
+    const categoryMap = new Map<string, number>()
+    const platformMap = new Map<string, number>()
+    const regionMap = new Map<string, number>()
+    let inStockCount = 0
+    let onSaleCount = 0
+
+    for (const p of base) {
+      categoryMap.set(p.category, (categoryMap.get(p.category) ?? 0) + 1)
+      platformMap.set(p.platform, (platformMap.get(p.platform) ?? 0) + 1)
+      regionMap.set(p.region, (regionMap.get(p.region) ?? 0) + 1)
+      if (p.inStock) inStockCount++
+      if (p.originalPrice && p.originalPrice.amountMinor > p.price.amountMinor) onSaleCount++
+    }
+
+    const toSortedCounts = (map: Map<string, number>): FilterOptionCount[] =>
+      Array.from(map.entries())
+        .filter(([, count]) => count > 0)
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => b.count - a.count)
+
+    return {
+      categories: toSortedCounts(categoryMap),
+      platforms: toSortedCounts(platformMap),
+      regions: toSortedCounts(regionMap),
+      inStockCount,
+      onSaleCount,
+      total: base.length,
+    }
   }
 
   async listByCollection(collection: ProductCollection): Promise<Product[]> {

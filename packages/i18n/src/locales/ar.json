@@ -12,6 +12,19 @@
       "system": "النظام"
     }
   },
+  "breadcrumb": {
+    "label": "مسار التنقل",
+    "home": "الرئيسية",
+    "products": "المنتجات",
+    "back": "العودة إلى المنتجات"
+  },
+  "categories": {
+    "all": "الكل",
+    "games": "الألعاب",
+    "software": "البرامج",
+    "subscriptions": "الاشتراكات",
+    "giftCards": "بطاقات الهدايا"
+  },
   "nav": {
     "home": "الرئيسية",
     "products": "المنتجات",
@@ -86,8 +99,40 @@
     "regionEu": "أوروبا",
     "platform": "المنصة",
     "category": "الفئة",
+    "categoryGames": "ألعاب",
+    "categorySoftware": "برامج",
+    "categorySubscriptions": "اشتراكات",
+    "categoryGiftCards": "بطاقات هدايا",
     "price": "السعر",
-    "noProductsFound": "لم يتم العثور على منتجات"
+    "noProductsFound": "لم يتم العثور على منتجات",
+    "listing": {
+      "title": "جميع المنتجات",
+      "subtitle": "تصفح مجموعتنا الكاملة من المفاتيح الرقمية والبرامج والاشتراكات",
+      "titleSearch": "نتائج البحث عن \"{{query}}\"",
+      "showing": "عرض {{count}} من {{total}}",
+      "resultCount": "{{count}} منتج",
+      "resultCountOne": "منتج واحد",
+      "showMore": "عرض المزيد",
+      "clearAll": "مسح الكل",
+      "filters": "التصفية",
+      "filtersCount": "التصفية ({{count}})",
+      "showResults": "عرض {{count}} نتيجة",
+      "sort": "ترتيب",
+      "sortFeatured": "مميز",
+      "sortBestSelling": "الأكثر مبيعاً",
+      "sortPriceLow": "السعر: من الأقل",
+      "sortPriceHigh": "السعر: من الأعلى",
+      "sortNewest": "الأحدث",
+      "priceRange": "نطاق السعر",
+      "priceMin": "الحد الأدنى",
+      "priceMax": "الحد الأقصى",
+      "inStockOnly": "المتوفر فقط",
+      "onSale": "عروض فقط",
+      "region": "المنطقة",
+      "noResults": "لا توجد منتجات تطابق التصفية",
+      "noResultsHint": "حاول مسح بعض التصفيات أو تصفح حسب الفئة",
+      "errorRetry": "حدث خطأ. حاول مرة أخرى."
+    }
   },
   "design": {
     "title": "نظام التصميم",
@@ -239,8 +284,28 @@
       "subtitle": "تجارب حقيقية وتقييمات موثقة من المشترين في الخليج والشرق الأوسط."
     },
     "support": {
-      "title": "الدعم الفني والمساعدة",
-      "subtitle": "هل تواجه صعوبة في تفعيل مفتاح أو استلام طلبك؟ فريقنا جاهز لمساعدتك."
+      "title": "تحتاج مساعدة؟ تواصل معنا",
+      "subtitle": "فريق الدعم جاهز لمساعدتك في التفعيل والطلبات وأي استفسار.",
+      "whatsapp": {
+        "title": "تحدث مع الدعم",
+        "description": "احصل على مساعدة في التفعيل أو طلبك أو أي سؤال.",
+        "action": "تواصل عبر واتساب"
+      },
+      "chips": {
+        "quickTopics": "مواضيع سريعة:",
+        "activation": {
+          "label": "مساعدة في التفعيل",
+          "prefill": "مرحبًا، أحتاج مساعدة في تفعيل منتجي. رقم الطلب: "
+        },
+        "order": {
+          "label": "مشكلة في طلب",
+          "prefill": "مرحبًا، لدي استفسار عن طلبي. رقم الطلب: "
+        },
+        "product": {
+          "label": "سؤال عن منتج",
+          "prefill": "مرحبًا، لدي سؤال عن أحد المنتجات."
+        }
+      }
     }
   }
 }

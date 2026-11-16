@@ -30,10 +30,11 @@ export function SearchPanel({
   const sheetRef = React.useRef<HTMLDivElement | null>(null)
 
   // Live products matching query through the service layer
-  const { data: liveResults } = useProducts({
+  const { data: searchResult } = useProducts({
     filter: query.trim() ? { search: query.trim() } : undefined,
     enabled: isOpen && query.trim().length > 0,
   })
+  const liveResults = searchResult?.items
 
   // Quick links derived from nav links
   const quickLinks = React.useMemo(() => getLocalizedNavLinks(currentLang), [currentLang])
