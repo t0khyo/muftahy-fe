@@ -73,8 +73,8 @@ export function AddToCartButton({
         onClick={handleButtonClick}
         aria-label={`${label} – ${productName}`}
         className={cn(
-          'relative z-10 cursor-pointer flex h-12 w-full items-center justify-center gap-2 rounded-xl',
-          'bg-primary text-primary-foreground font-semibold text-sm shadow-xs',
+          'relative z-10 cursor-pointer flex h-11 lg:h-10 w-full items-center justify-center gap-2 rounded-full px-4',
+          'bg-primary text-primary-foreground font-medium text-xs sm:text-sm shadow-none',
           'transition-all duration-150 hover:bg-primary/90 active:scale-[0.98]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',

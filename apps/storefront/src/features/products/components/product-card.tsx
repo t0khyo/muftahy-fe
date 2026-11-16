@@ -5,88 +5,34 @@ import { cn } from '@workspace/ui/lib/utils';
 import type { Product } from '@workspace/domain/schemas/product';
 import { useCartStore } from '../../cart/stores/cart-store';
 import { AddToCartButton } from './add-to-cart-button';
-import {
-  IconBox,
-  IconCircleCheck,
-  IconRefresh,
-  IconShield,
-  IconSparkles,
-  IconTag,
-  IconUserCheck,
-} from './icons';
+import { IconBox } from './icons';
 import { formatPrice } from './utils';
 import type {
   Platform,
-  ProductBadge,
   ProductCardData,
   ProductCardPlan,
   ProductCardTranslations,
-  ProductType,
 } from './types';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface BadgePillProps {
-  badge: ProductBadge;
   label: string;
+  isDiscount?: boolean;
 }
 
-function BadgePill({ badge, label }: BadgePillProps) {
-  const iconClass = 'h-3 w-3 shrink-0';
-  const Icon = badge === 'warranty' ? IconShield : badge === 'offer' ? IconTag : IconSparkles;
-
+function BadgePill({ label, isDiscount = false }: BadgePillProps) {
   return (
     <span
-      aria-label={label}
       className={cn(
-        'absolute start-2 top-2 z-10',
+        'absolute start-2.5 top-2.5 z-10',
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
-        'bg-offer-badge-bg text-offer-badge-foreground',
-        'text-[10px] font-semibold leading-none ring-1 ring-offer-badge/30'
+        'text-[10px] font-semibold leading-none',
+        isDiscount
+          ? 'bg-discount text-discount-foreground'
+          : 'bg-background/90 text-foreground backdrop-blur-xs shadow-xs'
       )}
     >
-      <Icon className={iconClass} />
-      {label}
-    </span>
-  );
-}
-
-interface TypeChipProps {
-  label: string;
-  productType: ProductType;
-}
-
-function TypeChip({ label, productType }: TypeChipProps) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5',
-        'text-[11px] font-medium text-muted-foreground'
-      )}
-    >
-      {productType === 'subscription' ? (
-        <IconRefresh className='h-3 w-3 shrink-0' />
-      ) : (
-        <IconSparkles className='h-3 w-3 shrink-0' />
-      )}
-      {label}
-    </span>
-  );
-}
-
-interface ActivationChipProps {
-  label: string;
-}
-
-function ActivationChip({ label }: ActivationChipProps) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5',
-        'text-[11px] font-medium text-muted-foreground'
-      )}
-    >
-      <IconUserCheck className='h-3 w-3 shrink-0' />
       {label}
     </span>
   );
@@ -143,6 +89,9 @@ export function ProductCard(props: ProductCardProps) {
       const title = p.title[isRtl ? 'ar' : 'en'] ?? p.title.en;
       const desc = p.description[isRtl ? 'ar' : 'en'] ?? p.description.en;
       const priceNum = (p.price.amountMinor / 100).toFixed(2);
+      const originalPriceNum = p.originalPrice
+        ? (p.originalPrice.amountMinor / 100).toFixed(2)
+        : undefined;
 
       const platformsMap: Platform[] =
         p.platform === 'steam'
@@ -163,14 +112,21 @@ export function ProductCard(props: ProductCardProps) {
         ratingCount: 128,
         platforms: platformsMap,
         startingPrice: priceNum,
-        startingPlanDuration: p.deliveryType === 'instant' ? (isRtl ? 'تسليم فوري' : 'Instant') : (isRtl ? 'شهر' : 'month'),
+        originalPrice: originalPriceNum,
+        startingPlanDuration:
+          p.deliveryType === 'instant'
+            ? (isRtl ? 'تسليم فوري' : 'Instant')
+            : (isRtl ? 'شهر' : 'month'),
         startingPlanDurationEn: p.deliveryType === 'instant' ? 'Instant' : 'month',
         trustNote: desc || (isRtl ? 'ضمان التسليم الفوري' : 'Instant Delivery Guaranteed'),
         plans: [
           {
             id: p.id,
             label: title,
-            duration: p.deliveryType === 'instant' ? (isRtl ? 'ترخيص فوري' : 'Instant License') : (isRtl ? 'اشتراك' : 'Subscription'),
+            duration:
+              p.deliveryType === 'instant'
+                ? (isRtl ? 'ترخيص فوري' : 'Instant License')
+                : (isRtl ? 'اشتراك' : 'Subscription'),
             price: priceNum,
             activationType: 'ready_account',
           },
@@ -186,48 +142,65 @@ export function ProductCard(props: ProductCardProps) {
 
   const isInStock = domainProduct ? domainProduct.inStock : true;
 
+  // Platform and Region Meta line
+  const metaText = React.useMemo(() => {
+    if (domainProduct) {
+      const platformKey = `platform${domainProduct.platform.charAt(0).toUpperCase() + domainProduct.platform.slice(1)}`;
+      const regionKey = `region${domainProduct.region.charAt(0).toUpperCase() + domainProduct.region.slice(1)}`;
+      const platformLabel = t(platformKey, { defaultValue: domainProduct.platform });
+      const regionLabel = t(regionKey, { defaultValue: domainProduct.region });
+      return [platformLabel, regionLabel].filter(Boolean).join(' • ');
+    }
+    if (card.platforms && card.platforms.length > 0) {
+      return card.platforms.map((p) => p.toUpperCase()).join(' • ');
+    }
+    return null;
+  }, [domainProduct, card.platforms, t]);
+
   // Badge label
-  const badgeLabels = {
+  const badgeLabels: Record<string, string> = {
     warranty: props.translations?.badge?.warranty ?? (isRtl ? 'ضمان' : 'Warranty'),
     offer: props.translations?.badge?.offer ?? (isRtl ? 'عرض خاص' : 'Special Offer'),
     new: props.translations?.badge?.new ?? (isRtl ? 'جديد' : 'New'),
   };
   const badgeLabel = card.badge ? badgeLabels[card.badge] : null;
 
-  // Product type label
-  const productType = card.productType ?? 'subscription';
-  const productTypeLabel =
-    productType === 'subscription'
-      ? (props.translations?.type?.subscription ?? (isRtl ? 'اشتراك' : 'Subscription'))
-      : (props.translations?.type?.service ?? (isRtl ? 'خدمة' : 'Service'));
-
-  // Activation type label
-  const activationType = card.activationType ?? card.plans[0]?.activationType ?? 'personal_invite';
-  const activationLabel =
-    activationType === 'personal_invite'
-      ? (props.translations?.activation?.personalInvite ?? (isRtl ? 'دعوة شخصية' : 'Personal Invite'))
-      : (props.translations?.activation?.readyAccount ?? (isRtl ? 'حساب جاهز' : 'Ready Account'));
-
-  const duration = isRtl
-    ? card.startingPlanDuration || card.plans[0]?.duration || 'شهر'
-    : card.startingPlanDurationEn ||
-      card.startingPlanDuration ||
-      card.plans[0]?.duration ||
-      'month';
+  // Discount calculation
+  const discountPercent = React.useMemo(() => {
+    if (domainProduct?.originalPrice && domainProduct.originalPrice.amountMinor > domainProduct.price.amountMinor) {
+      const orig = domainProduct.originalPrice.amountMinor;
+      const current = domainProduct.price.amountMinor;
+      return Math.round(((orig - current) / orig) * 100);
+    }
+    if (card.originalPrice && parseFloat(card.originalPrice) > parseFloat(card.startingPrice)) {
+      const orig = parseFloat(card.originalPrice);
+      const current = parseFloat(card.startingPrice);
+      return Math.round(((orig - current) / orig) * 100);
+    }
+    return null;
+  }, [domainProduct, card.originalPrice, card.startingPrice]);
 
   const defaultCurrency = domainProduct
     ? (domainProduct.price.currency === 'USD' ? '$' : (isRtl ? 'ج.م' : domainProduct.price.currency))
     : (isRtl ? 'ج.م' : '$');
   const currency = props.translations?.currency ?? defaultCurrency;
-  const startingFrom = props.translations?.startingFrom ?? (isRtl ? 'يبدأ من' : 'Starting from');
+  const fromPriceText = props.translations?.startingFrom ?? t('fromPrice', { ns: 'products', defaultValue: isRtl ? 'يبدأ من' : 'From' });
+
   const addToCartLabel = !isInStock
-    ? t('outOfStock', { ns: 'products' })
-    : (props.translations?.addToCart ?? t('addToCart', { ns: 'products' }));
+    ? t('outOfStock', { ns: 'products', defaultValue: isRtl ? 'نفدت الكمية' : 'Out of stock' })
+    : (props.translations?.addToCart ?? t('addToCart', { ns: 'products', defaultValue: isRtl ? 'أضف إلى السلة' : 'Add to cart' }));
   const addedLabel = props.translations?.addedToCart ?? (isRtl ? 'تمت الإضافة' : 'Added!');
-  const termWarranty =
-    props.translations?.termWarranty ?? card.trustNote ?? (isRtl ? 'ضمان المدة' : 'Term Warranty');
 
   const productUrl = `/${currentLang}/products/${card.slug}`;
+  const [prevImageUrl, setPrevImageUrl] = React.useState(card.imageUrl);
+  const [imageError, setImageError] = React.useState(false);
+
+  if (prevImageUrl !== card.imageUrl) {
+    setPrevImageUrl(card.imageUrl);
+    setImageError(false);
+  }
+
+  const hasImage = Boolean(card.imageUrl) && !imageError;
 
   const handleAddToCart = (plan: ProductCardPlan) => {
     if ('product' in props && props.product) {
@@ -257,120 +230,125 @@ export function ProductCard(props: ProductCardProps) {
     <article
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-3xl',
-        'border border-border bg-card p-0 text-card-foreground',
-        'shadow-xs transition-[box-shadow,transform] duration-200',
-        'hover:-translate-y-0.5 hover:shadow-md',
+        'bg-card border-0 shadow-none text-card-foreground',
+        'p-3 sm:p-3.5 lg:p-4 h-full',
         'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        !isInStock && 'opacity-70',
         props.className
       )}
     >
-      {/* 1 ── Image area */}
-      <div className='relative flex h-40 items-center justify-center bg-muted rounded-t-3xl overflow-hidden'>
-        {card.imageUrl ? (
+      {/* 1 ── Cover Area (4:3, centered with ~12% padding, never cropped) */}
+      <div className='relative aspect-4/3 w-full rounded-2xl bg-secondary/50 p-[12%] flex items-center justify-center overflow-hidden'>
+        {hasImage && card.imageUrl ? (
           props.renderImage ? (
             props.renderImage({
               src: card.imageUrl,
               alt: card.imageAlt || card.name,
-              width: 88,
-              height: 88,
-              className: 'rounded-2xl object-cover',
+              width: 640,
+              height: 480,
+              className: 'h-full w-full object-contain transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none',
               priority: props.priority,
             })
           ) : (
             <img
               src={card.imageUrl}
               alt={card.imageAlt || card.name}
-              width={88}
-              height={88}
+              width={640}
+              height={480}
               loading={props.priority ? 'eager' : 'lazy'}
-              className='h-[88px] w-[88px] rounded-2xl object-cover'
+              decoding='async'
+              onError={() => setImageError(true)}
+              className='h-full w-full object-contain transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none'
             />
           )
         ) : (
-          <IconBox className='h-14 w-14 text-muted-foreground/30' />
+          <div
+            role='img'
+            aria-label={card.imageAlt || card.name}
+            className='flex items-center justify-center transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none'
+          >
+            <IconBox className='size-12 sm:size-14 text-primary' aria-hidden='true' />
+          </div>
         )}
 
-        {/* Badge pill */}
-        {card.badge && badgeLabel && <BadgePill badge={card.badge} label={badgeLabel} />}
+        {/* Optional Label / Badge */}
+        {discountPercent ? (
+          <BadgePill label={`-${discountPercent}%`} isDiscount />
+        ) : badgeLabel ? (
+          <BadgePill label={badgeLabel} />
+        ) : null}
       </div>
 
-      {/* 2 ── Card body */}
-      <div className='flex flex-1 flex-col gap-3 p-4'>
-        {/* Chips row */}
-        <div className='flex flex-wrap items-center gap-1.5'>
-          <TypeChip label={productTypeLabel} productType={productType} />
-          <ActivationChip label={activationLabel} />
+      {/* 2 ── Optional Meta Line (Platform / Region) */}
+      {metaText && (
+        <div className='text-xs text-muted-foreground truncate pt-2.5 text-start font-normal leading-none'>
+          {metaText}
         </div>
+      )}
 
-        {/* Product name — stretched link anchor */}
-        <h2 className='text-[18px] font-semibold leading-snug min-h-[2.75rem] line-clamp-2 text-start'>
-          {props.renderLink ? (
-            props.renderLink({
-              href: productUrl,
-              className: cn(
-                'text-foreground outline-none',
-                'after:absolute after:inset-0 after:z-0 after:content-[""]',
-                'focus-visible:underline hover:text-primary'
-              ),
-              children: card.name,
-            })
-          ) : (
-            <Link
-              to={productUrl}
-              className={cn(
-                'text-foreground outline-none',
-                'after:absolute after:inset-0 after:z-0 after:content-[""]',
-                'focus-visible:underline hover:text-primary'
-              )}
-            >
-              {card.name}
-            </Link>
-          )}
-        </h2>
+      {/* 3 ── Title (2 lines max, 14/15/16px) */}
+      <h2 className='text-sm sm:text-[15px] lg:text-base font-medium line-clamp-2 leading-snug pt-1 text-start'>
+        {props.renderLink ? (
+          props.renderLink({
+            href: productUrl,
+            className: cn(
+              'text-foreground outline-none',
+              'after:absolute after:inset-0 after:z-0 after:content-[""]',
+              'focus-visible:underline hover:text-primary transition-colors'
+            ),
+            children: card.name,
+          })
+        ) : (
+          <Link
+            to={productUrl}
+            className={cn(
+              'text-foreground outline-none',
+              'after:absolute after:inset-0 after:z-0 after:content-[""]',
+              'focus-visible:underline hover:text-primary transition-colors'
+            )}
+          >
+            {card.name}
+          </Link>
+        )}
+      </h2>
 
-        {/* Spacer to push price + button to bottom */}
-        <div className='mt-auto flex flex-col gap-3 pt-1'>
-          {/* Price row */}
-          <div className='flex flex-wrap items-baseline gap-1 text-start'>
-            <span className='text-xs text-muted-foreground'>{startingFrom}</span>
-            <span className='text-2xl font-bold tabular-nums text-primary leading-none'>
-              {formatPrice(card.startingPrice, currentLang)}
+      {/* 4 ── Bottom Stack Pinned to Bottom: Price, Delivery, Pill Button */}
+      <div className='mt-auto flex flex-col gap-2.5 pt-3'>
+        {/* Price Row: Calm regular-weight "From X" */}
+        <div className='flex items-baseline gap-1.5 flex-wrap text-start leading-none'>
+          <span className='text-xs text-muted-foreground font-normal'>{fromPriceText}</span>
+          <span className='text-[15px] sm:text-base font-normal text-foreground tabular-nums'>
+            {formatPrice(card.startingPrice, currentLang)} {currency}
+          </span>
+          {card.originalPrice && parseFloat(card.originalPrice) > parseFloat(card.startingPrice) && (
+            <span className='text-xs text-muted-foreground line-through tabular-nums'>
+              {formatPrice(card.originalPrice, currentLang)}
             </span>
-            <span className='text-sm text-muted-foreground'>{currency}</span>
-            <span className='text-xs text-muted-foreground'>/ {duration}</span>
-          </div>
-
-          {/* Add to Cart CTA button */}
-          <AddToCartButton
-            productName={card.name}
-            plans={card.plans}
-            locale={currentLang}
-            currency={currency}
-            label={addToCartLabel}
-            addedLabel={addedLabel}
-            disabled={!isInStock}
-            choosePlanTitle={props.translations?.choosePlan ?? (isRtl ? 'اختر خطة' : 'Choose a plan')}
-            choosePlanSubtitle={
-              props.translations?.choosePlanSubtitle ??
-              (isRtl ? 'حدد المدة الأنسب لاحتياجاتك' : 'Select the duration that best suits your needs')
-            }
-            activationPersonalInviteLabel={
-              props.translations?.activation?.personalInvite ?? (isRtl ? 'دعوة شخصية' : 'Personal Invite')
-            }
-            activationReadyAccountLabel={
-              props.translations?.activation?.readyAccount ?? (isRtl ? 'حساب جاهز' : 'Ready Account')
-            }
-            onAddToCart={handleAddToCart}
-          />
-
-          {/* Trust note */}
-          {termWarranty && (
-            <p className='flex items-center justify-center gap-1 text-center text-[11px] text-muted-foreground'>
-              <span>{termWarranty}</span>
-              <IconCircleCheck className='h-3 w-3 shrink-0 text-primary' />
-            </p>
           )}
         </div>
+
+        {/* Add to Cart Pill Button (44/44/40 px) */}
+        <AddToCartButton
+          productName={card.name}
+          plans={card.plans}
+          locale={currentLang}
+          currency={currency}
+          label={addToCartLabel}
+          addedLabel={addedLabel}
+          disabled={!isInStock}
+          choosePlanTitle={props.translations?.choosePlan ?? (isRtl ? 'اختر خطة' : 'Choose a plan')}
+          choosePlanSubtitle={
+            props.translations?.choosePlanSubtitle ??
+            (isRtl ? 'حدد المدة الأنسب لاحتياجاتك' : 'Select the duration that best suits your needs')
+          }
+          activationPersonalInviteLabel={
+            props.translations?.activation?.personalInvite ?? (isRtl ? 'دعوة شخصية' : 'Personal Invite')
+          }
+          activationReadyAccountLabel={
+            props.translations?.activation?.readyAccount ?? (isRtl ? 'حساب جاهز' : 'Ready Account')
+          }
+          onAddToCart={handleAddToCart}
+        />
       </div>
     </article>
   );

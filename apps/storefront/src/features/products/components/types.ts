@@ -25,6 +25,7 @@ export interface ProductCardData {
   ratingCount?: number | null;
   platforms?: Platform[];
   startingPrice: string;
+  originalPrice?: string | null;
   startingPlanDuration?: string;
   startingPlanDurationEn?: string;
   trustNote?: string | null;

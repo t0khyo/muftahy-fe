@@ -109,12 +109,12 @@ export function ProductRail({
         ) : (
           <div
             data-testid={`rail-content-${id}`}
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 text-start"
+            className="flex gap-3 sm:gap-4 lg:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 text-start"
           >
             {products.map((product) => (
               <div
                 key={product.id}
-                className="w-[260px] sm:w-[280px] shrink-0 snap-start flex"
+                className="w-[164px] sm:w-[200px] lg:w-[240px] shrink-0 snap-start flex"
               >
                 <ProductCard product={product} className="h-full w-full" />
               </div>

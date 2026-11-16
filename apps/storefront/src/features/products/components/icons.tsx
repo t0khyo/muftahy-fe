@@ -19,10 +19,9 @@ export function IconBox({ className, ...props }: IconProps) {
       className={className}
       {...props}
     >
-      <path d='M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5' />
-      <path d='M12 12l8 -4.5' />
-      <path d='M12 12l0 9' />
-      <path d='M12 12l-8 -4.5' />
+      <path d='M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z' />
+      <path d='m3.3 7 8.7 5 8.7-5' />
+      <path d='M12 22V12' />
     </svg>
   );
 }
@@ -359,6 +358,115 @@ export function IconCheck({ className, ...props }: IconProps) {
       {...props}
     >
       <path d='M5 12l5 5l10 -10' />
+    </svg>
+  );
+}
+
+export function IconPlatformSteam({ className, ...props }: IconProps) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='1.75'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className={className}
+      {...props}
+    >
+      <circle cx='12' cy='12' r='10' />
+      <circle cx='15.5' cy='8.5' r='2.5' />
+      <circle cx='8.5' cy='15.5' r='2' />
+      <path d='M13.5 10.5l-3 3' />
+      <path d='M8.5 15.5l-5 -2' />
+    </svg>
+  );
+}
+
+export function IconPlatformPlaystation({ className, ...props }: IconProps) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='currentColor'
+      className={className}
+      {...props}
+    >
+      <path d='M6.5 12a4.5 4.5 0 1 1 9 0a4.5 4.5 0 0 1 -9 0M2 12a10 10 0 1 0 20 0a10 10 0 0 0 -20 0' fill='none' stroke='currentColor' strokeWidth='1.75' />
+      <path d='M10 8v8l5 -4z' />
+    </svg>
+  );
+}
+
+export function IconPlatformXbox({ className, ...props }: IconProps) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='1.75'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className={className}
+      {...props}
+    >
+      <circle cx='12' cy='12' r='10' />
+      <path d='M6.5 6.5c3 3 5 8 5.5 11' />
+      <path d='M17.5 6.5c-3 3 -5 8 -5.5 11' />
+      <path d='M8 12c2.5 -2 5.5 -2 8 0' />
+    </svg>
+  );
+}
+
+export function IconPlatformNintendo({ className, ...props }: IconProps) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='1.75'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className={className}
+      {...props}
+    >
+      <rect x='4' y='5' width='16' height='14' rx='3' />
+      <line x1='12' y1='5' x2='12' y2='19' />
+      <circle cx='8' cy='9' r='1' fill='currentColor' />
+      <circle cx='16' cy='15' r='1' fill='currentColor' />
+    </svg>
+  );
+}
+
+export function IconPlatformPc({ className, ...props }: IconProps) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='1.75'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className={className}
+      {...props}
+    >
+      <rect x='3' y='4' width='18' height='12' rx='2' />
+      <line x1='8' y1='20' x2='16' y2='20' />
+      <line x1='12' y1='16' x2='12' y2='20' />
     </svg>
   );
 }

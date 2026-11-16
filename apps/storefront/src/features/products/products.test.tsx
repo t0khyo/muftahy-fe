@@ -10,6 +10,8 @@ import { ThemeProvider } from '../../app/theme-provider'
 import { useTheme } from '../../app/theme-context'
 import { ProductCard } from './components/product-card'
 import { ProductGrid } from './components/product-grid'
+import { FeatureTile } from './components/feature-tile'
+import { formatPrice } from './components/utils'
 
 const mockProduct: Product = {
   id: 'test-001',
@@ -66,12 +68,23 @@ function renderWithProviders(
   )
 }
 
+describe('formatPrice', () => {
+  it('removes .00 and formats numbers without grouping commas', () => {
+    expect(formatPrice(20)).toBe('20')
+    expect(formatPrice('20.00')).toBe('20')
+    expect(formatPrice(1250)).toBe('1250')
+    expect(formatPrice('1250')).toBe('1250')
+    expect(formatPrice(19.99)).toBe('19.99')
+    expect(formatPrice(1250, 'ar')).toBe('1250')
+  })
+})
+
 describe('ProductCard', () => {
   it('renders correctly in English (LTR)', () => {
     renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'en' })
 
     expect(screen.getByText('Steam $20 Card')).toBeInTheDocument()
-    expect(screen.getByText('Digital card with instant delivery')).toBeInTheDocument()
+    expect(screen.getByText('Steam • Global')).toBeInTheDocument()
     const btn = screen.getByRole('button', { name: /add to cart/i })
     expect(btn).toBeInTheDocument()
     // Icon is placed after the text (second child)
@@ -84,14 +97,14 @@ describe('ProductCard', () => {
     renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'ar' })
 
     expect(screen.getByText('بطاقة ستيم 20 دولار')).toBeInTheDocument()
-    expect(screen.getByText('بطاقة رقمية مع تسليم فوري')).toBeInTheDocument()
+    expect(screen.getByText('ستيم • عالمي')).toBeInTheDocument()
     const btn = screen.getByRole('button', { name: /أضف إلى السلة/i })
     expect(btn).toBeInTheDocument()
     expect(btn.firstElementChild?.tagName.toLowerCase()).toBe('span')
     expect(btn.lastElementChild?.tagName.toLowerCase()).toBe('svg')
 
-    // Must use Western digits 20, not Eastern Arabic numerals
-    expect(screen.getByText(/20\.00/)).toBeInTheDocument()
+    // Must use Western digits 20, not Eastern Arabic numerals, and without .00
+    expect(screen.getByText((content) => content.includes('20') && content.includes('$'))).toBeInTheDocument()
     expect(document.documentElement.dir).toBe('rtl')
 
     // Click to add to cart
@@ -105,6 +118,65 @@ describe('ProductCard', () => {
 
     const button = screen.getByRole('button', { name: /out of stock/i })
     expect(button).toBeDisabled()
+  })
+
+  it('renders Box icon fallback with primary color when product has no image', () => {
+    const noImageProduct: Product = { ...mockProduct, coverImage: '' }
+    const { container } = renderWithProviders(<ProductCard product={noImageProduct} />, { lang: 'en' })
+
+    const boxIcon = container.querySelector('svg.text-primary')
+    expect(boxIcon).toBeInTheDocument()
+  })
+
+  it('renders Box icon fallback with primary color when image fails to load (onError)', () => {
+    const { container } = renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'en' })
+
+    const img = screen.getByRole('img', { name: mockProduct.title.en })
+    expect(img).toBeInTheDocument()
+
+    // Trigger image loading error
+    fireEvent.error(img)
+
+    // Image is replaced with the Box icon fallback
+    const boxIcon = container.querySelector('svg.text-primary')
+    expect(boxIcon).toBeInTheDocument()
+  })
+})
+
+describe('FeatureTile', () => {
+  it('renders correctly with headline, tagline, Buy pill, and Learn more link in English', () => {
+    renderWithProviders(
+      <FeatureTile
+        headline="Xbox Game Pass Ultimate"
+        tagline="Play hundreds of high-quality games with friends."
+        buyHref="/products/xbox-game-pass"
+        learnMoreHref="/products/xbox-game-pass/details"
+      />,
+      { lang: 'en' }
+    )
+
+    expect(screen.getByText('Xbox Game Pass Ultimate')).toBeInTheDocument()
+    expect(screen.getByText('Play hundreds of high-quality games with friends.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /buy/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /learn more/i })).toBeInTheDocument()
+  })
+
+  it('renders correctly in Arabic RTL', () => {
+    renderWithProviders(
+      <FeatureTile
+        headline="اشتراك جيم باس ألتيميت"
+        tagline="العب مئات الألعاب عالية الجودة مع أصدقائك."
+        buyHref="/products/xbox-game-pass"
+        learnMoreHref="/products/xbox-game-pass/details"
+      />,
+      { lang: 'ar' }
+    )
+
+    expect(screen.getByText('اشتراك جيم باس ألتيميت')).toBeInTheDocument()
+    expect(screen.getByText('العب مئات الألعاب عالية الجودة مع أصدقائك.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /شراء/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /اعرف المزيد/i })).toBeInTheDocument()
+    expect(document.documentElement.dir).toBe('rtl')
   })
 })
 

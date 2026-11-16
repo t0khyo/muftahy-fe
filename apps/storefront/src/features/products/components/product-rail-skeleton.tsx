@@ -9,12 +9,12 @@ export function ProductRailSkeleton({ count = 5 }: ProductRailSkeletonProps) {
     <div
       aria-hidden="true"
       data-testid="product-rail-skeleton"
-      className="flex gap-4 overflow-x-hidden"
+      className="flex gap-3 sm:gap-4 lg:gap-5 overflow-x-hidden"
     >
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className="w-[260px] sm:w-[280px] shrink-0"
+          className="w-[164px] sm:w-[200px] lg:w-[240px] shrink-0"
         >
           <ProductCardSkeleton />
         </div>
