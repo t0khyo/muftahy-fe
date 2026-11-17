@@ -72,8 +72,8 @@ interface PlatformItem {
 }
 
 const KNOWN_PLATFORMS: PlatformItem[] = [
-  { id: 'steam', labelKey: 'platformSteam', icon: Monitor },
   { id: 'microsoft', labelKey: 'platformMicrosoft', icon: Laptop },
+  { id: 'steam', labelKey: 'platformSteam', icon: Monitor },
   { id: 'xbox', labelKey: 'platformXbox', icon: Gamepad2 },
   { id: 'playstation', labelKey: 'platformPlaystation', icon: Gamepad },
 ]
@@ -228,7 +228,7 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
 
         {/* Platform Pill Row (~24px below category tiles) */}
         <div className="mt-6 lg:mt-8">
-          <div className="flex items-center gap-2.5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:overflow-visible lg:flex-wrap lg:justify-center">
+          <div className="flex items-center gap-2.5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 lg:overflow-visible lg:flex-wrap lg:justify-center">
             {/* Optional "All" Pill First */}
             <Link
               to={`/${currentLang}/products`}

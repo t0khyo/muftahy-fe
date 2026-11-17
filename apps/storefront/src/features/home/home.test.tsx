@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider, type UseQueryResult } from '@tanstack/react-query'
@@ -154,8 +154,19 @@ describe('Home Page Skeleton', () => {
       '/en/products?category=games',
     ])
 
-    // Platform pill row with All Platforms
-    expect(within(browseSection).getByRole('link', { name: /all platforms/i })).toBeInTheDocument()
+    // Platform pill row with All Platforms (no -mx-4, preserving 16px container padding on mobile)
+    const allPlatformsLink = within(browseSection).getByRole('link', { name: /all platforms/i })
+    expect(allPlatformsLink).toBeInTheDocument()
+    expect(allPlatformsLink.parentElement?.className).not.toContain('-mx-4')
+
+    // Microsoft platform tile is first after All Platforms
+    await waitFor(() => {
+      const platformLinks = within(browseSection)
+        .getAllByRole('link')
+        .filter((l) => l.getAttribute('href')?.includes('platform='))
+      expect(platformLinks.length).toBeGreaterThan(0)
+      expect(platformLinks[0]).toHaveAttribute('href', '/en/products?platform=microsoft')
+    })
   })
 
   it('renders unified Browse block in Arabic RTL', async () => {
@@ -453,12 +464,12 @@ describe('Home Page Skeleton', () => {
     expect(within(howItWorks).getAllByText('02').length).toBeGreaterThanOrEqual(1)
     expect(within(howItWorks).getAllByText('03').length).toBeGreaterThanOrEqual(1)
 
-    // Activation help link pointing to #faq
+    // Activation help link pointing to #support
     const helpLink = within(howItWorks).getByRole('link', {
-      name: /need help activating\? read the guides/i,
+      name: /need help activating\? contact us/i,
     })
     expect(helpLink).toBeInTheDocument()
-    expect(helpLink).toHaveAttribute('href', '#faq')
+    expect(helpLink).toHaveAttribute('href', '#support')
   })
 
   it('renders correctly in Arabic (RTL) with proper dir attribute and translations', async () => {
@@ -486,9 +497,9 @@ describe('Home Page Skeleton', () => {
     expect(within(howItWorks).getAllByText(/اختر منتجك/i).length).toBeGreaterThanOrEqual(1)
     expect(
       within(howItWorks).getByRole('link', {
-        name: /تحتاج مساعدة في التفعيل؟ اقرأ الأدلة/i,
+        name: /تحتاج مساعدة في التفعيل؟ تواصل معنا/i,
       }),
-    ).toHaveAttribute('href', '#faq')
+    ).toHaveAttribute('href', '#support')
 
     // Arabic Support section
     const support = container.querySelector<HTMLElement>('#support')!

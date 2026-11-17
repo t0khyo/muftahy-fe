@@ -165,10 +165,10 @@ export function HowItWorksSection({ config, className = '' }: HowItWorksSectionP
         {/* Centered Activation Help Link */}
         <div className="mt-10 lg:mt-16 text-center">
           <a
-            href="#faq"
+            href="#support"
             className="inline-flex items-center gap-1.5 min-h-11 px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span>{t('howItWorks.helpLink', { ns: 'home', defaultValue: isRtl ? 'تحتاج مساعدة في التفعيل؟ اقرأ الأدلة' : 'Need help activating? Read the guides' })}</span>
+            <span>{t('howItWorks.helpLink', { ns: 'home', defaultValue: isRtl ? 'تحتاج مساعدة في التفعيل؟ تواصل معنا' : 'Need help activating? Contact us' })}</span>
             <ChevronRight className="size-4 rtl:rotate-180 transition-transform" />
           </a>
         </div>
