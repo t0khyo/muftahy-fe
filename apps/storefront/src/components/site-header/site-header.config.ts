@@ -30,15 +30,15 @@ export const SITE_HEADER_CONFIG: SiteHeaderConfig = {
   quickLinksSource: 'navLinks',
   navLinks: [
     {
-      id: 'games',
-      labelKey: 'nav.games',
-      href: '/products?category=games',
-      isPlaceholder: true,
-    },
-    {
       id: 'software',
       labelKey: 'nav.software',
       href: '/products?category=software',
+      isPlaceholder: true,
+    },
+    {
+      id: 'subscriptions',
+      labelKey: 'nav.subscriptions',
+      href: '/products?category=subscriptions',
       isPlaceholder: true,
     },
     {
@@ -48,9 +48,9 @@ export const SITE_HEADER_CONFIG: SiteHeaderConfig = {
       isPlaceholder: true,
     },
     {
-      id: 'subscriptions',
-      labelKey: 'nav.subscriptions',
-      href: '/products?category=subscriptions',
+      id: 'games',
+      labelKey: 'nav.games',
+      href: '/products?category=games',
       isPlaceholder: true,
     },
     {

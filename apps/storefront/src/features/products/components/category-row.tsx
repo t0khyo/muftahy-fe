@@ -30,12 +30,6 @@ const CATEGORY_ITEMS: CategoryItemDef[] = [
     icon: LayoutGrid,
   },
   {
-    id: 'games',
-    key: 'games',
-    defaultLabel: 'Games',
-    icon: Gamepad2,
-  },
-  {
     id: 'software',
     key: 'software',
     defaultLabel: 'Software',
@@ -52,6 +46,12 @@ const CATEGORY_ITEMS: CategoryItemDef[] = [
     key: 'giftCards',
     defaultLabel: 'Gift cards',
     icon: Gift,
+  },
+  {
+    id: 'games',
+    key: 'games',
+    defaultLabel: 'Games',
+    icon: Gamepad2,
   },
 ]
 

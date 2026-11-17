@@ -32,14 +32,6 @@ interface CategoryCardItem {
 
 const CATEGORIES: CategoryCardItem[] = [
   {
-    id: 'games',
-    nameKey: 'categories.games',
-    descKey: 'categories.gamesDesc',
-    href: '/:lang/products?category=games',
-    icon: Gamepad2,
-    variant: 'games',
-  },
-  {
     id: 'software',
     nameKey: 'categories.software',
     descKey: 'categories.softwareDesc',
@@ -62,6 +54,14 @@ const CATEGORIES: CategoryCardItem[] = [
     href: '/:lang/products?category=gift-cards',
     icon: Gift,
     variant: 'giftCards',
+  },
+  {
+    id: 'games',
+    nameKey: 'categories.games',
+    descKey: 'categories.gamesDesc',
+    href: '/:lang/products?category=games',
+    icon: Gamepad2,
+    variant: 'games',
   },
 ]
 
@@ -148,7 +148,7 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon
-            const isLarge = cat.id === 'games' || cat.id === 'software'
+            const isLarge = cat.id === 'software' || cat.id === 'subscriptions'
             const count = productCounts[cat.id]
             const resolvedHref = cat.href.replace(':lang', currentLang)
 

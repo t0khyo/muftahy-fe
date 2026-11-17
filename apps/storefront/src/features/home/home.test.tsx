@@ -143,11 +143,16 @@ describe('Home Page Skeleton', () => {
     expect(within(browseSection).getByText(/browse catalog/i)).toBeInTheDocument()
     expect(within(browseSection).getByText(/explore keys, licenses, and subscriptions/i)).toBeInTheDocument()
 
-    // 4 Category tiles
-    expect(within(browseSection).getByRole('link', { name: /^games/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /^software/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /^gift cards/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /^subscriptions/i })).toBeInTheDocument()
+    // 4 Category tiles in prioritized order: Software, Subscriptions, Gift cards, Games
+    const categoryLinks = within(browseSection)
+      .getAllByRole('link')
+      .filter((l) => l.getAttribute('href')?.includes('category='))
+    expect(categoryLinks.map((l) => l.getAttribute('href'))).toEqual([
+      '/en/products?category=software',
+      '/en/products?category=subscriptions',
+      '/en/products?category=gift-cards',
+      '/en/products?category=games',
+    ])
 
     // Platform pill row with All Platforms
     expect(within(browseSection).getByRole('link', { name: /all platforms/i })).toBeInTheDocument()
@@ -232,6 +237,76 @@ describe('Home Page Skeleton', () => {
     // Add to cart buttons exist on product cards with Lucide shopping bag icon
     const addToCartButtons = await screen.findAllByRole('button', { name: /add to cart/i })
     expect(addToCartButtons.length).toBeGreaterThan(0)
+  })
+
+  it('renders carousel controls: prominent desktop side arrows and pagination dots', async () => {
+    const { container } = renderHomePage('/en')
+
+    const railSection = container.querySelector<HTMLElement>('#best-sellers')!
+    expect(railSection).toBeInTheDocument()
+
+    await screen.findAllByRole('article')
+
+    // Track does not have negative margin -mx-4, preserving 16px container padding before cards
+    const track = within(railSection).getByTestId('rail-content-best-sellers')
+    expect(track.className).not.toContain('-mx-4')
+
+    // Desktop side arrows
+    const prevBtn = within(railSection).getByRole('button', { name: /previous products/i })
+    const nextBtn = within(railSection).getByRole('button', { name: /next products/i })
+
+    expect(prevBtn).toBeInTheDocument()
+    expect(nextBtn).toBeInTheDocument()
+
+    // Side arrows are hidden on mobile (<lg) and visible on desktop (lg:flex)
+    expect(prevBtn.className).toMatch(/hidden\s+lg:flex/)
+    expect(nextBtn.className).toMatch(/hidden\s+lg:flex/)
+
+    // Desktop pagination dots: 2 dots for 8 products (4 per page)
+    const desktopDotsNav = within(railSection).getByTestId('rail-dots-desktop-best-sellers')
+    expect(desktopDotsNav).toBeInTheDocument()
+    const desktopDots = within(desktopDotsNav).getAllByRole('button')
+    expect(desktopDots.length).toBe(2)
+    expect(desktopDots[0]).toHaveAttribute('aria-current', 'true')
+    expect(desktopDots[1]).not.toHaveAttribute('aria-current')
+
+    // Mobile pagination dots: 1 per card shown (matching loaded products count)
+    const mobileDotsNav = within(railSection).getByTestId('rail-dots-mobile-best-sellers')
+    expect(mobileDotsNav).toBeInTheDocument()
+    const mobileDots = within(mobileDotsNav).getAllByRole('button')
+    const articles = within(railSection).getAllByRole('article')
+    expect(mobileDots.length).toBe(articles.length)
+    expect(mobileDots[0]).toHaveAttribute('aria-current', 'true')
+    expect(mobileDots[1]).not.toHaveAttribute('aria-current')
+
+    // Clicking next button advances active desktop page
+    fireEvent.click(nextBtn)
+    expect(desktopDots[1]).toHaveAttribute('aria-current', 'true')
+
+    // Clicking mobile dot advances active card
+    fireEvent.click(mobileDots[2])
+    expect(mobileDots[2]).toHaveAttribute('aria-current', 'true')
+  })
+
+  it('renders carousel controls in Arabic RTL with mirrored chevrons and localized labels', async () => {
+    const { container } = renderHomePage('/ar')
+
+    const railSection = container.querySelector<HTMLElement>('#best-sellers')!
+    expect(railSection).toBeInTheDocument()
+
+    await screen.findAllByRole('article')
+
+    const prevBtn = within(railSection).getByRole('button', { name: /المنتجات السابقة/i })
+    const nextBtn = within(railSection).getByRole('button', { name: /المنتجات التالية/i })
+
+    expect(prevBtn).toBeInTheDocument()
+    expect(nextBtn).toBeInTheDocument()
+
+    // Chevrons inside have rtl:rotate-180
+    const prevSvg = prevBtn.querySelector('svg')
+    const nextSvg = nextBtn.querySelector('svg')
+    expect(prevSvg?.getAttribute('class') || prevSvg?.className.baseVal).toContain('rtl:rotate-180')
+    expect(nextSvg?.getAttribute('class') || nextSvg?.className.baseVal).toContain('rtl:rotate-180')
   })
 
   it('shows skeleton cards when a rail is loading', () => {

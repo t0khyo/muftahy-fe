@@ -151,10 +151,10 @@ export function ProductsRoute() {
 
   // Quick categories for empty state
   const quickCategories: { id: ProductCategory; label: string }[] = [
-    { id: 'games', label: categoryLabels.games },
     { id: 'software', label: categoryLabels.software },
     { id: 'subscriptions', label: categoryLabels.subscriptions },
     { id: 'gift-cards', label: categoryLabels['gift-cards'] },
+    { id: 'games', label: categoryLabels.games },
   ]
 
   return (

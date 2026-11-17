@@ -226,7 +226,10 @@
       "viewAll": "View all",
       "empty": "No products currently available in this section.",
       "error": "Unable to load products. Please try again.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "prev": "Previous products",
+      "next": "Next products",
+      "goToPage": "Go to page {{page}} of {{total}}"
     },
     "trust": {
       "title": "Why Choose Muftahy",

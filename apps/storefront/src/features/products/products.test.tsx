@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
@@ -267,6 +267,29 @@ describe('ProductsRoute (Listing Page)', () => {
     await waitFor(() => {
       expect(screen.getByText('Cyberpunk 2077: Ultimate Edition (PC)')).toBeInTheDocument()
     })
+  })
+
+  it('renders category row tiles in prioritized order: All, Software, Subscriptions, Gift cards, Games', async () => {
+    renderWithProviders(<ProductsRoute />, {
+      lang: 'en',
+      initialEntries: ['/en/products'],
+    })
+
+    const categoryNav = screen.getByRole('navigation', { name: /category/i })
+    const links = within(categoryNav).getAllByRole('link')
+    const hrefs = links.map((l) => l.getAttribute('href'))
+
+    // Verify first 5 items (mobile) and next 5 items (desktop) both follow prioritized order
+    const expectedOrder = [
+      '/en/products',
+      '/en/products?category=software',
+      '/en/products?category=subscriptions',
+      '/en/products?category=gift-cards',
+      '/en/products?category=games',
+    ]
+
+    expect(hrefs.slice(0, 5)).toEqual(expectedOrder)
+    expect(hrefs.slice(5, 10)).toEqual(expectedOrder)
   })
 
   it('renders empty state with Clear all button when no products match', async () => {
