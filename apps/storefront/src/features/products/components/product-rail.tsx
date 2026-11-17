@@ -1,8 +1,16 @@
 import * as React from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, ChevronLeft } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+  type CarouselApi,
+} from '@workspace/ui/components/carousel'
 import { cn } from '@workspace/ui/lib/utils'
 import type { ProductCollection } from '@workspace/domain/schemas/product'
 import { useProductCollection } from '../hooks/use-product-collection'
@@ -17,8 +25,6 @@ export interface ProductRailProps {
   className?: string
 }
 
-const CARDS_PER_PAGE_DESKTOP = 4
-
 export function ProductRail({
   id,
   collection,
@@ -28,6 +34,7 @@ export function ProductRail({
 }: ProductRailProps) {
   const { lang } = useParams<{ lang: string }>()
   const currentLang = lang || 'en'
+  const isRtl = currentLang === 'ar'
   const { t } = useTranslation(['home', 'common'])
 
   const {
@@ -39,93 +46,37 @@ export function ProductRail({
 
   const headingId = `${id}-heading`
 
-  const scrollContainerRef = React.useRef<HTMLDivElement | null>(null)
-  const cardRefs = React.useRef<(HTMLDivElement | null)[]>([])
-
-  const totalCards = products?.length ?? 0
-  const desktopPages = Math.max(1, Math.ceil(totalCards / CARDS_PER_PAGE_DESKTOP))
-
-  const [activeCardIndex, setActiveCardIndex] = React.useState(0)
-  const [canScrollPrev, setCanScrollPrev] = React.useState(false)
-  const [canScrollNext, setCanScrollNext] = React.useState(desktopPages > 1)
-
-  const activeDesktopPage = Math.min(
-    desktopPages - 1,
-    Math.floor(activeCardIndex / CARDS_PER_PAGE_DESKTOP),
-  )
-
-  const handleScroll = React.useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const { scrollLeft, scrollWidth, clientWidth } = container
-    const maxScroll = scrollWidth - clientWidth
-
-    // In jsdom or headless environments without layout geometry, fallback to card/page index
-    if (scrollWidth === 0 && clientWidth === 0) {
-      setCanScrollPrev(activeCardIndex > 0)
-      setCanScrollNext(activeCardIndex < totalCards - 1)
-      return
-    }
-
-    if (maxScroll <= 1) {
-      setCanScrollPrev(false)
-      setCanScrollNext(false)
-      setActiveCardIndex(0)
-      return
-    }
-
-    const currentScroll = Math.abs(scrollLeft)
-    setCanScrollPrev(currentScroll > 4)
-    setCanScrollNext(currentScroll < maxScroll - 4)
-
-    const progress = Math.min(1, Math.max(0, currentScroll / maxScroll))
-    const cardIndex = Math.min(totalCards - 1, Math.round(progress * (totalCards - 1)))
-    setActiveCardIndex(cardIndex)
-  }, [totalCards, activeCardIndex])
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [current, setCurrent] = React.useState(0)
+  const [count, setCount] = React.useState(0)
 
   React.useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
+    if (!api) return
 
-    handleScroll()
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    window.addEventListener('resize', handleScroll, { passive: true })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCount(api.scrollSnapList().length)
+    setCurrent(api.selectedScrollSnap())
+
+    const onSelect = () => {
+      setCurrent(api.selectedScrollSnap())
+    }
+
+    api.on('select', onSelect)
+    api.on('reInit', onSelect)
+
     return () => {
-      container.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('resize', handleScroll)
+      api.off('select', onSelect)
     }
-  }, [handleScroll, totalCards])
+  }, [api])
 
-  const goToCard = (cardIndex: number) => {
-    const targetIndex = Math.min(Math.max(0, cardIndex), Math.max(0, totalCards - 1))
-    const targetEl = cardRefs.current[targetIndex]
-    if (targetEl) {
-      if (typeof targetEl.scrollIntoView === 'function') {
-        targetEl.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
-      } else if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollLeft = targetEl.offsetLeft
-      }
+  const totalCards = products?.length ?? 0
+  const displayDotsCount = count > 0 ? count : totalCards
+
+  const handleDotClick = (index: number) => {
+    if (api) {
+      api.scrollTo(index)
     }
-    setActiveCardIndex(targetIndex)
-    setCanScrollPrev(targetIndex > 0)
-    setCanScrollNext(targetIndex < totalCards - 1)
-  }
-
-  const goToDesktopPage = (pageIndex: number) => {
-    goToCard(pageIndex * CARDS_PER_PAGE_DESKTOP)
-  }
-
-  const prev = () => {
-    if (activeDesktopPage > 0) {
-      goToDesktopPage(activeDesktopPage - 1)
-    }
-  }
-
-  const next = () => {
-    if (activeDesktopPage < desktopPages - 1) {
-      goToDesktopPage(activeDesktopPage + 1)
-    }
+    setCurrent(index)
   }
 
   return (
@@ -193,134 +144,86 @@ export function ProductRail({
             </p>
           </div>
         ) : (
-          <div className="relative group/rail">
-            {/* Desktop Side Arrow: Previous */}
-            {desktopPages > 1 && (
-              <Button
+          <Carousel
+            dir={isRtl ? 'rtl' : 'ltr'}
+            opts={{
+              align: 'start',
+              loop: true,
+              direction: isRtl ? 'rtl' : 'ltr',
+            }}
+            setApi={setApi}
+            className="w-full relative"
+          >
+            {/* Desktop Flex Row with Flanking Outside Buttons */}
+            <div className="flex items-center gap-3 lg:gap-4">
+              {/* Desktop Side Arrow: Previous (flanking outside, never on top of cards) */}
+              <CarouselPrevious
                 variant="outline"
                 size="icon"
                 aria-label={t('rails.prev', { ns: 'home', defaultValue: 'Previous products' })}
-                onClick={prev}
-                disabled={!canScrollPrev}
-                className={cn(
-                  'absolute start-1 lg:start-2 top-1/2 -translate-y-1/2 z-10 hidden lg:flex',
-                  'size-11 rounded-full border border-border/80 bg-background/95 text-foreground shadow-md backdrop-blur-xs cursor-pointer',
-                  'hover:bg-accent hover:border-foreground/30 hover:scale-105 active:scale-95 transition-all',
-                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  !canScrollPrev && 'opacity-0 pointer-events-none'
-                )}
+                className="static hidden lg:flex shrink-0 size-10 rounded-full border border-border/80 bg-background text-foreground shadow-xs hover:bg-accent hover:border-foreground/30 hover:scale-105 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+
+              {/* Embla Viewport Track */}
+              <div
+                data-testid={`rail-content-${id}`}
+                className="flex-1 min-w-0"
               >
-                <ChevronLeft className="size-5 rtl:rotate-180" aria-hidden="true" />
-              </Button>
-            )}
+                <CarouselContent className="-ms-4">
+                  {products.map((product) => (
+                    <CarouselItem
+                      key={product.id}
+                      className="ps-4 basis-[82%] sm:basis-[240px] lg:basis-1/4"
+                    >
+                      <ProductCard product={product} className="h-full w-full" />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </div>
 
-            {/* Scrollable Track: inside container padding for 16px start margin */}
-            <div
-              ref={scrollContainerRef}
-              data-testid={`rail-content-${id}`}
-              className="flex gap-3 sm:gap-4 lg:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 text-start scroll-smooth"
-            >
-              {products.map((product, idx) => (
-                <div
-                  key={product.id}
-                  ref={(el) => {
-                    cardRefs.current[idx] = el
-                  }}
-                  className="w-[82%] sm:w-[240px] lg:w-[calc((100%-60px)/4)] shrink-0 snap-start flex"
-                >
-                  <ProductCard product={product} className="h-full w-full" />
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop Side Arrow: Next */}
-            {desktopPages > 1 && (
-              <Button
+              {/* Desktop Side Arrow: Next (flanking outside, never on top of cards) */}
+              <CarouselNext
                 variant="outline"
                 size="icon"
                 aria-label={t('rails.next', { ns: 'home', defaultValue: 'Next products' })}
-                onClick={next}
-                disabled={!canScrollNext}
-                className={cn(
-                  'absolute end-1 lg:end-2 top-1/2 -translate-y-1/2 z-10 hidden lg:flex',
-                  'size-11 rounded-full border border-border/80 bg-background/95 text-foreground shadow-md backdrop-blur-xs cursor-pointer',
-                  'hover:bg-accent hover:border-foreground/30 hover:scale-105 active:scale-95 transition-all',
-                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  !canScrollNext && 'opacity-0 pointer-events-none'
-                )}
-              >
-                <ChevronRight className="size-5 rtl:rotate-180" aria-hidden="true" />
-              </Button>
-            )}
+                className="static hidden lg:flex shrink-0 size-10 rounded-full border border-border/80 bg-background text-foreground shadow-xs hover:bg-accent hover:border-foreground/30 hover:scale-105 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
 
-            {/* Mobile Pagination Dots: 1 per card shown */}
-            {totalCards > 1 && (
+            {/* Pagination Dots (Map) */}
+            {displayDotsCount > 1 && (
               <nav
-                data-testid={`rail-dots-mobile-${id}`}
+                data-testid={`rail-dots-${id}`}
                 aria-label={t(`rails.${titleKey}`, { ns: 'home', defaultValue: titleKey })}
-                className="flex items-center justify-center gap-1.5 mt-5 lg:hidden select-none"
+                className="flex items-center justify-center gap-1.5 mt-5 lg:mt-6 select-none"
               >
-                {Array.from({ length: totalCards }, (_, i) => {
-                  const isActive = activeCardIndex === i
+                {Array.from({ length: displayDotsCount }, (_, i) => {
+                  const isActive = current === i
                   return (
                     <button
                       key={i}
                       type="button"
-                      onClick={() => goToCard(i)}
+                      onClick={() => handleDotClick(i)}
                       aria-label={t('rails.goToPage', {
                         ns: 'home',
                         page: i + 1,
-                        total: totalCards,
-                        defaultValue: `Go to item ${i + 1} of ${totalCards}`,
+                        total: displayDotsCount,
+                        defaultValue: `Go to item ${i + 1} of ${displayDotsCount}`,
                       })}
                       aria-current={isActive ? 'true' : undefined}
                       className={cn(
                         'rounded-full transition-all duration-300 outline-none cursor-pointer',
                         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                         isActive
-                          ? 'h-1.5 w-5 bg-primary shadow-xs'
-                          : 'size-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60'
+                          ? 'h-1.5 w-5 lg:h-2 lg:w-6 bg-primary shadow-xs'
+                          : 'size-1.5 lg:size-2 bg-muted-foreground/30 hover:bg-muted-foreground/60'
                       )}
                     />
                   )
                 })}
               </nav>
             )}
-
-            {/* Desktop Pagination Dots: 1 per 4-card page */}
-            {desktopPages > 1 && (
-              <nav
-                data-testid={`rail-dots-desktop-${id}`}
-                aria-label={t(`rails.${titleKey}`, { ns: 'home', defaultValue: titleKey })}
-                className="hidden lg:flex items-center justify-center gap-2 mt-6 select-none"
-              >
-                {Array.from({ length: desktopPages }, (_, i) => {
-                  const isActive = activeDesktopPage === i
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => goToDesktopPage(i)}
-                      aria-label={t('rails.goToPage', {
-                        ns: 'home',
-                        page: i + 1,
-                        total: desktopPages,
-                        defaultValue: `Go to page ${i + 1} of ${desktopPages}`,
-                      })}
-                      aria-current={isActive ? 'true' : undefined}
-                      className={cn(
-                        'rounded-full transition-all duration-300 outline-none cursor-pointer',
-                        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        isActive
-                          ? 'h-2 w-6 bg-primary shadow-xs'
-                          : 'size-2 bg-muted-foreground/30 hover:bg-muted-foreground/60 hover:scale-125'
-                      )}
-                    />
-                  )
-                })}
-              </nav>
-            )}
-          </div>
+          </Carousel>
         )}
       </div>
     </section>

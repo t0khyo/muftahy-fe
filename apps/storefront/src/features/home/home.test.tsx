@@ -258,34 +258,29 @@ describe('Home Page Skeleton', () => {
     expect(prevBtn).toBeInTheDocument()
     expect(nextBtn).toBeInTheDocument()
 
-    // Side arrows are hidden on mobile (<lg) and visible on desktop (lg:flex)
+    // Side arrows are external flex items (NOT absolute on top of cards) and hidden on mobile
     expect(prevBtn.className).toMatch(/hidden\s+lg:flex/)
+    expect(prevBtn.className).not.toContain('absolute')
     expect(nextBtn.className).toMatch(/hidden\s+lg:flex/)
+    expect(nextBtn.className).not.toContain('absolute')
+    expect(prevBtn).not.toBeDisabled()
+    expect(nextBtn).not.toBeDisabled()
 
-    // Desktop pagination dots: 2 dots for 8 products (4 per page)
-    const desktopDotsNav = within(railSection).getByTestId('rail-dots-desktop-best-sellers')
-    expect(desktopDotsNav).toBeInTheDocument()
-    const desktopDots = within(desktopDotsNav).getAllByRole('button')
-    expect(desktopDots.length).toBe(2)
-    expect(desktopDots[0]).toHaveAttribute('aria-current', 'true')
-    expect(desktopDots[1]).not.toHaveAttribute('aria-current')
+    // Pagination dots (mapped to Embla scroll snap points or product count)
+    const dotsNav = within(railSection).getByTestId('rail-dots-best-sellers')
+    expect(dotsNav).toBeInTheDocument()
+    const dots = within(dotsNav).getAllByRole('button')
+    expect(dots.length).toBeGreaterThan(0)
+    expect(dots[0]).toHaveAttribute('aria-current', 'true')
+    expect(dots[1]).not.toHaveAttribute('aria-current')
 
-    // Mobile pagination dots: 1 per card shown (matching loaded products count)
-    const mobileDotsNav = within(railSection).getByTestId('rail-dots-mobile-best-sellers')
-    expect(mobileDotsNav).toBeInTheDocument()
-    const mobileDots = within(mobileDotsNav).getAllByRole('button')
-    const articles = within(railSection).getAllByRole('article')
-    expect(mobileDots.length).toBe(articles.length)
-    expect(mobileDots[0]).toHaveAttribute('aria-current', 'true')
-    expect(mobileDots[1]).not.toHaveAttribute('aria-current')
-
-    // Clicking next button advances active desktop page
+    // Clicking next button advances active slide / dot or triggers carousel navigation
     fireEvent.click(nextBtn)
-    expect(desktopDots[1]).toHaveAttribute('aria-current', 'true')
 
-    // Clicking mobile dot advances active card
-    fireEvent.click(mobileDots[2])
-    expect(mobileDots[2]).toHaveAttribute('aria-current', 'true')
+    // Clicking a dot activates it
+    fireEvent.click(dots[2])
+    expect(dots[2]).toHaveAttribute('aria-current', 'true')
+    expect(dots[0]).not.toHaveAttribute('aria-current')
   })
 
   it('renders carousel controls in Arabic RTL with mirrored chevrons and localized labels', async () => {

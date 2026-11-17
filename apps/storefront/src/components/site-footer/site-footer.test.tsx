@@ -31,38 +31,36 @@ describe('SiteFooter Component', () => {
     // Copyright
     expect(screen.getByText(/all rights reserved/i)).toBeInTheDocument()
 
-    // Language switcher
-    expect(
-      screen.getByRole('button', { name: /switch language to العربية/i }),
-    ).toBeInTheDocument()
+    // Compact language switcher showing 'ع' in English mode
+    const langBtn = screen.getByRole('button', { name: /التبديل إلى العربية|switch to arabic/i })
+    expect(langBtn).toBeInTheDocument()
+    expect(langBtn).toHaveTextContent('ع')
 
-    // Theme switcher buttons
-    expect(screen.getByRole('button', { name: /^light$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^dark$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^system$/i })).toBeInTheDocument()
+    // Single icon-only theme toggle button
+    const themeBtn = screen.getByRole('button', { name: /switch to dark mode|dark/i })
+    expect(themeBtn).toBeInTheDocument()
   })
 
   it('updates theme selection when theme button is clicked', () => {
     renderSiteFooter('/en/products')
 
-    const darkBtn = screen.getByRole('button', { name: /^dark$/i })
-    fireEvent.click(darkBtn)
-    expect(darkBtn).toHaveAttribute('aria-pressed', 'true')
+    const themeBtn = screen.getByRole('button', { name: /switch to dark mode|dark/i })
+    fireEvent.click(themeBtn)
     expect(document.documentElement.classList.contains('dark')).toBe(true)
 
-    const lightBtn = screen.getByRole('button', { name: /^light$/i })
-    fireEvent.click(lightBtn)
-    expect(lightBtn).toHaveAttribute('aria-pressed', 'true')
+    // After switching to dark mode, button allows switching to light mode
+    const lightThemeBtn = screen.getByRole('button', { name: /switch to light mode|light/i })
+    fireEvent.click(lightThemeBtn)
     expect(document.documentElement.classList.contains('light')).toBe(true)
   })
 
-  it('renders in Arabic (RTL) with Arabic language toggle button', () => {
+  it('renders in Arabic (RTL) with Arabic language toggle button showing EN', () => {
     renderSiteFooter('/ar/products')
 
     expect(screen.getByText(/جميع الحقوق محفوظة/i)).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /switch language to English/i }),
-    ).toBeInTheDocument()
+    const langBtn = screen.getByRole('button', { name: /switch to english/i })
+    expect(langBtn).toBeInTheDocument()
+    expect(langBtn).toHaveTextContent('EN')
     expect(document.documentElement.dir).toBe('rtl')
   })
 })

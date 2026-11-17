@@ -290,6 +290,20 @@ describe('ProductsRoute (Listing Page)', () => {
 
     expect(hrefs.slice(0, 5)).toEqual(expectedOrder)
     expect(hrefs.slice(5, 10)).toEqual(expectedOrder)
+
+    // Mobile slider does not have -mx-4, preserving 16px screen-edge spacing
+    const mobileContainer = categoryNav.querySelector('.lg\\:hidden')
+    expect(mobileContainer?.className).not.toContain('-mx-4')
+
+    // Desktop tiles are 96px high and allow 2-line Arabic text wrapping without truncate
+    const desktopLinks = links.slice(5, 10)
+    for (const link of desktopLinks) {
+      expect(link.className).toContain('min-h-[96px]')
+      const labelSpan = link.querySelector('span')
+      expect(labelSpan?.className).toContain('line-clamp-2')
+      expect(labelSpan?.className).toContain('leading-tight')
+      expect(labelSpan?.className).not.toContain('truncate')
+    }
   })
 
   it('renders empty state with Clear all button when no products match', async () => {
@@ -302,6 +316,32 @@ describe('ProductsRoute (Listing Page)', () => {
       expect(screen.getByText(/no products match your filters/i)).toBeInTheDocument()
       expect(screen.getAllByRole('button', { name: /clear all/i }).length).toBeGreaterThan(0)
     })
+  })
+
+  it('renders Clear all button side-by-side with close button in mobile filter sheet header', async () => {
+    renderWithProviders(<ProductsRoute />, {
+      lang: 'en',
+      initialEntries: ['/en/products?platform=steam'],
+    })
+
+    // Click mobile filters button to open sheet
+    const mobileFiltersBtn = screen.getAllByRole('button', { name: /filters \(1\)/i })[0]
+    fireEvent.click(mobileFiltersBtn)
+
+    // Wait for sheet content
+    const sheetDialog = await screen.findByRole('dialog')
+    expect(sheetDialog).toBeInTheDocument()
+
+    const clearAllBtn = within(sheetDialog).getByRole('button', { name: /clear all/i })
+    const closeBtn = within(sheetDialog).getByRole('button', { name: /close/i })
+
+    expect(clearAllBtn).toBeInTheDocument()
+    expect(closeBtn).toBeInTheDocument()
+
+    // Both are siblings in the same flex container side-by-side
+    expect(clearAllBtn.parentElement).toBe(closeBtn.parentElement)
+    expect(clearAllBtn.parentElement?.className).toContain('flex')
+    expect(clearAllBtn.parentElement?.className).toContain('items-center')
   })
 })
 

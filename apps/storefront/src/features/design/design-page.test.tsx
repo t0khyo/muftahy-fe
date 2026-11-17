@@ -78,11 +78,11 @@ describe('DesignPage', () => {
   })
 })
 
-describe('ThemeToggle (3-way cycle)', () => {
-  it('cycles from system -> light -> dark -> system on click', () => {
+describe('ThemeToggle (toggle light and dark)', () => {
+  it('toggles between light and dark modes on click', () => {
     i18n.changeLanguage('en')
     render(
-      <ThemeProvider defaultTheme="system">
+      <ThemeProvider defaultTheme="light">
         <I18nextProvider i18n={i18n}>
           <ThemeToggle />
         </I18nextProvider>
@@ -91,18 +91,16 @@ describe('ThemeToggle (3-way cycle)', () => {
 
     const toggleBtn = screen.getByRole('button', { name: /toggle theme/i })
     expect(toggleBtn).toBeInTheDocument()
-    expect(toggleBtn).toHaveAttribute('aria-label', expect.stringContaining('System'))
-
-    // 1st click: system -> light
-    fireEvent.click(toggleBtn)
-    expect(toggleBtn).toHaveAttribute('aria-label', expect.stringContaining('Light'))
-
-    // 2nd click: light -> dark
-    fireEvent.click(toggleBtn)
     expect(toggleBtn).toHaveAttribute('aria-label', expect.stringContaining('Dark'))
 
-    // 3rd click: dark -> system
+    // 1st click: light -> dark
     fireEvent.click(toggleBtn)
-    expect(toggleBtn).toHaveAttribute('aria-label', expect.stringContaining('System'))
+    expect(toggleBtn).toHaveAttribute('aria-label', expect.stringContaining('Light'))
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+
+    // 2nd click: dark -> light
+    fireEvent.click(toggleBtn)
+    expect(toggleBtn).toHaveAttribute('aria-label', expect.stringContaining('Dark'))
+    expect(document.documentElement.classList.contains('light')).toBe(true)
   })
 })

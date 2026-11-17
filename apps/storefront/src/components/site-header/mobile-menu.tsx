@@ -2,6 +2,8 @@ import * as React from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { getLocalizedNavLinks, getNavKey } from './nav-links'
+import { LanguageSwitcher } from '../language-switcher'
+import { ThemeToggle } from '../theme-toggle'
 
 export interface MobileMenuProps {
   isOpen: boolean
@@ -106,6 +108,18 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
             )
           })}
         </nav>
+      </div>
+
+      {/* Mobile Menu Bottom: Appearance & Language Controls */}
+      <div className="border-t border-border/40 pt-4 mt-auto flex items-center justify-between">
+        <span className="text-xs text-muted-foreground font-medium">
+          {isAr ? 'المظهر واللغة' : 'Appearance & Language'}
+        </span>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div className="h-4 w-[1px] bg-border/60" aria-hidden="true" />
+          <LanguageSwitcher />
+        </div>
       </div>
 
       {/* Animation Keyframe Style injected for mobile staggered links */}

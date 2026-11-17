@@ -83,7 +83,7 @@ export function CategoryRow({ activeCategory, className }: CategoryRowProps) {
       className={cn('mb-4 lg:mb-6', className)}
     >
       {/* ── Mobile View: 44px snap-scroll pills with 20px icons & 14px labels ── */}
-      <div className="lg:hidden flex items-center gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:-mx-6 sm:px-6 py-1">
+      <div className="lg:hidden flex items-center gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-none py-1">
         {CATEGORY_ITEMS.map((item) => {
           const isActive = currentSelection === item.id
           const Icon = item.icon
@@ -109,7 +109,7 @@ export function CategoryRow({ activeCategory, className }: CategoryRowProps) {
         })}
       </div>
 
-      {/* ── Desktop View: 5 tiles in 1 row (88px high, 40px icon container, 16px name, 12px gap) ── */}
+      {/* ── Desktop View: 5 tiles in 1 row (96px high, 40px icon container, 2-line text clearance, 12px gap) ── */}
       <div className="hidden lg:grid grid-cols-5 gap-3">
         {CATEGORY_ITEMS.map((item) => {
           const isActive = currentSelection === item.id
@@ -122,7 +122,7 @@ export function CategoryRow({ activeCategory, className }: CategoryRowProps) {
               to={buildCategoryUrl(item.id)}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'group flex h-[88px] flex-col items-center justify-center gap-2 rounded-2xl p-2 transition-all select-none outline-none border text-center',
+                'group flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-2xl px-2 py-2.5 transition-all select-none outline-none border text-center',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isActive
                   ? 'bg-card border-foreground/30 shadow-xs text-foreground font-semibold ring-1 ring-foreground/20'
@@ -139,7 +139,7 @@ export function CategoryRow({ activeCategory, className }: CategoryRowProps) {
               >
                 <Icon className="size-5 shrink-0" aria-hidden={true} />
               </div>
-              <span className="text-base leading-none truncate max-w-full px-1">
+              <span className="text-base leading-tight line-clamp-2 max-w-full px-1">
                 {label}
               </span>
             </Link>

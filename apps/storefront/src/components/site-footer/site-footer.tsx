@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from './language-switcher'
-import { ThemeSwitcher } from './theme-switcher'
+import { ThemeToggle } from '../theme-toggle'
 import { BrandLogoMark } from '../brand-logo'
 
 export interface SiteFooterProps {
@@ -26,8 +26,8 @@ export function SiteFooter({ className = '' }: SiteFooterProps) {
         </div>
 
         {/* Controls: Theme & Language */}
-        <div className="flex items-center gap-3">
-          <ThemeSwitcher />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           <div className="h-4 w-[1px] bg-border/60" aria-hidden="true" />
           <LanguageSwitcher />
         </div>

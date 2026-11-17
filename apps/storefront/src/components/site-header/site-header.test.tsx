@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -331,5 +331,24 @@ describe('SiteHeader Component', () => {
     const cartDropdown = screen.getByRole('dialog', { name: /your bag/i })
     expect(cartDropdown).toHaveClass('bg-background')
     expect(cartDropdown).not.toHaveClass('header-glass')
+  })
+
+  it('renders theme toggle and compact language switcher at the bottom of the mobile menu', () => {
+    const { container } = renderSiteHeader('/en/products')
+
+    // Open mobile menu
+    const hamburger = screen.getByRole('button', { name: /open menu/i })
+    fireEvent.click(hamburger)
+
+    const mobileMenu = container.querySelector<HTMLElement>('#mobile-menu')!
+    expect(mobileMenu).toBeInTheDocument()
+
+    // Language switcher and theme toggle inside mobile menu
+    const langBtn = within(mobileMenu).getByRole('button', { name: /التبديل إلى العربية|switch to arabic/i })
+    expect(langBtn).toBeInTheDocument()
+    expect(langBtn).toHaveTextContent('ع')
+
+    const themeBtn = within(mobileMenu).getByRole('button', { name: /switch to dark mode|dark/i })
+    expect(themeBtn).toBeInTheDocument()
   })
 })

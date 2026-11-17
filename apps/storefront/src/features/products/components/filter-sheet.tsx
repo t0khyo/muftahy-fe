@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -15,6 +16,7 @@ import {
 import { Switch } from '@workspace/ui/components/switch'
 import { Input } from '@workspace/ui/components/input'
 import { Button } from '@workspace/ui/components/button'
+import { X } from 'lucide-react'
 import type {
   ProductFilterCounts,
   ProductPlatform,
@@ -91,6 +93,7 @@ export function FilterSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        showCloseButton={false}
         className="h-[85vh] max-h-[85vh] rounded-t-3xl flex flex-col p-0 gap-0 overflow-hidden bg-background border-border"
       >
         {/* Header */}
@@ -105,16 +108,32 @@ export function FilterSheet({
               </span>
             )}
           </div>
-          {activeFiltersCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClearAll}
-              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+          <div className="flex items-center gap-2">
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearAll}
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                {t('listing.clearAll', { defaultValue: 'Clear all' })}
+              </Button>
+            )}
+            <SheetClose
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-8 rounded-full cursor-pointer text-muted-foreground hover:text-foreground"
+                />
+              }
             >
-              {t('listing.clearAll', { defaultValue: 'Clear all' })}
-            </Button>
-          )}
+              <X className="size-4" />
+              <span className="sr-only">
+                {t('common.close', { defaultValue: 'Close' })}
+              </span>
+            </SheetClose>
+          </div>
         </SheetHeader>
 
         {/* Scrollable Filters Body */}

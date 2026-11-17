@@ -84,26 +84,9 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
   const isRtl = currentLang === 'ar'
   const { t } = useTranslation(['home', 'products', 'common'])
 
-  // Fetch all products to compute real category counts and active platforms
+  // Fetch all products to compute active platforms
   const { data: result } = useProducts()
   const products = result?.items
-
-  const productCounts = React.useMemo(() => {
-    const counts: Record<string, number> = {
-      games: 0,
-      software: 0,
-      subscriptions: 0,
-      'gift-cards': 0,
-    }
-    if (products) {
-      for (const p of products) {
-        if (counts[p.category] !== undefined) {
-          counts[p.category] += 1
-        }
-      }
-    }
-    return counts
-  }, [products])
 
   const activePlatforms = React.useMemo(() => {
     if (!products) return []
@@ -149,27 +132,14 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon
             const isLarge = cat.id === 'software' || cat.id === 'subscriptions'
-            const count = productCounts[cat.id]
             const resolvedHref = cat.href.replace(':lang', currentLang)
 
-            // Distinct semantic token pairing for each tile
+            // Unified Apple-store editorial styling across all tiles
             const tileStyle =
-              cat.id === 'games'
-                ? 'bg-card text-card-foreground border-0 hover:bg-secondary/40'
-                : cat.id === 'software'
-                  ? 'bg-secondary/40 text-secondary-foreground border-0 hover:bg-secondary/70'
-                  : cat.id === 'subscriptions'
-                    ? 'bg-muted/40 text-foreground border-0 hover:bg-muted/70'
-                    : 'bg-card text-card-foreground border border-border/40 hover:bg-secondary/40'
+              'bg-card border border-border/60 text-card-foreground hover:bg-secondary/35 hover:border-foreground/20'
 
             const iconContainerStyle =
-              cat.id === 'games'
-                ? 'bg-primary/10 text-primary'
-                : cat.id === 'software'
-                  ? 'bg-background text-foreground shadow-xs'
-                  : cat.id === 'subscriptions'
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-accent text-accent-foreground'
+              'bg-secondary/80 text-foreground group-hover:bg-primary/10 group-hover:text-primary'
 
             return (
               <Link
@@ -221,22 +191,13 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
                   )}
                 </div>
 
-                {/* Content info: Name, Descriptor, Product count */}
+                {/* Content info: Name & Descriptor */}
                 <div
                   className={cn(
                     'mt-3 lg:mt-0 space-y-1',
                     !isLarge && 'lg:flex-1 lg:ps-4'
                   )}
                 >
-                  {count > 0 && (
-                    <span className="text-[11px] lg:text-xs font-medium text-muted-foreground tabular-nums block">
-                      {t('browse.itemCount', {
-                        ns: 'home',
-                        count,
-                        defaultValue: `${count} items`,
-                      })}
-                    </span>
-                  )}
                   <h3 className="text-base lg:text-lg font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
                     {t(`browse.${cat.nameKey}`, {
                       ns: 'home',

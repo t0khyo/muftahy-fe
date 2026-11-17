@@ -1,15 +1,21 @@
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@workspace/ui/components/button'
+import { cn } from '@workspace/ui/lib/utils'
 import type { SupportedLanguage } from '@workspace/i18n/config'
 
-export function LanguageSwitcher() {
+export interface LanguageSwitcherProps {
+  className?: string
+}
+
+export function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
   const { lang } = useParams<{ lang: string }>()
   const location = useLocation()
   const navigate = useNavigate()
 
   const currentLang = (lang === 'ar' ? 'ar' : 'en') as SupportedLanguage
   const nextLang: SupportedLanguage = currentLang === 'ar' ? 'en' : 'ar'
-  const nextLabel = currentLang === 'ar' ? 'English' : 'العربية'
+  const nextShortLabel = currentLang === 'ar' ? 'EN' : 'ع'
+  const accessibleLabel = currentLang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'
 
   const handleSwitch = () => {
     // Replace the language segment at the start of the path
@@ -20,12 +26,18 @@ export function LanguageSwitcher() {
 
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="sm"
       onClick={handleSwitch}
-      aria-label={`Switch to ${nextLabel}`}
+      aria-label={accessibleLabel}
+      className={cn(
+        'h-8 px-2.5 text-xs font-semibold rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+        className
+      )}
     >
-      {nextLabel}
+      <span className={currentLang === 'en' ? 'font-arabic text-sm' : 'font-sans text-xs tracking-wider'}>
+        {nextShortLabel}
+      </span>
     </Button>
   )
 }

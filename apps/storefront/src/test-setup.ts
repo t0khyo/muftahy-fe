@@ -58,4 +58,17 @@ if (typeof window !== 'undefined') {
       value: MockIntersectionObserver,
     })
   }
+
+  if (typeof window.ResizeObserver === 'undefined') {
+    class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    Object.defineProperty(window, 'ResizeObserver', {
+      writable: true,
+      configurable: true,
+      value: MockResizeObserver,
+    })
+  }
 }
