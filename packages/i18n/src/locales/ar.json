@@ -57,9 +57,25 @@
     "account": "الحساب"
   },
   "footer": {
+    "tagline": "منصتك الموثوقة للمفاتيح الرقمية الأصلية، وتراخيص البرامج، واشتراكات الألعاب.",
+    "categories": "الأقسام",
+    "support": "الدعم والمساعدة",
+    "contact": "تواصل معنا",
+    "socialMedia": "تابعنا",
+    "phone": "الهاتف",
+    "whatsapp": "واتساب",
+    "instagram": "إنستغرام",
+    "facebook": "فيسبوك",
+    "chatOnWhatsApp": "راسلنا عبر واتساب",
+    "callUs": "اتصل بنا",
+    "howItWorks": "خطوات الشراء",
+    "activationHelp": "المساعدة في التفعيل",
+    "faq": "الأسئلة الشائعة",
     "allRightsReserved": "جميع الحقوق محفوظة.",
     "language": "اللغة",
-    "theme": "المظهر"
+    "theme": "المظهر",
+    "genuineKeys": "مفاتيح أصلية 100%",
+    "instantDelivery": "تسليم فوري ومباشر"
   },
   "search": {
     "title": "نتائج البحث",

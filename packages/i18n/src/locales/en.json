@@ -57,9 +57,25 @@
     "account": "Account"
   },
   "footer": {
+    "tagline": "Your trusted marketplace for genuine digital keys, software licenses, and gaming subscriptions.",
+    "categories": "Categories",
+    "support": "Support & Help",
+    "contact": "Contact Us",
+    "socialMedia": "Follow Us",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "chatOnWhatsApp": "Chat on WhatsApp",
+    "callUs": "Call Us",
+    "howItWorks": "How it works",
+    "activationHelp": "Activation help",
+    "faq": "FAQ",
     "allRightsReserved": "All rights reserved.",
     "language": "Language",
-    "theme": "Theme"
+    "theme": "Theme",
+    "genuineKeys": "100% Genuine Keys",
+    "instantDelivery": "Instant Digital Delivery"
   },
   "search": {
     "title": "Search Results",

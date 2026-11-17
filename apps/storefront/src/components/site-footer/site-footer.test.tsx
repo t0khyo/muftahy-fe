@@ -54,7 +54,50 @@ describe('SiteFooter Component', () => {
     expect(document.documentElement.classList.contains('light')).toBe(true)
   })
 
-  it('renders in Arabic (RTL) with Arabic language toggle button showing EN', () => {
+  it('renders WhatsApp contact link and does NOT render call button', () => {
+    renderSiteFooter('/en/products')
+
+    // Phone call button is deleted
+    expect(screen.queryByRole('link', { name: /call us|اتصل بنا/i })).toBeNull()
+
+    // WhatsApp direct contact button
+    const whatsappLink = screen.getByRole('link', { name: /chat on whatsapp/i })
+    expect(whatsappLink).toBeInTheDocument()
+    expect(whatsappLink).toHaveAttribute('href', 'https://wa.me/201158172869')
+  })
+
+  it('renders social media links for Instagram, Facebook and WhatsApp with @muftahy', () => {
+    renderSiteFooter('/en/products')
+
+    const instagramLink = screen.getByRole('link', { name: /instagram @muftahy/i })
+    expect(instagramLink).toBeInTheDocument()
+    expect(instagramLink).toHaveAttribute('href', 'https://instagram.com/muftahy')
+
+    const facebookLink = screen.getByRole('link', { name: /facebook @muftahy/i })
+    expect(facebookLink).toBeInTheDocument()
+    expect(facebookLink).toHaveAttribute('href', 'https://facebook.com/muftahy')
+
+    expect(screen.getByText('@muftahy')).toBeInTheDocument()
+  })
+
+  it('renders category and support navigation in a 2-column mobile grid', () => {
+    renderSiteFooter('/en/products')
+
+    const navColumns = screen.getByTestId('footer-nav-columns')
+    expect(navColumns).toBeInTheDocument()
+    expect(navColumns.className).toContain('grid-cols-2')
+
+    expect(screen.getByRole('heading', { name: /categories/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /support & help/i })).toBeInTheDocument()
+
+    const softwareLink = screen.getByRole('link', { name: /software/i })
+    expect(softwareLink).toHaveAttribute('href', '/en/products?category=software')
+
+    const subscriptionsLink = screen.getByRole('link', { name: /subscriptions/i })
+    expect(subscriptionsLink).toHaveAttribute('href', '/en/products?category=subscriptions')
+  })
+
+  it('renders in Arabic (RTL) with Arabic language toggle button showing EN and Arabic translations', () => {
     renderSiteFooter('/ar/products')
 
     expect(screen.getByText(/جميع الحقوق محفوظة/i)).toBeInTheDocument()
@@ -62,6 +105,15 @@ describe('SiteFooter Component', () => {
     expect(langBtn).toBeInTheDocument()
     expect(langBtn).toHaveTextContent('EN')
     expect(document.documentElement.dir).toBe('rtl')
+
+    // Arabic categories & headings
+    expect(screen.getByRole('heading', { name: /الأقسام/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /الدعم والمساعدة/i })).toBeInTheDocument()
+
+    // Arabic WhatsApp button
+    expect(screen.getByRole('link', { name: /راسلنا عبر واتساب/i })).toHaveAttribute(
+      'href',
+      'https://wa.me/201158172869',
+    )
   })
 })
-
