@@ -179,7 +179,7 @@ export function ProductDetailPage() {
   const productTitle = resolveLocalizedName(product.title, lang)
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="site-container py-8 sm:py-10">
       {/* Polite Live Region for Assistive Technology Announcements */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {liveAnnouncement}
@@ -222,7 +222,9 @@ export function ProductDetailPage() {
       </div>
 
       {/* 3. Lower Content Sections: What You Get, Activation, Specs, FAQ, Contact */}
-      <DetailInfoSections product={product} lang={lang} />
+      <div className="border-t border-border/40 mt-12 sm:mt-16 pt-10 sm:pt-14">
+        <DetailInfoSections product={product} lang={lang} />
+      </div>
 
       {/* 4. You May Also Like (Related Products Rail) */}
       <DetailRelatedRail

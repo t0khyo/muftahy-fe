@@ -63,9 +63,9 @@ describe('ProductDetailPage', () => {
 
     // Sections
     expect(screen.getByRole('heading', { level: 2, name: /What you get/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /How to activate/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /Details/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /Questions about this product/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /Activation steps/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /Product details/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /Common questions/i })).toBeInTheDocument()
 
     // Specs table values
     expect(screen.getByText(/Retail \/ Digital/i)).toBeInTheDocument()
@@ -86,9 +86,9 @@ describe('ProductDetailPage', () => {
 
     // Arabic sections
     expect(screen.getByRole('heading', { level: 2, name: /ما ستحصل عليه/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /طريقة التفعيل/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /التفاصيل/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /أسئلة عن هذا المنتج/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /خطوات التفعيل/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /تفاصيل المنتج/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /أسئلة شائعة/i })).toBeInTheDocument()
   })
 
   it('hides plan picker when product has only one plan', async () => {

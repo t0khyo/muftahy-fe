@@ -20,7 +20,7 @@ export function PlatformStrip({ config, className = '' }: PlatformStripProps) {
       aria-labelledby={headingId}
       className={`py-8 lg:py-12 ${className}`}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6 space-y-4">
+      <div className="site-container space-y-4">
         <h2
           id={headingId}
           className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-start"

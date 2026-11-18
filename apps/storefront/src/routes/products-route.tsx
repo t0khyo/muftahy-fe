@@ -158,7 +158,7 @@ export function ProductsRoute() {
   ]
 
   return (
-    <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6 py-6 lg:py-10">
+    <div className="site-container py-6 lg:py-10">
       {/* ── Breadcrumbs Trail (Reusable navigation component) ── */}
       <Breadcrumbs
         items={breadcrumbItems}

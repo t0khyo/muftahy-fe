@@ -1,12 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* Site Header Tokens (Apple Clone Base) */
+  /* Unified Site Layout Container Tokens */
+  --site-max-width: 1280px;
+  --site-padding-mobile: 1rem;    /* 16px */
+  --site-padding-tablet: 1.5rem;  /* 24px */
+  --site-padding-desktop: 2rem;   /* 32px */
+
+  /* Site Header Tokens (Mapped to unified container) */
   --header-height: 44px;
   --header-height-mobile: 48px;
-  --header-inline-padding: 22px;
-  --header-inline-padding-mobile: 16px;
-  --header-max-width: 1024px;
+  --header-inline-padding: var(--site-padding-desktop);
+  --header-inline-padding-mobile: var(--site-padding-mobile);
+  --header-max-width: var(--site-max-width);
   --header-blur: 20px;
   --header-saturate: 180%;
   --header-bg-opacity: 0.8;
@@ -33,6 +39,26 @@
   background-color: color-mix(in srgb, var(--color-background) calc(var(--header-bg-opacity) * 100%), transparent);
   backdrop-filter: blur(var(--header-blur)) saturate(var(--header-saturate));
   -webkit-backdrop-filter: blur(var(--header-blur)) saturate(var(--header-saturate));
+}
+
+/* Single Shared Layout Container (1280px max-width, 16px/24px/32px responsive padding) */
+.site-container {
+  width: 100%;
+  max-width: var(--site-max-width, 1280px);
+  margin-inline: auto;
+  padding-inline: var(--site-padding-mobile, 1rem);
+}
+
+@media (min-width: 640px) {
+  .site-container {
+    padding-inline: var(--site-padding-tablet, 1.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-container {
+    padding-inline: var(--site-padding-desktop, 2rem);
+  }
 }
 
 /* Scroll lock when modal/menu/search takeover is active */

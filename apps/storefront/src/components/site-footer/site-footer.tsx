@@ -44,7 +44,7 @@ export function SiteFooter({ className = '' }: SiteFooterProps) {
         className
       )}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-[var(--header-inline-padding-mobile,16px)] lg:px-[var(--header-inline-padding,22px)]">
+      <div className="site-container">
         {/* Main Content: Compact flex on mobile, 12-col grid on desktop */}
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-10 py-8 lg:py-16">
           {/* Brand & Socials Hub (Col 1-5 on desktop) */}

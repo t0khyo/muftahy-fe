@@ -18,7 +18,7 @@ export function SocialProofSection({ config, className = '' }: SocialProofSectio
       aria-labelledby={headingId}
       className={`py-12 lg:py-20 ${className}`}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6 space-y-8">
+      <div className="site-container space-y-8">
         <div className="text-start space-y-2">
           <h2
             id={headingId}

@@ -38,8 +38,8 @@ export function DetailMedia({
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      {/* 4:3 Main Surface */}
-      <div className="relative aspect-4/3 w-full rounded-3xl bg-secondary/40 border border-border/40 p-[12%] flex items-center justify-center overflow-hidden">
+      {/* 4:3 Main Surface - Product Big, Full-Bleed (No Padded Shrink) */}
+      <div className="group relative aspect-4/3 w-full rounded-2xl bg-secondary/30 border border-border/40 flex items-center justify-center overflow-hidden">
         {!isBroken && currentItem?.url ? (
           <img
             key={currentItem.url}
@@ -52,15 +52,16 @@ export function DetailMedia({
                 setFailedUrls((prev) => ({ ...prev, [currentItem.url]: true }))
               }
             }}
-            className="h-full w-full object-contain transition-transform duration-300 ease-out hover:scale-105 motion-reduce:transform-none select-none"
+            className="h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transform-none select-none"
           />
         ) : (
           <div
             role="img"
             aria-label={currentAlt}
-            className="flex flex-col items-center justify-center gap-2 text-primary"
+            className="flex flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground"
           >
-            <Box className="size-16 sm:size-20" aria-hidden="true" />
+            <Box className="size-16 sm:size-20 text-muted-foreground/50" aria-hidden="true" />
+            <span className="text-sm font-medium text-foreground line-clamp-1">{productTitle}</span>
           </div>
         )}
       </div>
@@ -82,10 +83,10 @@ export function DetailMedia({
                 aria-label={altText}
                 onClick={() => setSelectedIndex(idx)}
                 className={cn(
-                  'relative size-16 shrink-0 rounded-xl overflow-hidden border p-1 bg-secondary/30 transition-all',
+                  'relative size-14 shrink-0 rounded-xl overflow-hidden border-2 p-1 bg-secondary/30 transition-all',
                   isSelected
-                    ? 'border-primary ring-2 ring-primary/40'
-                    : 'border-border/50 hover:border-border opacity-70 hover:opacity-100',
+                    ? 'border-primary'
+                    : 'border-border/40 hover:border-border opacity-70 hover:opacity-100',
                 )}
               >
                 <img

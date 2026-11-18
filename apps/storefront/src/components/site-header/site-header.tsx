@@ -123,7 +123,7 @@ export function SiteHeader({
           isScrolled ? 'border-b border-border/40' : 'border-b border-transparent'
         } ${className}`}
       >
-        <div className="mx-auto flex h-[var(--header-height-mobile,48px)] lg:h-[var(--header-height,44px)] max-w-[var(--header-max-width,1024px)] items-center justify-between px-[var(--header-inline-padding-mobile,16px)] lg:px-[var(--header-inline-padding,22px)]">
+        <div className="site-container flex h-[var(--header-height-mobile,48px)] lg:h-[var(--header-height,44px)] items-center justify-between">
           {/* 1 ── Start: Logo (Hidden on mobile when search or menu is open; visible on desktop) */}
           <div
             className={`flex shrink-0 items-center transition-opacity duration-200 ${

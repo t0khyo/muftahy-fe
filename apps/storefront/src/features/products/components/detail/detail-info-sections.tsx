@@ -35,7 +35,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
   const whatsappUrl = `https://wa.me/201158172869?text=${encodedMessage}`
 
   return (
-    <div className="max-w-2xl w-full text-start space-y-12 sm:space-y-16 pt-8">
+    <div className="max-w-2xl w-full text-start space-y-12 sm:space-y-16">
       {/* 1. What You Get */}
       <section aria-labelledby="heading-what-you-get" className="space-y-4">
         <h2
@@ -65,7 +65,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
         )}
       </section>
 
-      {/* 2. How to Activate */}
+      {/* 2. Activation Steps */}
       {product.activationSteps && product.activationSteps.length > 0 && (
         <section aria-labelledby="heading-activation" className="space-y-4">
           <h2
@@ -80,10 +80,10 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
                 key={i}
                 className="flex items-start gap-3.5 text-sm sm:text-[15px] text-foreground"
               >
-                <span className="size-6 rounded-full bg-secondary text-secondary-foreground font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
+                <span className="size-8 rounded-full bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
                   {i + 1}
                 </span>
-                <span className="leading-relaxed">
+                <span className="leading-relaxed pt-1">
                   {resolveLocalizedName(step, lang)}
                 </span>
               </li>
@@ -92,7 +92,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
         </section>
       )}
 
-      {/* 3. Details (Specification Table) */}
+      {/* 3. Product Details (Specification Table) */}
       {product.specs && (
         <section aria-labelledby="heading-specs" className="space-y-4">
           <h2
@@ -104,7 +104,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
           <div className="rounded-2xl border border-border/50 overflow-hidden bg-card">
             <Table>
               <TableBody>
-                <TableRow className="border-b border-border/40">
+                <TableRow className="border-b border-border/40 bg-secondary/15">
                   <TableCell className="font-medium text-muted-foreground w-1/3 text-xs sm:text-sm">
                     {t('licenseType')}
                   </TableCell>
@@ -120,7 +120,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
                     {resolveLocalizedName(product.specs.edition, lang)}
                   </TableCell>
                 </TableRow>
-                <TableRow className="border-b border-border/40">
+                <TableRow className="border-b border-border/40 bg-secondary/15">
                   <TableCell className="font-medium text-muted-foreground w-1/3 text-xs sm:text-sm">
                     {t('language')}
                   </TableCell>
@@ -142,7 +142,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
         </section>
       )}
 
-      {/* 4. Questions About This Product (Accordion) */}
+      {/* 4. Common Questions (Accordion) */}
       {product.faq && product.faq.length > 0 && (
         <section aria-labelledby="heading-faq" className="space-y-4">
           <h2
@@ -172,7 +172,7 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2.5 text-sm sm:text-base text-primary hover:text-primary/80 transition-colors font-medium group"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full border border-border/60 bg-secondary/30 hover:bg-secondary/60 px-5 py-3 text-sm sm:text-base text-foreground transition-all active:scale-[0.98] font-medium group"
         >
           <MessageCircle className="size-5 text-emerald-500 group-hover:scale-110 transition-transform" />
           <span>{t('askUs')}</span>

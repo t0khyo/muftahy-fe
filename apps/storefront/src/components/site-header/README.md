@@ -35,9 +35,9 @@ All dimensions and motion values are CSS custom properties in `src/index.css`:
 ```css
 --header-height: 44px;              /* Desktop bar height */
 --header-height-mobile: 48px;       /* Mobile bar height */
---header-max-width: 1024px;         /* Container max-width */
---header-inline-padding: 22px;      /* Desktop padding */
---header-inline-padding-mobile: 16px;
+--header-max-width: var(--site-max-width, 1280px); /* Unified container max-width */
+--header-inline-padding: var(--site-padding-desktop, 2rem); /* Desktop padding (32px) */
+--header-inline-padding-mobile: var(--site-padding-mobile, 1rem); /* Mobile padding (16px) */
 --header-blur: 20px;                /* Backdrop blur radius */
 --header-duration-fast: 150ms;
 --header-duration-base: 300ms;

@@ -63,7 +63,7 @@ export function TrustStrip({ config, className = '' }: TrustStripProps) {
       aria-labelledby={headingId}
       className={`py-12 lg:py-20 ${className}`}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6 space-y-8">
+      <div className="site-container space-y-8">
         <h2
           id={headingId}
           className="text-h4 font-bold tracking-tight text-foreground text-start"

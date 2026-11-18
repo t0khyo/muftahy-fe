@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Check, ShieldCheck, Zap, Headphones, ShoppingCart } from 'lucide-react'
+import { Check, ShieldCheck, Headphones, Lock, ShoppingCart } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -109,12 +109,12 @@ export function DetailBuyBox({
       </div>
 
       {/* 2. Title & Tagline */}
-      <div className="space-y-1.5">
-        <h1 className="font-heading text-2xl sm:text-3xl font-semibold text-foreground leading-tight line-clamp-3">
+      <div className="space-y-2">
+        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-foreground leading-tight line-clamp-3">
           {productTitle}
         </h1>
         {productTagline && (
-          <p className="text-sm sm:text-[15px] text-muted-foreground leading-relaxed">
+          <p className="text-base text-muted-foreground leading-relaxed">
             {productTagline}
           </p>
         )}
@@ -147,7 +147,7 @@ export function DetailBuyBox({
                 <label
                   key={plan.slug}
                   className={cn(
-                    'relative flex items-center justify-between rounded-2xl border p-3.5 sm:p-4 cursor-pointer transition-all select-none',
+                    'relative flex items-center justify-between rounded-xl border p-3.5 sm:p-4 cursor-pointer transition-all select-none',
                     isSelected
                       ? 'border-primary bg-primary/5 ring-1 ring-primary'
                       : 'border-input hover:border-border bg-card',
@@ -182,13 +182,13 @@ export function DetailBuyBox({
       )}
 
       {/* 4. Price & Discount Row */}
-      <div className="flex flex-wrap items-baseline gap-2.5 pt-1">
-        <span className="text-2xl sm:text-3xl font-semibold text-foreground tabular-nums">
+      <div className="flex flex-wrap items-baseline gap-3 pt-2">
+        <span className="text-3xl sm:text-4xl font-bold text-foreground tabular-nums tracking-tight">
           {formattedPrice}
         </span>
         {hasDiscount && (
           <>
-            <span className="text-sm sm:text-base text-muted-foreground line-through tabular-nums">
+            <span className="text-base text-muted-foreground line-through tabular-nums">
               {formattedOriginalPrice}
             </span>
             <Badge variant="destructive" className="h-6 px-2 text-xs font-bold">
@@ -226,7 +226,7 @@ export function DetailBuyBox({
           disabled={isOutOfStock}
           onClick={handleActionClick}
           className={cn(
-            'w-full h-12 rounded-full font-medium text-base transition-all shadow-sm',
+            'w-full h-12 rounded-full font-medium text-base transition-all active:scale-[0.98] shadow-sm',
             isInCart
               ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
               : 'bg-primary text-primary-foreground hover:bg-primary/90',
@@ -261,19 +261,25 @@ export function DetailBuyBox({
         )}
       </div>
 
-      {/* 7. Trust items (3 claims) */}
-      <div className="grid grid-cols-1 gap-2.5 pt-4 border-t border-border/40 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2.5">
-          <Zap className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <span>{t('instantDelivery')}</span>
-        </div>
-        <div className="flex items-center gap-2.5">
+      {/* 7. Trust Stamp Grid (3 distinct badges, no duplicate delivery claim) */}
+      <div className="grid grid-cols-3 gap-px bg-border/40 border border-border/40 rounded-xl overflow-hidden mt-2">
+        <div className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-secondary/30 text-center">
           <ShieldCheck className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <span>{isRtl ? 'تراخيص رقمية أصلية ومعتمدة' : 'Official & Verified Licenses'}</span>
+          <span className="text-[11px] leading-tight text-muted-foreground font-medium">
+            {t('verifiedLicense', { defaultValue: isRtl ? 'ترخيص رسمي' : 'Official license' })}
+          </span>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-secondary/30 text-center">
           <Headphones className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <span>{isRtl ? 'دعم فني للتفعيل خطوة بخطوة' : '24/7 Activation Support'}</span>
+          <span className="text-[11px] leading-tight text-muted-foreground font-medium">
+            {t('activationSupport', { defaultValue: isRtl ? 'دعم التفعيل' : 'Activation support' })}
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-secondary/30 text-center">
+          <Lock className="size-4 text-primary shrink-0" aria-hidden="true" />
+          <span className="text-[11px] leading-tight text-muted-foreground font-medium">
+            {t('buyerProtection', { defaultValue: isRtl ? 'حماية المشتري' : 'Buyer protection' })}
+          </span>
         </div>
       </div>
     </div>

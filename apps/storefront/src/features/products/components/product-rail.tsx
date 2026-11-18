@@ -85,7 +85,7 @@ export function ProductRail({
       aria-labelledby={headingId}
       className={`py-12 lg:py-20 ${className}`}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6">
+      <div className="site-container">
         {/* Rail Header */}
         <div className="flex items-center justify-between mb-6">
           <h2

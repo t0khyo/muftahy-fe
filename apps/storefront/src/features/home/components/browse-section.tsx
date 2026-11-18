@@ -102,7 +102,7 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
       aria-labelledby={headingId}
       className={cn('py-12 lg:py-20 text-start', className)}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6">
+      <div className="site-container">
         {/* Unified Block Header */}
         <div className="mb-8 space-y-1.5">
           <h2

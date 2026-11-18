@@ -282,9 +282,7 @@ describe('SiteHeader Component', () => {
 
     const searchSheet = container.querySelector('#search-sheet')
     const contentContainer = searchSheet?.querySelector('div')
-    expect(contentContainer).toHaveClass('max-w-[var(--header-max-width,1024px)]')
-    expect(contentContainer).toHaveClass('px-[var(--header-inline-padding-mobile,16px)]')
-    expect(contentContainer).toHaveClass('lg:px-[var(--header-inline-padding,22px)]')
+    expect(contentContainer).toHaveClass('site-container')
   })
 
   it('renders properly in RTL Arabic mode', () => {

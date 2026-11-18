@@ -158,7 +158,7 @@ export function SearchPanel({
             }}
             className="fixed inset-x-0 z-40 bg-background overflow-y-auto border-b border-border/40 shadow-md bottom-0 lg:bottom-auto top-[var(--header-height-mobile,48px)] lg:top-[var(--header-height,44px)] lg:h-[400px] animate-in fade-in slide-in-from-top-2 duration-300 flex flex-col"
           >
-            <div className="mx-auto w-full max-w-[var(--header-max-width,1024px)] px-[var(--header-inline-padding-mobile,16px)] lg:px-[var(--header-inline-padding,22px)] py-6 flex-1 flex flex-col space-y-6 text-start">
+            <div className="site-container py-6 flex-1 flex flex-col space-y-6 text-start">
               {/* Completely Borderless Search Input Field */}
               <form onSubmit={handleSubmit} className="relative w-full">
                 <div className="flex items-center gap-2.5 w-full border-b border-border/20 pb-3">

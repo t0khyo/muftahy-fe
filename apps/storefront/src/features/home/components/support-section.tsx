@@ -53,7 +53,7 @@ export function SupportSection({ config, className = '' }: SupportSectionProps) 
       aria-labelledby={headingId}
       className={cn('py-12 lg:py-24', className)}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6">
+      <div className="site-container">
         {/* Centered Heading & Subline */}
         <div className="text-center space-y-2 mb-10 lg:mb-14">
           <h2

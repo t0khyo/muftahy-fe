@@ -25,7 +25,7 @@ export function DetailRelatedRail({
   return (
     <section
       aria-labelledby="heading-related-products"
-      className="w-full pt-16 sm:pt-20 space-y-6 text-start"
+      className="w-full border-t border-border/40 mt-16 sm:mt-20 pt-12 sm:pt-16 space-y-6 text-start"
     >
       <h2
         id="heading-related-products"

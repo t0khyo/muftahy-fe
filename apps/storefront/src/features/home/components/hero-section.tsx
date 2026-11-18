@@ -48,7 +48,7 @@ export function HeroSection({ config, className = '' }: HeroSectionProps) {
       aria-labelledby={headingId}
       className={`py-12 lg:py-20 text-center ${className}`}
     >
-      <div className="mx-auto max-w-[var(--header-max-width,1024px)] px-4 lg:px-6 space-y-8">
+      <div className="site-container space-y-8">
         {/* Optional Announcement Pill */}
         {hasBadge && (
           <div className="flex justify-center">
@@ -79,8 +79,8 @@ export function HeroSection({ config, className = '' }: HeroSectionProps) {
           </div>
         )}
 
-        {/* Typographic Core */}
-        <div className="space-y-4 max-w-3xl mx-auto">
+        {/* Typographic Core (capped ~720px for optimal reading measure) */}
+        <div className="space-y-4 max-w-[720px] mx-auto">
           {/* Exactly one h1 on the page */}
           <h1
             id={headingId}
@@ -88,7 +88,7 @@ export function HeroSection({ config, className = '' }: HeroSectionProps) {
           >
             {t('hero.title', { ns: 'home' })}
           </h1>
-          <p className="text-body text-muted-foreground text-balance max-w-xl mx-auto">
+          <p className="text-body text-muted-foreground text-balance max-w-[640px] mx-auto">
             {t('hero.subtitle', { ns: 'home' })}
           </p>
         </div>
@@ -143,7 +143,7 @@ export function HeroSection({ config, className = '' }: HeroSectionProps) {
         <div className="pt-4 flex justify-center">
           <div
             data-testid="hero-visual-placeholder"
-            className="w-full max-w-[1024px] aspect-16/9 sm:aspect-21/9 overflow-hidden rounded-3xl bg-muted/60 border border-border/50 flex flex-col items-center justify-center p-6 text-muted-foreground/60 transition-colors"
+            className="w-full aspect-16/9 sm:aspect-21/9 overflow-hidden rounded-3xl bg-muted/60 border border-border/50 flex flex-col items-center justify-center p-6 text-muted-foreground/60 transition-colors"
           >
             <BrandLogoMark
               className="h-16 sm:h-20 w-auto mb-3 opacity-90 transition-transform duration-300 hover:scale-105"
