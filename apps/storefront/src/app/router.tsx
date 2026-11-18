@@ -3,6 +3,7 @@ import { CatchAllRedirect } from './catch-all-redirect'
 import { CartRoute } from '../routes/cart-route'
 import { DesignRoute } from '../routes/design-route'
 import { HomeRoute } from '../routes/home'
+import { ProductDetailRoute } from '../routes/product-detail-route'
 import { ProductsRoute } from '../routes/products-route'
 import { SearchRoute } from '../routes/search-route'
 import { RootLayout } from './root-layout'
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
       {
         path: 'products',
         element: <ProductsRoute />,
+      },
+      {
+        path: 'products/:slug',
+        element: <ProductDetailRoute />,
       },
       {
         path: 'search',

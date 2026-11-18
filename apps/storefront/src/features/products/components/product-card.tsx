@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { cn } from '@workspace/ui/lib/utils';
-import type { Product } from '@workspace/domain/schemas/product';
+import { getSummaryPlan, type Product } from '@workspace/domain/schemas/product';
 import { useCartStore } from '../../cart/stores/cart-store';
 import { Box } from 'lucide-react';
 import { AddToCartButton } from './add-to-cart-button';
@@ -86,11 +86,12 @@ export function ProductCard(props: ProductCardProps) {
   const card: ProductCardData = React.useMemo(() => {
     if (domainProduct) {
       const p = domainProduct;
+      const summaryPlan = getSummaryPlan(p);
       const title = p.title[isRtl ? 'ar' : 'en'] ?? p.title.en;
       const desc = p.description[isRtl ? 'ar' : 'en'] ?? p.description.en;
-      const priceNum = (p.price.amountMinor / 100).toFixed(2);
-      const originalPriceNum = p.originalPrice
-        ? (p.originalPrice.amountMinor / 100).toFixed(2)
+      const priceNum = (summaryPlan.price.amountMinor / 100).toFixed(2);
+      const originalPriceNum = summaryPlan.originalPrice
+        ? (summaryPlan.originalPrice.amountMinor / 100).toFixed(2)
         : undefined;
 
       const platformsMap: Platform[] =
@@ -108,23 +109,21 @@ export function ProductCard(props: ProductCardProps) {
         badge: p.featured ? 'offer' : null,
         productType: p.category === 'subscriptions' ? 'subscription' : 'service',
         activationType: 'ready_account',
-        ratingAverage: 4.9,
-        ratingCount: 128,
         platforms: platformsMap,
         startingPrice: priceNum,
         originalPrice: originalPriceNum,
         startingPlanDuration:
-          p.deliveryType === 'instant'
+          summaryPlan.deliveryType === 'instant'
             ? (isRtl ? 'تسليم فوري' : 'Instant')
             : (isRtl ? 'شهر' : 'month'),
-        startingPlanDurationEn: p.deliveryType === 'instant' ? 'Instant' : 'month',
+        startingPlanDurationEn: summaryPlan.deliveryType === 'instant' ? 'Instant' : 'month',
         trustNote: desc || (isRtl ? 'ضمان التسليم الفوري' : 'Instant Delivery Guaranteed'),
         plans: [
           {
-            id: p.id,
-            label: title,
+            id: summaryPlan.id,
+            label: summaryPlan.name[isRtl ? 'ar' : 'en'] ?? summaryPlan.name.en,
             duration:
-              p.deliveryType === 'instant'
+              summaryPlan.deliveryType === 'instant'
                 ? (isRtl ? 'ترخيص فوري' : 'Instant License')
                 : (isRtl ? 'اشتراك' : 'Subscription'),
             price: priceNum,
@@ -180,6 +179,13 @@ export function ProductCard(props: ProductCardProps) {
     return null;
   }, [domainProduct, card.originalPrice, card.startingPrice]);
 
+  const hasMultiplePrices = Boolean(
+    domainProduct &&
+      domainProduct.plans &&
+      domainProduct.plans.length > 1 &&
+      new Set(domainProduct.plans.map((p) => p.price.amountMinor)).size > 1
+  );
+
   const defaultCurrency = domainProduct
     ? (domainProduct.price.currency === 'USD' ? '$' : (isRtl ? 'ج.م' : domainProduct.price.currency))
     : (isRtl ? 'ج.م' : '$');
@@ -191,7 +197,10 @@ export function ProductCard(props: ProductCardProps) {
     : (props.translations?.addToCart ?? t('addToCart', { ns: 'products', defaultValue: isRtl ? 'أضف إلى السلة' : 'Add to cart' }));
   const addedLabel = props.translations?.addedToCart ?? (isRtl ? 'تمت الإضافة' : 'Added!');
 
-  const productUrl = `/${currentLang}/products/${card.slug}`;
+  const resolvedSummaryPlan = domainProduct ? getSummaryPlan(domainProduct) : null;
+  const productUrl = domainProduct && resolvedSummaryPlan
+    ? `/${currentLang}/products/${card.slug}?plan=${resolvedSummaryPlan.slug}`
+    : `/${currentLang}/products/${card.slug}`;
   const [prevImageUrl, setPrevImageUrl] = React.useState(card.imageUrl);
   const [imageError, setImageError] = React.useState(false);
 
@@ -207,21 +216,21 @@ export function ProductCard(props: ProductCardProps) {
       if (props.onAddToCart) {
         props.onAddToCart(props.product);
       } else {
+        const summary = getSummaryPlan(props.product);
         useCartStore.getState().addItem({
-          id: props.product.id,
-          name: props.product.title[isRtl ? 'ar' : 'en'] ?? props.product.title.en,
-          priceMinor: props.product.price.amountMinor,
+          id: `${props.product.id}:${summary.id}`,
+          productId: props.product.id,
+          planId: summary.id,
+          slug: props.product.slug,
+          name: props.product.title,
+          planName: summary.name,
+          priceMinor: summary.price.amountMinor,
+          currency: summary.price.currency,
         });
       }
     } else if ('card' in props && props.card) {
       if (props.onAddToCart) {
         props.onAddToCart(plan);
-      } else {
-        useCartStore.getState().addItem({
-          id: plan.id,
-          name: card.name,
-          priceMinor: Math.round(parseFloat(plan.price) * 100),
-        });
       }
     }
   };
@@ -316,7 +325,9 @@ export function ProductCard(props: ProductCardProps) {
       <div className='mt-auto flex flex-col gap-2.5 pt-3'>
         {/* Price Row: Calm regular-weight "From X" */}
         <div className='flex items-baseline gap-1.5 flex-wrap text-start leading-none'>
-          <span className='text-xs text-muted-foreground font-normal'>{fromPriceText}</span>
+          {hasMultiplePrices && (
+            <span className='text-xs text-muted-foreground font-normal'>{fromPriceText}</span>
+          )}
           <span className='text-[15px] sm:text-base font-normal text-foreground tabular-nums'>
             {formatPrice(card.startingPrice, currentLang)} {currency}
           </span>

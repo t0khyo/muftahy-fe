@@ -98,5 +98,30 @@ describe('MockProductAdapter', () => {
     const s2 = getProductService()
     expect(s1).toBe(s2)
   })
+
+  it('provides bilingual detail sections and plans for all products', async () => {
+    const list = await adapter.list()
+    for (const p of list.items) {
+      expect(p.plans?.length).toBeGreaterThan(0)
+      expect(p.specs).toBeDefined()
+      expect(p.activationSteps?.length).toBeGreaterThan(0)
+      expect(p.includes?.length).toBeGreaterThan(0)
+      expect(p.faq?.length).toBeGreaterThan(0)
+      expect(p.relatedSlugs?.length).toBeGreaterThan(0)
+      // Every relatedSlug must point to a valid product slug
+      for (const relSlug of p.relatedSlugs ?? []) {
+        const rel = await adapter.getBySlug(relSlug)
+        expect(rel).not.toBeNull()
+      }
+    }
+
+    const w11 = await adapter.getBySlug('windows-11-pro')
+    expect(w11?.plans?.length).toBe(2)
+    expect(w11?.plans?.some((plan) => plan.stock <= 5)).toBe(true)
+
+    const psn = await adapter.getBySlug('playstation-network-card-100-sar')
+    expect(psn?.plans?.every((plan) => plan.stock === 0)).toBe(true)
+    expect(psn?.regionNote).toBeDefined()
+  })
 })
 

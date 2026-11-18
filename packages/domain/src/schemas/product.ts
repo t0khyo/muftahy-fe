@@ -48,6 +48,43 @@ export const localizedStringSchema = z.object({
 
 export type LocalizedString = z.infer<typeof localizedStringSchema>
 
+export const productPlanSchema = z.object({
+  id: z.string().min(1),
+  slug: z.string().min(1),
+  name: localizedStringSchema,
+  price: moneySchema,
+  originalPrice: moneySchema.optional(),
+  stock: z.number().int().nonnegative(),
+  deliveryType: z.enum(['instant', 'manual']).default('instant'),
+  deliveryTime: localizedStringSchema.optional(),
+})
+
+export type ProductPlan = z.infer<typeof productPlanSchema>
+
+export const productSpecsSchema = z.object({
+  licenseType: localizedStringSchema,
+  edition: localizedStringSchema,
+  language: localizedStringSchema,
+  deliveryTime: localizedStringSchema,
+})
+
+export type ProductSpecs = z.infer<typeof productSpecsSchema>
+
+export const productFaqItemSchema = z.object({
+  question: localizedStringSchema,
+  answer: localizedStringSchema,
+})
+
+export type ProductFaqItem = z.infer<typeof productFaqItemSchema>
+
+export const productMediaItemSchema = z.object({
+  type: z.enum(['image', 'video']).default('image'),
+  url: z.string().min(1),
+  alt: localizedStringSchema,
+})
+
+export type ProductMediaItem = z.infer<typeof productMediaItemSchema>
+
 export const productSchema = z.object({
   id: z.string().min(1),
   slug: z.string().min(1),
@@ -62,9 +99,51 @@ export const productSchema = z.object({
   inStock: z.boolean(),
   featured: z.boolean().default(false),
   deliveryType: z.enum(['instant', 'manual']).default('instant'),
+  tagline: localizedStringSchema.optional(),
+  regionNote: localizedStringSchema.optional(),
+  includes: z.array(localizedStringSchema).optional(),
+  activationSteps: z.array(localizedStringSchema).optional(),
+  specs: productSpecsSchema.optional(),
+  faq: z.array(productFaqItemSchema).optional(),
+  relatedSlugs: z.array(z.string()).optional(),
+  media: z.array(productMediaItemSchema).optional(),
+  plans: z.array(productPlanSchema).optional(),
+  defaultPlanSlug: z.string().optional(),
 })
 
 export type Product = z.infer<typeof productSchema>
+
+export function getSummaryPlan(product: Product): ProductPlan {
+  if (product.plans && product.plans.length > 0) {
+    if (product.defaultPlanSlug) {
+      const defaultPlan = product.plans.find((p) => p.slug === product.defaultPlanSlug)
+      if (defaultPlan && defaultPlan.stock > 0) {
+        return defaultPlan
+      }
+    }
+    const firstInStock = product.plans.find((p) => p.stock > 0)
+    if (firstInStock) {
+      return firstInStock
+    }
+    if (product.defaultPlanSlug) {
+      const defaultPlan = product.plans.find((p) => p.slug === product.defaultPlanSlug)
+      if (defaultPlan) {
+        return defaultPlan
+      }
+    }
+    return product.plans[0]
+  }
+
+  return {
+    id: `${product.id}-default`,
+    slug: 'default',
+    name: product.title,
+    price: product.price,
+    originalPrice: product.originalPrice,
+    stock: product.inStock ? 10 : 0,
+    deliveryType: product.deliveryType,
+  }
+}
 
 export const productCollectionSchema = z.enum([
   'best-sellers',

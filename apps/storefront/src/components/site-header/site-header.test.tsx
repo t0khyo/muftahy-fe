@@ -132,14 +132,14 @@ describe('SiteHeader Component', () => {
 
     // Set count to 3
     act(() => {
-      useCartStore.getState().setCount(3)
+      useCartStore.getState().addItem({ id: 'item-1', name: 'Item 1', priceMinor: 100 }, 3)
     })
     expect(screen.getByText('3')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cart, 3 items/i })).toBeInTheDocument()
 
     // Set count to 15 -> should show 9+
     act(() => {
-      useCartStore.getState().setCount(15)
+      useCartStore.getState().addItem({ id: 'item-2', name: 'Item 2', priceMinor: 100 }, 12)
     })
     expect(screen.getByText('9+')).toBeInTheDocument()
   })

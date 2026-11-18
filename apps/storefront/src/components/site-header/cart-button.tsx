@@ -10,6 +10,10 @@ import {
   SheetTitle,
 } from '@workspace/ui/components/sheet'
 import { useCartStore } from '../../features/cart/stores/cart-store'
+import {
+  getCurrencySubtotals,
+  resolveLocalizedName,
+} from '../../features/cart/lib/cart-selectors'
 
 export interface CartButtonProps {
   className?: string
@@ -67,14 +71,10 @@ export function CartButton({
   const dropdownRef = React.useRef<HTMLDivElement | null>(null)
   const triggerRef = React.useRef<HTMLButtonElement | null>(null)
 
-  // Subtotal in minor units
-  const subtotalMinor = React.useMemo(() => {
-    return items.reduce((acc, item) => acc + item.priceMinor * item.quantity, 0)
-  }, [items])
-
-  const formattedSubtotal = React.useMemo(() => {
-    return formatMoneyFromMinor(subtotalMinor, 'USD', currentLang)
-  }, [subtotalMinor, currentLang])
+  // Currency-grouped subtotals
+  const currencySubtotals = React.useMemo(() => {
+    return getCurrencySubtotals(items, currentLang)
+  }, [items, currentLang])
 
   // Close desktop dropdown on outside click or Escape
   React.useEffect(() => {
@@ -255,8 +255,13 @@ export function CartButton({
                   >
                     <div className="truncate me-2">
                       <span className="font-medium text-foreground block truncate">
-                        {item.name}
+                        {resolveLocalizedName(item.name, currentLang)}
                       </span>
+                      {item.planName && (
+                        <span className="text-muted-foreground text-[11px] block truncate">
+                          {resolveLocalizedName(item.planName, currentLang)}
+                        </span>
+                      )}
                       <span className="text-muted-foreground text-[11px]">
                         Qty: {item.quantity}
                       </span>
@@ -264,7 +269,7 @@ export function CartButton({
                     <span className="shrink-0 font-medium text-foreground tabular-nums">
                       {formatMoneyFromMinor(
                         item.priceMinor * item.quantity,
-                        'USD',
+                        item.currency || 'USD',
                         currentLang,
                       )}
                     </span>
@@ -272,10 +277,16 @@ export function CartButton({
                 ))}
               </div>
 
-              {/* Subtotal */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs font-semibold">
-                <span className="text-muted-foreground">{t('subtotal', { ns: 'header' })}</span>
-                <span className="text-foreground tabular-nums">{formattedSubtotal}</span>
+              {/* Subtotal grouped by currency */}
+              <div className="pt-2 border-t border-border/40 text-xs font-semibold space-y-1">
+                {currencySubtotals.map((sub) => (
+                  <div key={sub.currency} className="flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      {t('subtotal', { ns: 'header' })} ({sub.currency})
+                    </span>
+                    <span className="text-foreground tabular-nums">{sub.formatted}</span>
+                  </div>
+                ))}
               </div>
 
               {/* Actions */}
@@ -398,8 +409,13 @@ export function CartButton({
                         >
                           <div className="truncate me-2">
                             <span className="font-medium text-foreground block truncate">
-                              {item.name}
+                              {resolveLocalizedName(item.name, currentLang)}
                             </span>
+                            {item.planName && (
+                              <span className="text-muted-foreground text-xs block truncate">
+                                {resolveLocalizedName(item.planName, currentLang)}
+                              </span>
+                            )}
                             <span className="text-muted-foreground text-xs">
                               Qty: {item.quantity}
                             </span>
@@ -407,7 +423,7 @@ export function CartButton({
                           <span className="shrink-0 font-medium text-foreground tabular-nums">
                             {formatMoneyFromMinor(
                               item.priceMinor * item.quantity,
-                              'USD',
+                              item.currency || 'USD',
                               currentLang,
                             )}
                           </span>
@@ -415,9 +431,15 @@ export function CartButton({
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-border/40 text-sm font-semibold">
-                      <span className="text-muted-foreground">{t('subtotal', { ns: 'header' })}</span>
-                      <span className="text-foreground tabular-nums">{formattedSubtotal}</span>
+                    <div className="pt-3 border-t border-border/40 text-sm font-semibold space-y-1">
+                      {currencySubtotals.map((sub) => (
+                        <div key={sub.currency} className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            {t('subtotal', { ns: 'header' })} ({sub.currency})
+                          </span>
+                          <span className="text-foreground tabular-nums">{sub.formatted}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

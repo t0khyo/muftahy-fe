@@ -407,7 +407,7 @@ export function DesignPage() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {SAMPLE_PRODUCTS.map((card) => (
-            <ProductCard key={card.slug} card={card} />
+            <ProductCard key={card.slug} card={card} onAddToCart={() => {}} />
           ))}
           <div className="flex flex-col gap-2">
             <span className="text-caption text-muted-foreground text-start">

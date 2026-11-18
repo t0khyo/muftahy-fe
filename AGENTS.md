@@ -73,7 +73,6 @@ If you cannot run a check, say so explicitly. Never claim it passes.
 
 Stop and ask the user first before doing any of these:
 
-- Adding, removing, or upgrading a dependency
 - Editing components in `packages/ui` directly
 - Changing the shadcn preset or its config (`components.json`, preset settings)
 - Touching lockfiles (`pnpm-lock.yaml`)
