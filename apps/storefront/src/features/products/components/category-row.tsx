@@ -99,7 +99,7 @@ export function CategoryRow({ activeCategory, className }: CategoryRowProps) {
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isActive
                   ? 'bg-foreground text-background shadow-xs'
-                  : 'bg-secondary/70 text-foreground hover:bg-secondary border border-border/40',
+                  : 'bg-secondary/50 text-foreground hover:bg-secondary border border-border/50',
               )}
             >
               <Icon className="size-5 shrink-0" aria-hidden={true} />
@@ -125,13 +125,13 @@ export function CategoryRow({ activeCategory, className }: CategoryRowProps) {
                 'group flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-2xl px-2 py-2.5 transition-all select-none outline-none border text-center',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isActive
-                  ? 'bg-card border-foreground/30 shadow-xs text-foreground font-semibold ring-1 ring-foreground/20'
-                  : 'bg-secondary/35 border-transparent text-muted-foreground hover:bg-secondary/80 hover:text-foreground',
+                  ? 'bg-card border-primary/40 shadow-xs text-foreground font-semibold ring-1 ring-primary/20'
+                  : 'bg-secondary/30 border-border/40 text-muted-foreground hover:bg-secondary/70 hover:text-foreground hover:-translate-y-0.5 hover:border-border/70',
               )}
             >
               <div
                 className={cn(
-                  'flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 motion-reduce:transform-none',
+                  'flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 motion-reduce:transform-none',
                   isActive
                     ? 'bg-primary text-primary-foreground shadow-xs'
                     : 'bg-background/80 text-foreground/80 shadow-2xs',

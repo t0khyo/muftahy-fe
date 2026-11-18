@@ -90,12 +90,12 @@ export function FilterSidebar({
       className={cn('w-64 shrink-0 flex flex-col gap-6', className)}
     >
       {/* Header with title & clear */}
-      <div className="flex items-center justify-between pb-1 border-b border-border/40">
-        <h2 className="text-sm font-semibold tracking-wide text-foreground">
+      <div className="flex items-center justify-between pb-2 border-b border-border/40">
+        <h2 className="text-sm font-semibold tracking-wide text-foreground flex items-center">
           {t('listing.filters', { defaultValue: 'Filters' })}
           {activeFiltersCount > 0 && (
-            <span className="ms-1.5 text-xs font-normal text-muted-foreground">
-              ({activeFiltersCount})
+            <span className="ms-2 inline-flex items-center justify-center size-5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold tabular-nums">
+              {activeFiltersCount}
             </span>
           )}
         </h2>
@@ -104,7 +104,7 @@ export function FilterSidebar({
             variant="ghost"
             size="sm"
             onClick={onClearAll}
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50"
           >
             {t('listing.clearAll', { defaultValue: 'Clear all' })}
           </Button>

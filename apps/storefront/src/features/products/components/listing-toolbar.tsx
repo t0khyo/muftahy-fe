@@ -161,7 +161,7 @@ export function ListingToolbar({
             onValueChange={(val) => onSortChange(val as ProductSortOption)}
           >
             <SelectTrigger
-              className="h-9 min-w-[150px] rounded-lg text-xs font-medium border-border/80"
+              className="h-9 min-w-[150px] rounded-lg text-xs font-medium border-border/60 hover:border-border transition-colors"
               aria-label={sortLabel}
             >
               <SelectValue />
@@ -201,13 +201,13 @@ export function ListingToolbar({
               onClick={() => onRemoveFilter(chip.type, chip.value)}
               className={cn(
                 'inline-flex h-8 items-center gap-1.5 rounded-full px-3',
-                'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-                'text-[13px] font-normal transition-colors outline-none',
+                'border border-border/60 bg-secondary/50 text-foreground hover:bg-secondary',
+                'text-xs font-medium transition-all outline-none active:scale-95',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               )}
             >
               <span>{chip.labelFallback}</span>
-              <XIcon className="size-3.5 text-muted-foreground hover:text-foreground shrink-0" />
+              <XIcon className="size-3 text-muted-foreground hover:text-foreground shrink-0" />
             </button>
           ))}
 

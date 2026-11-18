@@ -10,12 +10,12 @@ export function ProductCardSkeleton({ className }: { className?: string }) {
       aria-busy='true'
       aria-label='Loading...'
       className={cn(
-        'relative flex flex-col rounded-3xl bg-card border-0 shadow-none p-3 sm:p-3.5 lg:p-4 h-full',
+        'relative flex flex-col rounded-2xl bg-card border border-border/40 p-3 sm:p-3.5 lg:p-4 h-full',
         className
       )}
     >
-      {/* 1 ── Cover Area (4:3, centered with ~12% padding) */}
-      <div className='aspect-4/3 w-full rounded-2xl bg-secondary/50 p-[12%] flex items-center justify-center overflow-hidden'>
+      {/* 1 ── Cover Area (4:3) */}
+      <div className='aspect-4/3 w-full rounded-xl bg-secondary/35 p-4 sm:p-5 flex items-center justify-center overflow-hidden'>
         <Bone className='h-12 w-12 rounded-xl bg-muted-foreground/15' />
       </div>
 

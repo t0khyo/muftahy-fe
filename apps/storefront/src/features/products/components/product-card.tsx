@@ -238,16 +238,17 @@ export function ProductCard(props: ProductCardProps) {
   return (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-3xl',
-        'bg-card border-0 shadow-none text-card-foreground',
+        'group relative flex flex-col overflow-hidden rounded-2xl',
+        'bg-card border border-border/40 hover:border-border/80 text-card-foreground',
         'p-3 sm:p-3.5 lg:p-4 h-full',
+        'transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs',
         'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
         !isInStock && 'opacity-70',
         props.className
       )}
     >
-      {/* 1 ── Cover Area (4:3, centered with ~12% padding, never cropped) */}
-      <div className='relative aspect-4/3 w-full rounded-2xl bg-secondary/50 p-[12%] flex items-center justify-center overflow-hidden'>
+      {/* 1 ── Cover Area (4:3, prominent whole-artwork surface, never cropped) */}
+      <div className='relative aspect-4/3 w-full rounded-xl bg-secondary/35 p-4 sm:p-5 flex items-center justify-center overflow-hidden'>
         {hasImage && card.imageUrl ? (
           props.renderImage ? (
             props.renderImage({

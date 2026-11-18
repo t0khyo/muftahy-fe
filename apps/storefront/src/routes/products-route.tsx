@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { PackageOpen } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 import type { ProductCategory } from '@workspace/domain/schemas/product'
@@ -167,18 +168,18 @@ export function ProductsRoute() {
         backLabel={t('back', { ns: 'breadcrumb', defaultValue: 'Back to products' })}
       />
 
-      {/* ── Page Header: Apple-store large typography ── */}
+      {/* ── Page Header: Apple-store authoritative typography ── */}
       <header className="mb-6 lg:mb-8 text-start max-w-3xl">
         <h1
           className={cn(
-            'text-[28px] sm:text-3xl lg:text-[40px] font-semibold text-foreground leading-tight',
+            'text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight',
             // AGENTS.md: No tracking-tight on Arabic
             !isRtl && 'tracking-tight',
           )}
         >
           {heading}
         </h1>
-        <p className="text-sm lg:text-[17px] text-muted-foreground mt-2 leading-relaxed">
+        <p className="text-sm sm:text-base text-muted-foreground mt-2.5 leading-relaxed max-w-2xl">
           {subline}
         </p>
       </header>
@@ -186,8 +187,8 @@ export function ProductsRoute() {
       {/* ── Compact Category Row: Single-select category control ── */}
       <CategoryRow activeCategory={selectedCategory} />
 
-      {/* ── Mobile Sticky Toolbar (attached under site header) ── */}
-      <div className="lg:hidden sticky top-[56px] z-20 bg-background/95 backdrop-blur-xs -mx-4 px-4 sm:-mx-6 sm:px-6 py-2.5 mb-6 border-b border-border/40">
+      {/* ── Mobile Toolbar (Non-sticky static flow) ── */}
+      <div className="lg:hidden mb-6">
         <ListingToolbar
           totalResults={total}
           state={state}
@@ -247,7 +248,7 @@ export function ProductsRoute() {
           {!isLoading && isError && (
             <div
               role="alert"
-              className="flex min-h-[360px] flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-destructive/30 bg-destructive/5 p-8 text-center"
+              className="flex min-h-[360px] flex-col items-center justify-center gap-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center"
             >
               <p className="text-base font-medium text-destructive">
                 {t('listing.errorRetry', {
@@ -255,7 +256,7 @@ export function ProductsRoute() {
                   defaultValue: 'Something went wrong. Try again.',
                 })}
               </p>
-              <Button variant="outline" onClick={() => refetch()} className="rounded-full px-6">
+              <Button variant="outline" onClick={() => refetch()} className="rounded-full px-6 active:scale-[0.98]">
                 {t('retry', { ns: 'common', defaultValue: 'Retry' })}
               </Button>
             </div>
@@ -263,7 +264,10 @@ export function ProductsRoute() {
 
           {/* 3 ── No Results State ── */}
           {!isLoading && !isError && products.length === 0 && (
-            <div className="flex min-h-[380px] flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-secondary/20 p-8 sm:p-12 text-center">
+            <div className="flex min-h-[380px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-secondary/20 p-8 sm:p-12 text-center">
+              <div className="size-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-muted-foreground mb-4">
+                <PackageOpen className="size-7" aria-hidden="true" />
+              </div>
               <h3 className="text-lg font-semibold text-foreground">
                 {t('listing.noResults', {
                   ns: 'products',
@@ -282,7 +286,7 @@ export function ProductsRoute() {
                   <Button
                     variant="default"
                     onClick={clearAll}
-                    className="rounded-full px-6 text-sm"
+                    className="rounded-full px-6 text-sm active:scale-[0.98]"
                   >
                     {t('listing.clearAll', { ns: 'products', defaultValue: 'Clear all' })}
                   </Button>
@@ -293,7 +297,7 @@ export function ProductsRoute() {
                   <Link
                     key={cat.id}
                     to={`/${currentLang}/products?category=${cat.id}`}
-                    className="inline-flex h-9 items-center rounded-full border border-border bg-background px-4 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                    className="inline-flex h-9 items-center rounded-full border border-border/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-secondary hover:border-border transition-colors active:scale-95"
                   >
                     {cat.label}
                   </Link>
@@ -338,7 +342,7 @@ export function ProductsRoute() {
                     size="lg"
                     disabled={isFetching}
                     onClick={handleShowMore}
-                    className="rounded-full px-8 h-11 text-sm font-medium border-border/80 hover:bg-secondary"
+                    className="rounded-full px-8 h-11 text-sm font-medium border-border/80 hover:bg-secondary active:scale-[0.98] transition-all"
                   >
                     {isFetching
                       ? t('loading', { ns: 'common', defaultValue: 'Loading...' })
