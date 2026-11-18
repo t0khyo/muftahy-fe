@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
+import { AccountDropdown } from './account-dropdown'
 import { CartButton } from './cart-button'
 import { DesktopNav } from './desktop-nav'
 import { MenuToggle } from './menu-toggle'
@@ -159,6 +160,19 @@ export function SiteHeader({
                   onOpen={handleOpenSearch}
                   onClose={handleCloseSearch}
                 />
+              </div>
+            )}
+
+            {/* Account Dropdown */}
+            {!isMobileMenuOpen && (
+              <div
+                className={`inline-flex transition-opacity duration-200 ${
+                  isSearchOpen
+                    ? 'max-lg:invisible max-lg:opacity-0 max-lg:pointer-events-none max-lg:w-0 max-lg:overflow-hidden'
+                    : 'visible opacity-100'
+                }`}
+              >
+                <AccountDropdown />
               </div>
             )}
 

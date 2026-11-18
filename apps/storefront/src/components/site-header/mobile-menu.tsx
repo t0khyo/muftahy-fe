@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { getLocalizedNavLinks, getNavKey } from './nav-links'
 import { LanguageSwitcher } from '../language-switcher'
 import { ThemeToggle } from '../theme-toggle'
+import { useAuth } from '../../features/auth/hooks/use-auth'
 
 export interface MobileMenuProps {
   isOpen: boolean
@@ -19,6 +20,7 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
   const { t } = useTranslation(['nav'])
 
   const links = React.useMemo(() => getLocalizedNavLinks(currentLang), [currentLang])
+  const { user, isAuthenticated, logout } = useAuth()
 
   // Lock body scroll while open
   React.useEffect(() => {
@@ -108,6 +110,49 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
             )
           })}
         </nav>
+
+        {/* Mobile Account Section */}
+        <div className="border-t border-border/40 pt-4 space-y-2">
+          {isAuthenticated ? (
+            <div className="space-y-1 text-start">
+              <Link
+                to={`/${currentLang}/account/profile`}
+                onClick={onClose}
+                className="block text-lg font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                {user?.full_name || user?.email || (isAr ? 'حسابي' : 'My Account')}
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  logout()
+                }}
+                className="block text-sm font-medium text-destructive hover:underline cursor-pointer"
+              >
+                {isAr ? 'تسجيل الخروج' : 'Sign Out'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                to={`/${currentLang}/login`}
+                onClick={onClose}
+                className="text-base font-semibold text-primary hover:underline"
+              >
+                {isAr ? 'تسجيل الدخول' : 'Sign In'}
+              </Link>
+              <span className="text-muted-foreground/40">•</span>
+              <Link
+                to={`/${currentLang}/register`}
+                onClick={onClose}
+                className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                {isAr ? 'إنشاء حساب' : 'Create Account'}
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile Menu Bottom: Appearance & Language Controls */}
