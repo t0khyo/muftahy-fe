@@ -6,7 +6,7 @@ Shared utility helpers for the `@workspace/ui` package.
 
 ## Interface
 
-- `cn(...inputs): string` — re-exported from the `cn` package; merges Tailwind class names using `clsx` and `tailwind-merge`, resolving conflicting utility classes in favour of the last one
+- `[utils.ts:cn]` `cn(...inputs: ClassValue[]): string` — re-exported from the `cn` package; merges Tailwind class names using `clsx` and `tailwind-merge`, resolving conflicting utility classes in favour of the last one
 
 ## Invariants
 

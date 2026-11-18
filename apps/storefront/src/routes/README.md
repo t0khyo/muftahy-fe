@@ -2,26 +2,26 @@
 
 ## Overview
 
-Thin route modules wired into the React Router `BrowserRouter`. Each file exports a single route component that delegates immediately to a feature or page component; no business logic lives here. Routes obtain locale from the `:lang` URL param, not from props.
+Thin route modules wired into the React Router `createBrowserRouter` tree. Each file exports a single route component that delegates directly to feature views; no business logic lives here. Routes obtain locale from the `:lang` URL parameter.
 
 ## Interface
 
-- `HomeRoute()` — renders `<HomePage renderProductRail={(props) => <ProductRail {...props} />} />`.
-- `ProductsRoute()` — renders a page heading (translated `products.title`) and `<ProductGrid />`.
-- `SearchRoute()` — reads `?q=` search param, fetches via `useProducts`, renders `ProductCard` grid or `ProductCardSkeleton` loading state.
-- `CartRoute()` — reads `useCartStore` count; renders a placeholder cart page. Full checkout UI is unimplemented.
-- `DesignRoute()` — renders `<DesignPage />` (dev-only design system showcase).
+- `HomeRoute()` — renders `<HomePage />` configuring the home marketing sections and injecting `ProductRail`.
+- `ProductsRoute()` — renders the product catalog browsing view with category strip, filter sidebar/sheet, sorting toolbar, and product grid.
+- `ProductDetailRoute()` — renders `<ProductDetailPage />` for the `/:lang/products/:slug` route.
+- `SearchRoute()` — reads `?q=` search query, fetches products via `useProducts`, and renders the product search results grid.
+- `CartRoute()` — renders the full shopping cart review view with `CartLineItem` rows, quantity steppers, item deletion with focus restoration, and currency subtotals.
+- `DesignRoute()` — renders `<DesignPage />` design system gallery.
 
 ## Invariants
 
-- Route components contain no data-fetching logic or store mutations — they delegate entirely to feature components.
-- Locale is read from `useParams()` within feature components, not passed as props from route modules.
-- `CartRoute` and `SearchRoute` are placeholder implementations; full functionality is pending.
+- `[home.tsx:locale]` Locale is parsed from `useParams()` or URL context; route modules do not accept locale via props.
+- `[cart-route.tsx:focus]` Manages focus transfer to adjacent line item removal buttons when an item is removed.
 
 ## Side Effects
 
-- `SearchRoute`: triggers `useProducts` fetch on mount/query change.
-- `CartRoute`: reads `useCartStore` (no mutations).
+- `[search-route.tsx:useProducts]` Triggers TanStack Query product searches on search param changes.
+- `[cart-route.tsx:useCartStore]` Reads and dispatches quantity updates and item removal in the Zustand cart store.
 
 ## Verification
 

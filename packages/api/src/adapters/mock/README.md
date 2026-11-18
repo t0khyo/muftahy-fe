@@ -2,28 +2,31 @@
 
 ## Overview
 
-In-memory mock implementation of `ProductService`. Ships a static dataset of eight representative products (games, software, gift cards, subscriptions) covering EGP, USD, and SAR currencies, multiple platforms, and both GCC and global regions. This adapter is the sole data source until a real HTTP backend is wired in via `factory.ts`.
+In-memory mock implementation of `ProductService`. Ships a static dataset of representative products (games, software, gift cards, subscriptions) covering EGP, USD, and SAR currencies, multiple platforms, and both GCC and global regions. This adapter serves as the primary data source until a real HTTP backend is configured via `factory.ts`.
 
 ## Interface
 
-- `MOCK_PRODUCTS: Product[]` — exported constant; the full static product catalogue (8 items)
-- `MockProductAdapter` — class implementing `ProductService`:
-  - `list(filter?)` — filters in-memory by category, platform, region, featured, and free-text search across `title.en`, `title.ar`, and `slug`
-  - `listByCollection(collection)` — `best-sellers`: featured/in-stock top-8; `deals`: items with a discounted `originalPrice` top-8; `new`: reverse insertion order top-8
-  - `getBySlug(slug)` — linear scan; returns `null` on miss
-  - `getById(id)` — linear scan; returns `null` on miss
-  - `getSampleLicenseKey(_productId)` — always returns `'XXXXX-XXXXX-XXXXX'`
+- `[product-mock-adapter.ts:MOCK_PRODUCTS]` `const MOCK_PRODUCTS: Product[]` — exported static product catalogue
+- `[product-mock-adapter.ts:MockProductAdapter]` `class MockProductAdapter implements ProductService`
+  - `[product-mock-adapter.ts:MockProductAdapter.list]` `async list(filter?: ProductListFilter): Promise<ProductListResult>` — in-memory filtering, sorting, and pagination
+  - `[product-mock-adapter.ts:MockProductAdapter.getFilterCounts]` `async getFilterCounts(_filter?: ProductListFilter): Promise<ProductFilterCounts>` — returns aggregated facet counts
+  - `[product-mock-adapter.ts:MockProductAdapter.listByCollection]` `async listByCollection(collection: ProductCollection): Promise<Product[]>` — returns up to 8 items for 'best-sellers', 'deals', or 'new'
+  - `[product-mock-adapter.ts:MockProductAdapter.getBySlug]` `async getBySlug(slug: string): Promise<Product | null>` — lookup product by unique slug
+  - `[product-mock-adapter.ts:MockProductAdapter.getById]` `async getById(id: string): Promise<Product | null>` — lookup product by unique ID
+  - `[product-mock-adapter.ts:MockProductAdapter.getSampleLicenseKey]` `async getSampleLicenseKey(_productId: string): Promise<string>` — returns a mock license key
 
 ## Invariants
 
-- Product amounts are stored as minor units (integers); no floating-point arithmetic is used for money.
-- All mock keys and codes are obviously fake (`XXXXX-XXXXX-XXXXX`); no real or realistic keys appear in this file.
-- `MOCK_PRODUCTS` is never mutated; each `list` call copies the array before filtering.
-- Titles and descriptions must have both `en` and `ar` values (enforced by the `Product` schema).
+- `[product-mock-adapter.ts:MockProductAdapter.getSampleLicenseKey]` Always returns the fixed mock license key string `'XXXXX-XXXXX-XXXXX'`. Real keys are never used.
+- `[product-mock-adapter.ts:MockProductAdapter.list]` Default sort order falls back to `'featured'` when `filter?.sort` is undefined.
+- `[product-mock-adapter.ts:MockProductAdapter.list]` Default `page` is 1 and default `pageSize` is 24 when unspecified.
+- `[product-mock-adapter.ts:MockProductAdapter.listByCollection]` Always caps returned collections to at most 8 items via `.slice(0, 8)`.
+- `[product-mock-adapter.ts:MockProductAdapter.getFilterCounts]` Excludes zero-count options and sorts counts descending.
+- In-memory data is never mutated; filtering operates on non-destructive array passes.
 
 ## Side Effects
 
-- Pure in-memory — no network calls, no disk access, no external state mutations.
+- None. Pure in-memory operations with no network or persistent disk storage.
 
 ## Verification
 

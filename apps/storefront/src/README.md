@@ -4,16 +4,21 @@
 
 React + TypeScript single-page application for the Muftahy digital marketplace storefront. Vite-bundled, RTL/LTR bilingual (Arabic + English), dark/light themed. The entry point (`main.tsx`) mounts `<App>` which wraps a `BrowserRouter` in `AppProviders` (theme + i18n + query client). All routes are under `/:lang/...` and are rendered inside `RootLayout` which provides the sticky `SiteHeader` and `SiteFooter` on every page.
 
+## Local Interface & Invariants
+
+- `App()` — root application component providing `AppProviders` and `RouterProvider`.
+- `[main.tsx]` — application entry point rendering `<App />` into DOM `#root` within React `StrictMode` and registering global window error handlers.
+
 ## Subdirectories & System Boundaries
 
-- **app**: [`./app/README.md`](./app/README.md) — Provider composition (`AppProviders`), router definition, `RootLayout`, `ThemeProvider`, `I18nProvider`, `QueryProvider`, `queryClient`, `useTheme`.
-- **components**: [`./components/README.md`](./components/README.md) — App-wide shared components: `SiteHeader` (sticky nav), `SiteFooter`, `BrandLogoMark`, `LanguageSwitcher`, `ThemeToggle`.
-- **features**: [`./features/README.md`](./features/README.md) — Domain feature modules: `cart`, `design`, `home`, `products`.
-- **routes**: [`./routes/README.md`](./routes/README.md) — Thin route entry points: `HomeRoute`, `ProductsRoute`, `SearchRoute`, `CartRoute`, `DesignRoute`.
+- **app**: [`./app/README.md`](./app/README.md) — Application bootstrap: `AppProviders`, `router`, `RootLayout`, `ThemeProvider`, `I18nProvider`, `QueryProvider`, and `queryClient`.
+- **components**: [`./components/README.md`](./components/README.md) — App-wide shared components: `SiteHeader`, `SiteFooter`, `BrandLogoMark`, `LanguageSwitcher`, `ThemeToggle`, `Breadcrumbs`.
+- **features**: [`./features/README.md`](./features/README.md) — Feature domains: `cart`, `design`, `home`, and `products`.
+- **routes**: [`./routes/README.md`](./routes/README.md) — Route entry points: `HomeRoute`, `ProductsRoute`, `ProductDetailRoute`, `SearchRoute`, `CartRoute`, `DesignRoute`.
 
 ## Global Invariants
 
-- All routes are under `/:lang` prefix; invalid or missing locale redirects to `/en/products`. Locale is URL-authoritative — it is never stored in React state or `localStorage`.
+- All routes are scoped under `/:lang` prefix; invalid or missing locale redirects to `/en/products`. Locale is URL-authoritative — it is never stored in React state or `localStorage`.
 - `document.documentElement.lang` and `.dir` are set exclusively by `RootLayout` based on the `:lang` URL param.
 - Dependency direction: `routes → features → packages/*`. Features never import from other features. `packages/ui` imports from no other workspace package.
 - All monetary amounts are stored in minor units (integers); formatting goes through `@workspace/domain/formatters/money`. No floating-point arithmetic for money.

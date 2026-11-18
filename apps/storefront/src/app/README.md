@@ -2,37 +2,44 @@
 
 ## Overview
 
-Application bootstrap: provider composition, router definition, root layout, and theme/i18n infrastructure. This directory owns the app-level concerns that wrap the entire React tree; nothing in `features/` or `components/` imports from here except through React context.
+Application bootstrap: provider composition, router definition, root layout, and theme/i18n infrastructure. This directory owns the top-level application concerns that wrap the React component tree; feature modules and components consume these capabilities via React context.
 
 ## Interface
 
-- `AppProviders(props: AppProvidersProps)` — composes `ThemeProvider > I18nProvider > QueryProvider` in that order. The single mount point for all global context.
-- `router` — `BrowserRouter` instance created via `createBrowserRouter`. Route table:
+- `AppProviders(props: AppProvidersProps)` — composes `ThemeProvider > I18nProvider > QueryProvider` in that strict order. Single mount point for application context.
+- `router` — `BrowserRouter` instance created via `createBrowserRouter`. Route hierarchy:
   - `/` → redirect to `/en`
-  - `/:lang` → `RootLayout` with children: `HomeRoute`, `ProductsRoute` (`products`), `SearchRoute` (`search`), `CartRoute` (`cart`), `DesignRoute` (`design`), catch-all → redirect to `products`.
-  - `*` → redirect to `/en/products`.
-- `RootLayout()` — validates `:lang` param against `isSupportedLanguage()`; redirects invalid locales to `/en/products`. Sets `document.documentElement.lang` and `.dir` on locale change. Renders `SiteHeader`, `<main>`, `<Outlet>`, and `SiteFooter`.
-- `ThemeProvider(props: ThemeProviderProps)` — reads/writes theme preference from `localStorage` (key: `'muftahy-theme'`). Applies `'dark'` or `'light'` class to `document.documentElement`. Respects `prefers-color-scheme` media query when theme is `'system'`.
-- `I18nProvider(props: I18nProviderProps)` — wraps `I18nextProvider` using the shared `i18n` instance from `@workspace/i18n/config`.
-- `QueryProvider(props: QueryProviderProps)` — wraps `QueryClientProvider` with the shared `queryClient`. Accepts an optional `client` prop for test injection.
-- `queryClient: QueryClient` — singleton with `staleTime: 5 min`, `refetchOnWindowFocus: false`, `retry: 1`.
-- `Theme` — `'dark' | 'light' | 'system'`
-- `ThemeProviderState` — `{ theme, resolvedTheme, setTheme }`
-- `ThemeContext` — React context for theme state.
-- `useTheme(): ThemeProviderState` — hook; throws if used outside `ThemeProvider`.
+  - `/:lang` → `RootLayout` with children:
+    - `/` (index) → `HomeRoute`
+    - `products` → `ProductsRoute`
+    - `products/:slug` → `ProductDetailRoute`
+    - `search` → `SearchRoute`
+    - `cart` → `CartRoute`
+    - `design` → `DesignRoute`
+    - `*` → `CatchAllRedirect`
+  - `*` → redirect to `/en/products`
+- `CatchAllRedirect()` — handles unmatched sub-routes under `/:lang/*`, redirecting to `/:lang/products`.
+- `RootLayout()` — validates `:lang` route parameter against `isSupportedLanguage()`; redirects unsupported locales to `/en/products`. Synchronizes `document.documentElement.lang` and `.dir` on locale changes. Renders `SiteHeader`, main landmark, `<Outlet />`, and `SiteFooter`.
+- `ThemeProvider(props: ThemeProviderProps)` — reads and writes theme preferences to `localStorage` (`muftahy-theme`). Synchronizes `dark`/`light` classes on `document.documentElement`.
+- `I18nProvider(props: I18nProviderProps)` — initializes `react-i18next` with shared config.
+- `QueryProvider(props: QueryProviderProps)` — wraps child tree in TanStack `QueryClientProvider` with `queryClient`.
+- `queryClient: QueryClient` — shared query cache singleton (5-minute stale time, 1 retry).
+- `Theme` — `'dark' | 'light' | 'system'`.
+- `ThemeProviderState` — `{ theme, resolvedTheme, setTheme }`.
+- `useTheme(): ThemeProviderState` — hook returning active theme state.
 
 ## Invariants
 
-- Provider nesting order is fixed: `ThemeProvider` must be outermost so theme class is set on `<html>` before any component renders.
-- `RootLayout` is the only place that writes `document.documentElement.lang` and `document.documentElement.dir`; locale is always derived from the URL `:lang` param, never from global state.
-- `ThemeProvider` falls back to `defaultTheme` if `localStorage` is unavailable or throws.
-- `useTheme` must be used within `ThemeProvider` or it throws.
+- `[providers.tsx:AppProviders]` Nesting order is immutable: `ThemeProvider` must wrap `I18nProvider` and `QueryProvider` to ensure HTML theme classes exist before DOM rendering.
+- `[root-layout.tsx:RootLayout]` `RootLayout` is the sole writer of `document.documentElement.lang` and `.dir`.
+- `[theme-provider.tsx:ThemeProvider]` Gracefully falls back to default theme if `localStorage` access is blocked.
+- `[theme-context.ts:useTheme]` Throws descriptive error if invoked outside `ThemeProvider`.
 
 ## Side Effects
 
-- `ThemeProvider`: reads/writes `localStorage` key `'muftahy-theme'`; toggles `dark`/`light` class on `<html>`; listens to `prefers-color-scheme` media query.
-- `RootLayout`: writes `document.documentElement.lang` and `.dir` on locale change.
-- `QueryProvider`: instantiates the global `QueryClient` cache.
+- `[theme-provider.tsx:localStorage]` Reads/writes `localStorage` key `'muftahy-theme'`; toggles `dark`/`light` classes on `<html>`.
+- `[root-layout.tsx:document.documentElement]` Sets `lang` and `dir` attributes on the root HTML node.
+- `[query-client.ts:QueryClient]` Instantiates and manages in-memory HTTP cache.
 
 ## Verification
 

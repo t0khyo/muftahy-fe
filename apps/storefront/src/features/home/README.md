@@ -2,23 +2,23 @@
 
 ## Overview
 
-The home page feature, served at `/:lang` (e.g. `/en`, `/ar`). It renders a configurable sequence of marketing sections — hero, category tiles, platform strip, product rails, trust strip, and FAQ — driven entirely by `home.config.ts`. Section ordering, visibility, and content references are all controlled from that single config object without touching component code.
-
-## Subdirectories & Boundaries
-
-- **components**: [`./components/README.md`](./components/README.md) — `HomePage`, `HeroSection`, `CategoryTiles`, `PlatformStrip`, `TrustStrip`, `FaqSection`, `HeroIcons`.
-- **lib**: Utility helpers such as `resolve-locale-href.ts`.
+The home page feature, served at `/:lang` (e.g. `/en`, `/ar`). It renders a configurable sequence of marketing sections — hero, category tiles, platform strip, product rails, trust strip, bundles, how it works, social proof, support, and FAQ — driven entirely by `home.config.ts`. Section ordering, visibility, and content references are all controlled from that single configuration object without touching component code.
 
 ## Interface
 
+### Configuration & Symbols
 - `DEFAULT_HOME_CONFIG: HomeConfig` — the default section sequence used by `HomeRoute` (Hero & Trust Strip, Best Sellers, Bundles, Categories, Platforms, How It Works, Social Proof, FAQ, Support).
-- `DEFAULT_HERO_TRUST_CLAIMS: HeroTrustClaim[]` — the standard triad of micro-proof claims framing the hero CTA.
+- `DEFAULT_HERO_TRUST_CLAIMS: HeroTrustClaim[]` — standard triad of micro-proof claims framing the hero CTA.
 - `HomeConfig` — `{ sections: HomeSection[] }`.
-- `HomeSectionType` — `'hero' | 'category-tiles' | 'platform-strip' | 'product-rail' | 'trust-strip' | 'faq' | 'bundles' | 'how-it-works' | 'social-proof' | 'support'`.
-- `HeroSectionConfig` — `{ id: string; type: 'hero'; enabled: boolean; primaryCtaHref: string; secondaryCtaHref: string; badgeKey?: string; badgeHref?: string; trustClaims?: HeroTrustClaim[] }`.
-- `HeroTrustClaim` — `{ id: string; icon: 'zap' | 'shield-check' | 'headphones'; labelKey: string }`.
-- `CategoryTilesSectionConfig`, `PlatformStripSectionConfig`, `ProductRailSectionConfig`, `TrustStripSectionConfig`, `FaqSectionConfig` — per-type config shapes.
+- `HomeSectionType` — `'hero' | 'category-tiles' | 'platform-strip' | 'product-rail' | 'trust-strip' | 'faq' | 'bundles' | 'how-it-works' | 'social-proof' | 'support' | 'browse'`.
+- `HomeSection` — union of all section configuration interfaces.
+- `HeroSectionConfig`, `BrowseSectionConfig`, `BundlesSectionConfig`, `CategoryTilesSectionConfig`, `PlatformStripSectionConfig`, `ProductRailSectionConfig`, `TrustStripSectionConfig`, `HowItWorksSectionConfig`, `SocialProofSectionConfig`, `SupportSectionConfig`, `FaqSectionConfig`.
 - `BaseSectionConfig` — `{ id: string; type: HomeSectionType; enabled: boolean }`.
+- `HeroTrustClaim` — `{ id: string; icon: 'zap' | 'shield-check' | 'headphones'; labelKey: string }`.
+
+### Subdirectories
+- **components**: [`./components/README.md`](./components/README.md) — Presentational section components (`HomePage`, `HeroSection`, `CategoryTiles`, `PlatformStrip`, `TrustStrip`, `FaqSection`, `HowItWorksSection`, `SocialProofSection`, `SupportSection`, `BundlesSection`, `BrowseSection`).
+- **lib**: [`./lib/README.md`](./lib/README.md) — Utility helpers such as `resolveLocaleHref`.
 
 ## Developer Guide
 
@@ -34,7 +34,7 @@ Ensure the collection exists in `ProductCollection` (`packages/domain`), then ad
 ```
 
 ### Product Cards
- 
+
 Rails render the full production `ProductCard` from `features/products/components/product-card.tsx`.
 
 ### Copy Keys
@@ -54,12 +54,12 @@ The following routes linked from the home page do not yet have route handlers:
 
 ## Invariants
 
-- Section render order matches `sections` array order exactly.
-- Product rail sections require the `renderProductRail` render prop from `HomeRoute` to actually render.
+- `[home.config.ts:DEFAULT_HOME_CONFIG]` Section render order matches `sections` array order exactly.
+- `[home.config.ts:DEFAULT_HERO_TRUST_CLAIMS]` Trust claim icons map strictly to `'zap' | 'shield-check' | 'headphones'`.
 
 ## Side Effects
 
-- `HomePage` sets page `<title>` and `<meta description>` via React 19 head metadata.
+- None in config; child components set `<title>` and `<meta name="description">` via React 19 native head metadata.
 
 ## Verification
 

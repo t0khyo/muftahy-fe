@@ -6,21 +6,21 @@ Global site footer rendered by `RootLayout` at the bottom of every page. Display
 
 ## Interface
 
-- `SiteFooter(props: SiteFooterProps)` — the footer landmark element. `className?: string` for additional container classes.
+- `SiteFooter(props: SiteFooterProps)` — the footer landmark element with links grid and localized bottom strip. `className?: string` for additional container styling.
 - `ThemeSwitcher(props: ThemeSwitcherProps)` — three-button segmented control (Light / Dark / System) that reads and writes `useTheme()` context.
 - `LanguageSwitcher(props: LanguageSwitcherProps)` — ghost button that navigates to the equivalent URL in the opposite locale (`en` ↔ `ar`) while preserving the current path, search params, and hash.
 
 ## Invariants
 
-- Copyright year is computed at render time from `new Date().getFullYear()` — no hardcoded year.
-- `LanguageSwitcher` preserves the full URL (path + search + hash) when switching locale.
-- All i18n strings come from the `'footer'` and `'common'` namespaces — no hardcoded strings.
-- `ThemeSwitcher` applies `aria-pressed` to the active option for accessible state communication.
+- `[site-footer.tsx:getFullYear]` Copyright year is computed dynamically at render time from `new Date().getFullYear()` — no hardcoded static year.
+- `[language-switcher.tsx:preserveUrl]` `LanguageSwitcher` preserves the full URL (pathname + search query + hash) when toggling language locale.
+- `[site-footer.tsx:i18n]` All strings originate from the `'footer'` and `'common'` namespaces.
+- `[theme-switcher.tsx:aria-pressed]` Applies `aria-pressed` to the currently active theme button for accessible assistive state communication.
 
 ## Side Effects
 
-- `LanguageSwitcher`: calls React Router `navigate()` to change locale — triggers a full route re-render.
-- `ThemeSwitcher`: calls `setTheme()` from `ThemeContext`, which writes to `localStorage` and toggles the `dark`/`light` class on `<html>`.
+- `[language-switcher.tsx:navigate]` Calls React Router `navigate()` to switch active language URL prefix.
+- `[theme-switcher.tsx:setTheme]` Calls `setTheme()` from `ThemeContext`, writing to `localStorage` and toggling `dark`/`light` classes on `<html>`.
 
 ## Verification
 

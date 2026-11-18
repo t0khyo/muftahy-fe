@@ -2,40 +2,43 @@
 
 ## Overview
 
-UI components, display types, and static sample data for the product catalog. The primary entry point is `ProductCard`, which renders individual product listings in both a full-featured variant (accepting a domain `Product` object) and a template variant (accepting a `ProductCardData` object). Supporting components handle the add-to-cart flow, plan selection, platform display, loading skeletons, and the scrollable rail layout used on the home page.
+UI components, filter bars, icons, display types, and static sample data for the product catalog. The primary entry point is `ProductCard`, which renders individual product listings in both a full-featured variant (accepting a domain `Product` object) and a template variant (accepting a `ProductCardData` object). Supporting components handle catalog filtering, category selection, add-to-cart flows, plan selection modal sheets, platform icons, loading skeletons, and scrollable recommendation rails.
 
 ## Interface
 
-- `ProductCard(props: ProductCardProps)` — renders an accessible product card article supporting both domain `Product` and template `ProductCardData` input modes. Accepts `renderLink` and `renderImage` render props for framework-specific overrides.
-- `ProductCardProps` — union of `BaseProductCardProps & { card: ProductCardData }` and `BaseProductCardProps & { product: Product }`.
-- `ProductCardData` — template-format card data shape (slug, name, plans, badge, platforms, pricing, etc.).
-- `ProductCardTranslations` — optional override strings for all localizable labels in `ProductCard`.
-- `ProductCardPlan` — `{ id, label, duration, price, activationType }` — a single purchasable plan.
-- `ProductBadge` — `'warranty' | 'offer' | 'new'`
-- `ProductType` — `'subscription' | 'service'`
-- `ActivationType` — `'personal_invite' | 'ready_account'`
-- `Platform` — `'windows' | 'mac' | 'android' | 'ios' | 'web'`
-- `AddToCartButton(props: AddToCartButtonProps)` — primary CTA button; fires `onAddToCart` directly for single-plan products, opens `PlanPicker` for multi-plan products. Shows a 1.5-second "Added!" confirmation state.
-- `PlanPicker(props: PlanPickerProps)` — modal bottom-sheet for selecting among multiple plans before adding to cart. Closes on Escape or backdrop click.
+### Components
+- `ProductCard(props: ProductCardProps)` — renders an accessible product card article supporting both domain `Product` and template `ProductCardData` input modes. Accepts `renderLink` and `renderImage` render props.
+- `ProductCardSkeleton(props: { className?: string })` — loading skeleton mirroring the `ProductCard` structure.
+- `ProductGrid(props: ProductGridProps)` — responsive grid (1–4 columns) rendering products via `ProductCard`.
+- `ProductRail(props: ProductRailProps)` — horizontally scrollable snap rail for a named `ProductCollection`. Shows `ProductRailSkeleton` while loading.
+- `ProductRailSkeleton(props: ProductRailSkeletonProps)` — skeleton placeholder row for loading rails.
+- `AddToCartButton(props: AddToCartButtonProps)` — primary CTA button; adds single-plan items directly or triggers `PlanPicker` for multi-plan products. Shows transient confirmation state.
+- `CategoryRow(props: CategoryRowProps)` — horizontally scrolling pill list of catalog categories with active selection highlight.
+- `FeatureTile(props: FeatureTileProps)` — featured highlight tile for promotions and key catalog features.
+- `FilterGroup(props: FilterGroupProps)` — collapsible accordion group for filter facets (checkboxes, radios, range sliders).
+- `FilterSheet(props: FilterSheetProps)` — mobile slide-over drawer containing the full filter controls.
+- `FilterSidebar(props: FilterSidebarProps)` — desktop sidebar containing facet filter groups, price inputs, and stock toggles.
+- `ListingToolbar(props: ListingToolbarProps)` — sorting dropdown, result counts, and mobile filter toggle button bar.
+- `PlanPicker(props: PlanPickerProps)` — modal bottom-sheet for selecting among multiple plans before adding to cart.
 - `PlatformsRow(props: PlatformsRowProps)` — normalizes `Platform[]` to `DisplayPlatform[]` and renders icon pills with CSS tooltips.
-- `ProductGrid(props: ProductGridProps)` — responsive grid (1–4 columns) that fetches products via `useProducts` and renders a `ProductCard` per product.
-- `ProductRail(props: ProductRailProps)` — horizontally scrollable snap rail for a named `ProductCollection`. Shows `ProductRailSkeleton` while loading and `ProductCard` for each loaded product.
-- `ProductCardSkeleton` — full-card loading skeleton mirroring `ProductCard` layout.
-- `ProductRailSkeleton(props: ProductRailSkeletonProps)` — row of `ProductCardSkeleton` skeletons shown while a rail loads.
-- `formatPrice(raw, locale): string` — formats a numeric price string using `Intl.NumberFormat` with Western digits for both Arabic and English locales.
-- `SAMPLE_PRODUCTS: ProductCardData[]` — static sample data (Canva Pro, Google AI Pro, Microsoft 365) used by `DesignPage` for component showcasing. Contains obviously placeholder keys only.
+- `IconBox`, `IconShield`, `IconTag`, `IconSparkles`, `IconRefresh`, `IconUserCheck`, `IconStarFilled`, `IconStarOutline`, `IconCircleCheck`, `IconShoppingCartPlus`, `IconShoppingBag`, `IconGlobe`, `IconPlatformWindows`, `IconPlatformMac`, `IconPlatformAndroid`, `IconClose`, `IconCheck`, `IconPlatformSteam`, `IconPlatformPlaystation`, `IconPlatformXbox`, `IconPlatformNintendo`, `IconPlatformPc` (from `./icons`) — SVG catalog icons.
+- `formatPrice(raw: string | number, locale?: string): string` — formats monetary amounts with Western digits (`ar-u-nu-latn`).
+- `SAMPLE_PRODUCTS: ProductCardData[]` — static sample products with obviously fake license keys for testing and showcases.
+
+### Subdirectories
+- **detail**: [`./detail/README.md`](./detail/README.md) — Product detail page components (media gallery, sticky buy box, info accordions, related rail, mobile sticky bar).
 
 ## Invariants
 
-- `ProductCard` accepts either `card` or `product` prop — never both simultaneously (enforced by TypeScript discriminated union).
-- `formatPrice` always uses `ar-u-nu-latn` for Arabic locale to ensure Western digits (0-9) are rendered.
-- `PlatformsRow` normalizes `'mac'` and `'ios'` to the unified `'apple'` display platform.
-- All mock/sample product keys and codes are obviously fake (no real license keys appear in source).
+- `[product-card.tsx]` Accepts either `card` or `product` prop — never both simultaneously (enforced by TypeScript discriminated union).
+- `[utils.ts:formatPrice]` Uses `ar-u-nu-latn` for Arabic locale to enforce Western digits (0-9).
+- `[platforms-row.tsx]` Normalizes `'mac'` and `'ios'` to unified `'apple'` display platform.
+- `[sample-data.ts]` Mock/sample keys are obviously fake (`XXXXX-XXXXX-XXXXX`).
 
 ## Side Effects
 
-- `ProductGrid` and `ProductRail` trigger TanStack Query fetches on mount via their respective hooks.
-- `AddToCartButton` calls `onAddToCart` callback (which callers wire to `useCartStore`) — no direct store writes.
+- `[product-grid.tsx]` and `[product-rail.tsx]` trigger TanStack Query data fetching via hooks on mount.
+- `[add-to-cart-button.tsx]` invokes `onAddToCart` callback to delegate store mutations to caller.
 
 ## Verification
 

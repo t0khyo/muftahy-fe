@@ -67,19 +67,19 @@ Use the `endActions` slot: `<SiteHeader endActions={<UserAccountMenu />} />`.
 
 ## Invariants
 
-- At most one panel (search, mobile menu, cart) is open at any time; opening one closes all others.
-- `MobileMenu` locks body scroll (`data-header-locked` attribute on `document.body`) while open; cleanup is guaranteed via effect return.
-- `SearchPanel` calls `useProducts` only when `isOpen && query.trim().length > 0`.
-- The scroll-border state is driven by `IntersectionObserver` on `#nav-sentinel` (a 1px sentinel placed above the header in `RootLayout`), not a scroll listener.
-- Direction-sensitive icons (arrows, chevrons) use `rtl:rotate-180` for RTL-aware flipping.
-- Cart prices are formatted through `formatMoneyFromMinor` from `@workspace/domain`; no inline currency concatenation.
+- `[site-header.tsx:activePanel]` At most one panel (search, mobile menu, cart) is open at any time; opening one closes all others.
+- `[mobile-menu.tsx:data-header-locked]` `MobileMenu` locks body scroll (`data-header-locked` attribute on `document.body`) while open; cleanup is guaranteed via effect return.
+- `[search-panel.tsx:useProducts]` `SearchPanel` calls `useProducts` only when `isOpen && query.trim().length > 0`.
+- `[site-header.tsx:IntersectionObserver]` The scroll-border state is driven by `IntersectionObserver` on `#nav-sentinel` (a 1px sentinel placed above the header in `RootLayout`), not a scroll listener.
+- `[site-header.tsx:rtl]` Direction-sensitive icons (arrows, chevrons) use `rtl:rotate-180` for RTL-aware flipping.
+- `[cart-button.tsx:formatMoneyFromMinor]` Cart prices are formatted through `formatMoneyFromMinor` from `@workspace/domain`; no inline currency concatenation.
 
 ## Side Effects
 
-- `MobileMenu` and `SearchPanel`: set/remove `data-header-locked` attribute on `document.body` while open (used by CSS to prevent body scroll).
-- `SearchPanel`: triggers a TanStack Query fetch for live product search results.
-- `CartButton`: reads `useCartStore` for item count and subtotal; no store mutations.
-- `SiteHeader`: attaches an `IntersectionObserver` to `#nav-sentinel` on mount.
+- `[mobile-menu.tsx:document.body]` and `[search-panel.tsx:document.body]`: set/remove `data-header-locked` attribute on `document.body` while open (used by CSS to prevent body scroll).
+- `[search-panel.tsx:useProducts]`: triggers a TanStack Query fetch for live product search results.
+- `[cart-button.tsx:useCartStore]`: reads `useCartStore` for item count and subtotal; no store mutations.
+- `[site-header.tsx:IntersectionObserver]`: attaches an `IntersectionObserver` to `#nav-sentinel` on mount.
 
 ## Verification
 

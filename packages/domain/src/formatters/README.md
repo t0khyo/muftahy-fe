@@ -2,37 +2,34 @@
 
 ## Overview
 
-Locale-aware formatting utilities for money, numbers, and dates. All formatters delegate to the browser/Node `Intl` API and enforce Western digits (0-9) even when the active locale is Arabic, by injecting the Unicode extension `-u-nu-latn` via `locale.ts`. Currency amounts must be passed in minor units or as pre-divided major units; formatters never perform money arithmetic.
+Locale-aware formatting utilities for money, numbers, and dates. All formatters delegate to the standard `Intl` API and enforce Western digits (0-9) even when the active locale is Arabic, by injecting the Unicode extension `-u-nu-latn` via `locale.ts`. Currency amounts are handled in minor units or pre-divided major units; formatters never perform money arithmetic.
 
 ## Interface
 
-- `locale.ts`
-  - `normalizeLocaleWithWesternDigits(locale?: string): string` — appends `-u-nu-latn` to Arabic locale tags that lack a numeral system extension
-- `money.ts`
-  - `SUPPORTED_CURRENCIES` — `readonly` tuple of supported ISO 4217 codes: `EGP`, `USD`, `SAR`, `AED`, `QAR`, `KWD`, `BHD`, `OMR`
-  - `CURRENCY_DECIMALS: Record<SupportedCurrency, number>` — minor-unit exponent per currency (2 for most, 3 for KWD/BHD/OMR)
-  - `SupportedCurrency` — union type derived from `SUPPORTED_CURRENCIES`
-  - `Money` — interface `{ amountMinor: number; currency: SupportedCurrency }`
-  - `FormatMoneyOptions` — interface `{ currency, locale?, currencyDisplay? }`
-  - `formatMoney(amount: number, options: FormatMoneyOptions): string` — formats a **major-unit** amount
-  - `formatMoneyFromMinor(amountMinor: number, currency: SupportedCurrency, locale?: string): string` — converts minor to major then formats
-- `number.ts`
-  - `FormatNumberOptions` — extends `Intl.NumberFormatOptions` with optional `locale`
-  - `formatNumber(value: number, options?: FormatNumberOptions): string`
-- `date.ts`
-  - `FormatDateOptions` — extends `Intl.DateTimeFormatOptions` with optional `locale`
-  - `formatDate(value: Date | number | string, options?: FormatDateOptions): string`
+- `[locale.ts:normalizeLocaleWithWesternDigits]` `(locale?: string): string` — appends `-u-nu-latn` to Arabic locale tags that lack a numeral system extension
+- `[money.ts:SUPPORTED_CURRENCIES]` `readonly ['EGP', 'USD', 'SAR', 'AED', 'QAR', 'KWD', 'BHD', 'OMR']` — supported ISO 4217 currency list
+- `[money.ts:SupportedCurrency]` `(typeof SUPPORTED_CURRENCIES)[number]` — union of supported currency codes
+- `[money.ts:CURRENCY_DECIMALS]` `Record<SupportedCurrency, number>` — minor-unit exponent per currency (3 for KWD, BHD, OMR; 2 for all others)
+- `[money.ts:Money]` `interface { amountMinor: number; currency: SupportedCurrency }` — money value structure
+- `[money.ts:FormatMoneyOptions]` `interface { currency: SupportedCurrency; locale?: string; currencyDisplay?: 'symbol' | 'narrowSymbol' | 'code' | 'name' }`
+- `[money.ts:formatMoney]` `(amount: number, options: FormatMoneyOptions): string` — formats a major-unit amount with localized currency symbol
+- `[money.ts:formatMoneyFromMinor]` `(amountMinor: number, currency: SupportedCurrency, locale?: string): string` — converts minor units to major units and formats
+- `[number.ts:FormatNumberOptions]` `interface FormatNumberOptions extends Intl.NumberFormatOptions { locale?: string }`
+- `[number.ts:formatNumber]` `(value: number, options?: FormatNumberOptions): string` — formats numbers with Western digits
+- `[date.ts:FormatDateOptions]` `interface FormatDateOptions extends Intl.DateTimeFormatOptions { locale?: string }`
+- `[date.ts:formatDate]` `(value: Date | number | string, options?: FormatDateOptions): string` — formats dates with Western digits
 
 ## Invariants
 
-- Western digits (0-9) are always used, even for `ar` locale — enforced by `normalizeLocaleWithWesternDigits`.
-- `formatMoneyFromMinor` performs division by `10^decimals`; callers must not pass already-divided amounts to this function.
-- `formatMoney` accepts major-unit amounts only.
-- Supported currencies are fixed at build time via the `SUPPORTED_CURRENCIES` constant; adding a currency requires updating both the tuple and `CURRENCY_DECIMALS`.
+- `[locale.ts:normalizeLocaleWithWesternDigits]` Enforces Western digits (0-9) by appending `-u-nu-latn` if `locale` starts with `ar` and lacks `-u-nu-`; defaults fallback locale to `'en'`.
+- `[money.ts:CURRENCY_DECIMALS]` Maps decimals to 3 for KWD, BHD, OMR, and 2 for EGP, USD, SAR, AED, QAR.
+- `[money.ts:formatMoneyFromMinor]` Calculates major units as `amountMinor / 10^(CURRENCY_DECIMALS[currency] ?? 2)` before delegating to `formatMoney`.
+- `[money.ts:formatMoney]` Requires major-unit amounts; minimum and maximum fraction digits default to currency decimals.
+- `[date.ts:formatDate]` Normalizes non-Date values via `new Date(value)` and delegates to `Intl.DateTimeFormat` with Western digits.
 
 ## Side Effects
 
-- No network calls, no disk access. `Intl` APIs may read the host's ICU locale data.
+- None. Formatting operations are pure and synchronous.
 
 ## Verification
 

@@ -2,27 +2,27 @@
 
 ## Overview
 
-Defines the `ProductService` TypeScript interface — the single seam between the application and product data. All hooks and components that need product data depend on this interface, never on a concrete implementation. The factory (`packages/api/src/factory.ts`) selects the active implementation at runtime.
+Defines the `ProductService` TypeScript interface — the primary architectural seam between the frontend application and product data. All hooks and components that need product data depend on this interface, never on a concrete adapter directly. The factory selects the active implementation at runtime.
 
 ## Interface
 
-- `ProductService` — interface with five async methods:
-  - `list(filter?: ProductListFilter): Promise<Product[]>` — returns all products, optionally filtered by category, platform, region, featured flag, or free-text search
-  - `listByCollection(collection: ProductCollection): Promise<Product[]>` — returns up to 8 products for a named collection (`best-sellers`, `deals`, `new`)
-  - `getBySlug(slug: string): Promise<Product | null>` — lookup by URL slug; returns `null` when not found
-  - `getById(id: string): Promise<Product | null>` — lookup by opaque ID; returns `null` when not found
-  - `getSampleLicenseKey(productId: string): Promise<string>` — returns an obviously fake placeholder key for display purposes
+- `[product-service.ts:ProductService]` `interface ProductService`
+  - `[product-service.ts:ProductService.list]` `list(filter?: ProductListFilter): Promise<ProductListResult>` — returns paginated product result matching criteria
+  - `[product-service.ts:ProductService.listByCollection]` `listByCollection(collection: ProductCollection): Promise<Product[]>` — returns products for a named collection ('best-sellers', 'deals', 'new')
+  - `[product-service.ts:ProductService.getFilterCounts]` `getFilterCounts(filter?: ProductListFilter): Promise<ProductFilterCounts>` — returns aggregated facet counts for filters
+  - `[product-service.ts:ProductService.getBySlug]` `getBySlug(slug: string): Promise<Product | null>` — lookup by URL slug; returns `null` when not found
+  - `[product-service.ts:ProductService.getById]` `getById(id: string): Promise<Product | null>` — lookup by ID; returns `null` when not found
+  - `[product-service.ts:ProductService.getSampleLicenseKey]` `getSampleLicenseKey(productId: string): Promise<string>` — returns an obfuscated mock key string
 
 ## Invariants
 
-- All methods return Promises; callers must not expect synchronous results.
-- `list` with no filter must return all available products.
-- `getBySlug` and `getById` return `null` (never throw) when a product is absent.
-- `getSampleLicenseKey` must return an obviously fake key (e.g., `XXXXX-XXXXX-XXXXX`); real keys must never appear here.
+- All methods return Promises; asynchronous execution is guaranteed across all implementations.
+- `getBySlug` and `getById` return `null` (never throw) when the requested entity is absent.
+- `getSampleLicenseKey` returns a simulated key for reveal/copy interaction tests without exposing actual licenses.
 
 ## Side Effects
 
-- Interface only — no side effects are defined here. Side effects are delegated to implementations.
+- Interface definitions only. Concrete side effects are delegated to adapter implementations.
 
 ## Verification
 
