@@ -136,7 +136,7 @@ describe("CartRoute (Shopping Cart Page)", () => {
       screen.getByRole("heading", { name: /ملخص الطلب/i })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: /لإتمام الشراء/i })
+      screen.getByRole("button", { name: /إتمام الشراء/i })
     ).toBeInTheDocument()
   })
 })

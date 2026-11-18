@@ -122,7 +122,7 @@
     "decreaseQuantityFor": "تقليل كمية {{product}} - {{plan}}",
     "removeItemFor": "إزالة {{product}} - {{plan}} من السلة",
     "orderSummary": "ملخص الطلب",
-    "proceedToCheckout": "لإتمام الشراء",
+    "proceedToCheckout": "إتمام الشراء",
     "continueShopping": "متابعة التسوق",
     "freeInstantDelivery": "تسليم فوري مجاني",
     "instantDeliveryDesc": "يتم إظهار المفاتيح فور الدفع وإرسالها إلى بريدك الإلكتروني",

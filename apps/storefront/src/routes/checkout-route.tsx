@@ -10,7 +10,6 @@ import {
   CreditCard,
   Eye,
   EyeOff,
-  Gamepad2,
   Headphones,
   KeyRound,
   Lock,
@@ -118,7 +117,9 @@ export function CheckoutRoute() {
       clearCart()
       setIsSubmitting(false)
       setIsOrderPlaced(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     }, 600)
   }
 

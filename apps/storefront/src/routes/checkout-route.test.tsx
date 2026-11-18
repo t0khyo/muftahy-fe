@@ -49,7 +49,7 @@ describe('CheckoutRoute (Digital Goods Checkout)', () => {
     renderCheckoutRoute('/en/checkout')
 
     expect(screen.getByRole('heading', { name: /your bag is empty/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /explore products/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /explore products/i })).toBeInTheDocument()
   })
 
   it('renders checkout form, validates inputs, and processes order with reveal-and-copy key pattern', async () => {

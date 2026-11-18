@@ -71,4 +71,14 @@ if (typeof window !== 'undefined') {
       value: MockResizeObserver,
     })
   }
+
+  if (typeof window.scrollTo === 'undefined' || !window.scrollTo) {
+    Object.defineProperty(window, 'scrollTo', {
+      writable: true,
+      configurable: true,
+      value: () => {},
+    })
+  } else {
+    window.scrollTo = () => {}
+  }
 }
