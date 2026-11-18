@@ -101,6 +101,9 @@ export function ProductDetailPage() {
         planName: selectedPlan.name,
         priceMinor: selectedPlan.price.amountMinor,
         currency: selectedPlan.price.currency,
+        platform: product.platform,
+        region: product.region,
+        coverImage: product.coverImage,
       },
       1,
     )

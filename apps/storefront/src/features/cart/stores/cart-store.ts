@@ -11,6 +11,9 @@ export interface CartItem {
   priceMinor: number
   currency: SupportedCurrency
   quantity: number
+  platform?: string
+  region?: string
+  coverImage?: string
 }
 
 export interface CartInputItem {
@@ -22,6 +25,9 @@ export interface CartInputItem {
   planName?: { en: string; ar: string } | string
   priceMinor: number
   currency?: SupportedCurrency
+  platform?: string
+  region?: string
+  coverImage?: string
 }
 
 export interface CartState {
@@ -58,6 +64,9 @@ export const useCartStore = create<CartState>((set) => ({
         priceMinor: item.priceMinor,
         currency: item.currency ?? 'EGP',
         quantity: Math.max(1, quantity),
+        platform: item.platform,
+        region: item.region,
+        coverImage: item.coverImage,
       }
 
       const nextItems = [...state.items, newItem]

@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { CatchAllRedirect } from './catch-all-redirect'
 import { CartRoute } from '../routes/cart-route'
+import { CheckoutRoute } from '../routes/checkout-route'
 import { DesignRoute } from '../routes/design-route'
 import { HomeRoute } from '../routes/home'
 import { ProductDetailRoute } from '../routes/product-detail-route'
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
       {
         path: 'cart',
         element: <CartRoute />,
+      },
+      {
+        path: 'checkout',
+        element: <CheckoutRoute />,
       },
       {
         path: 'design',

@@ -226,6 +226,9 @@ export function ProductCard(props: ProductCardProps) {
           planName: summary.name,
           priceMinor: summary.price.amountMinor,
           currency: summary.price.currency,
+          platform: props.product.platform,
+          region: props.product.region,
+          coverImage: props.product.coverImage,
         });
       }
     } else if ('card' in props && props.card) {

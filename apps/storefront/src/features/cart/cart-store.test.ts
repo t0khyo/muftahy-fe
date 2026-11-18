@@ -130,6 +130,25 @@ describe('Cart Store & Selectors', () => {
     expect(usd?.amountMinor).toBe(5000)
   })
 
+  it('preserves metadata fields (platform, region, coverImage) on added items', () => {
+    useCartStore.getState().addItem({
+      id: 'p-meta',
+      productId: 'p-meta',
+      slug: 'meta-slug',
+      name: 'Game with Meta',
+      priceMinor: 1999,
+      currency: 'USD',
+      platform: 'steam',
+      region: 'global',
+      coverImage: 'https://images.unsplash.com/photo-1234',
+    })
+
+    const item = useCartStore.getState().items.find((i) => i.id === 'p-meta')
+    expect(item?.platform).toBe('steam')
+    expect(item?.region).toBe('global')
+    expect(item?.coverImage).toBe('https://images.unsplash.com/photo-1234')
+  })
+
   it('resolves localized names correctly according to language', () => {
     const bilingual = { en: 'English Title', ar: 'عنوان عربي' }
     expect(resolveLocalizedName(bilingual, 'en')).toBe('English Title')

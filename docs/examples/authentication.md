@@ -1,4 +1,4 @@
-# Souq Muftah - Authentication API Examples for Frontend
+# Authentication API Examples
 
 This document provides a comprehensive integration guide, request/response examples, TypeScript interfaces, and error-handling patterns for the Souq Muftah authentication system. It is designed for frontend developers and frontend AI agents.
 
@@ -7,11 +7,14 @@ This document provides a comprehensive integration guide, request/response examp
 ## 1. Quick Reference & Core Architecture
 
 ### Base URLs
+
 - **Local Development**: `http://localhost:8000/api/v1`
 - **Docker / Production**: `https://api.yourdomain.com/api/v1`
 
 ### Authentication Model
+
 The API uses stateless **JWT Bearer Access Tokens** paired with stateful, single-use **UUID Refresh Tokens**:
+
 - **Access Token**: Short-lived JWT (default 15 minutes / 900 seconds) sent via standard header:
   ```http
   Authorization: Bearer <access_token>
@@ -24,7 +27,9 @@ The API uses stateless **JWT Bearer Access Tokens** paired with stateful, single
   - Admin endpoints strictly require tokens with `"aud": "admin"`. Customer tokens will receive `403 Forbidden`.
 
 ### Rate Limiting (`auth_limiter`)
+
 Authentication endpoints are protected by an in-memory sliding window rate limiter:
+
 - **Ceiling**: 10 attempts per 60 seconds per IP address.
 - **Header**: Returns `Retry-After: <seconds>` on `429 Too Many Requests`.
 
@@ -43,23 +48,26 @@ All error responses from custom domain exceptions conform to this structure:
 ```
 
 ### Common HTTP Status Codes
-| Status Code | `error_code` | Description / Cause |
-| :--- | :--- | :--- |
-| `400 Bad Request` | `EMAIL_ALREADY_EXISTS` | Registration email already taken |
-| `400 Bad Request` | `INVALID_CREDENTIALS` | Incorrect or expired verification code |
-| `401 Unauthorized` | `AUTHENTICATION_FAILED` | Wrong password, expired session, or revoked token |
-| `403 Forbidden` | `PERMISSION_DENIED` | Account deactivated, locked out, or role mismatch |
-| `422 Unprocessable`| *(FastAPI default)* | Pydantic validation failure (e.g., password < 8 chars, invalid email) |
-| `429 Too Many Req` | `RATE_LIMIT_EXCEEDED` | Exceeded 10 auth requests in 60 seconds |
+
+| Status Code         | `error_code`            | Description / Cause                                                   |
+| :------------------ | :---------------------- | :-------------------------------------------------------------------- |
+| `400 Bad Request`   | `EMAIL_ALREADY_EXISTS`  | Registration email already taken                                      |
+| `400 Bad Request`   | `INVALID_CREDENTIALS`   | Incorrect or expired verification code                                |
+| `401 Unauthorized`  | `AUTHENTICATION_FAILED` | Wrong password, expired session, or revoked token                     |
+| `403 Forbidden`     | `PERMISSION_DENIED`     | Account deactivated, locked out, or role mismatch                     |
+| `422 Unprocessable` | _(FastAPI default)_     | Pydantic validation failure (e.g., password < 8 chars, invalid email) |
+| `429 Too Many Req`  | `RATE_LIMIT_EXCEEDED`   | Exceeded 10 auth requests in 60 seconds                               |
 
 ---
 
 ## 3. Customer Authentication Endpoints
 
 ### 3.1 Customer Registration (`POST /auth/register`)
+
 Creates a new customer account.
 
 #### Request
+
 ```http
 POST /api/v1/auth/register HTTP/1.1
 Host: localhost:8000
@@ -74,6 +82,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/register" \
   -H "Content-Type: application/json" \
@@ -86,12 +95,14 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 ```
 
 #### Field Rules
+
 - `email`: Valid email format (required).
 - `password`: String, minimum 8 characters (required).
 - `full_name`: String, 2 to 255 characters (required).
 - `phone`: String, up to 20 characters (optional, default `null`).
 
 #### Success Response (`201 Created`)
+
 ```json
 {
   "status": "success",
@@ -101,6 +112,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 ```
 
 #### Duplicate Email Error (`400 Bad Request`)
+
 ```json
 {
   "error_code": "EMAIL_ALREADY_EXISTS",
@@ -112,9 +124,11 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 ---
 
 ### 3.2 Customer Login (`POST /auth/login`)
+
 Authenticates customer credentials and issues tokens.
 
 #### Request
+
 ```http
 POST /api/v1/auth/login HTTP/1.1
 Host: localhost:8000
@@ -127,6 +141,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -137,6 +152,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/login" \
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YjFkZWI0ZC0zYjdkLTRiYWQtOWJkZC0yYjBkN2IzZGNiNmQiLCJhdWQiOiJjdXN0b21lciIsImV4cCI6MTcxNTkxNTgwMH0.XYZ...",
@@ -147,6 +163,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/login" \
 ```
 
 #### Invalid Credentials Error (`401 Unauthorized`)
+
 ```json
 {
   "error_code": "AUTHENTICATION_FAILED",
@@ -158,9 +175,11 @@ curl -X POST "http://localhost:8000/api/v1/auth/login" \
 ---
 
 ### 3.3 Google OAuth Login (`POST /auth/login/google`)
+
 Exchanges a frontend Google OAuth authorization code for platform JWT tokens. Automatically provisions a customer account if one does not already exist.
 
 #### Request
+
 ```http
 POST /api/v1/auth/login/google HTTP/1.1
 Host: localhost:8000
@@ -172,6 +191,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/login/google" \
   -H "Content-Type: application/json" \
@@ -181,6 +201,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/login/google" \
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -193,9 +214,11 @@ curl -X POST "http://localhost:8000/api/v1/auth/login/google" \
 ---
 
 ### 3.4 Refresh Tokens (`POST /auth/refresh`)
+
 Exchanges an active refresh token for a new access token and a **new rotated refresh token**.
 
 #### Request
+
 ```http
 POST /api/v1/auth/refresh HTTP/1.1
 Host: localhost:8000
@@ -207,6 +230,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/refresh" \
   -H "Content-Type: application/json" \
@@ -216,6 +240,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/refresh" \
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -231,9 +256,11 @@ curl -X POST "http://localhost:8000/api/v1/auth/refresh" \
 ---
 
 ### 3.5 Logout (`POST /auth/logout`)
+
 Revokes the provided refresh token in the backend database.
 
 #### Request
+
 ```http
 POST /api/v1/auth/logout HTTP/1.1
 Host: localhost:8000
@@ -245,6 +272,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/logout" \
   -H "Content-Type: application/json" \
@@ -254,6 +282,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/logout" \
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "status": "success",
@@ -266,13 +295,16 @@ curl -X POST "http://localhost:8000/api/v1/auth/logout" \
 ## 4. Password Reset & OTP Verification
 
 The platform supports two ways to confirm a password reset:
+
 1. **Via Email OTP code** (`email` + 6-digit `code` + `new_password`).
 2. **Via Reset Token** (`token` + `new_password`).
 
 ### 4.1 Request Password Reset (`POST /auth/password/reset-request`)
+
 Sends a 6-digit OTP code to the user's email asynchronously.
 
 #### Request
+
 ```http
 POST /api/v1/auth/password/reset-request HTTP/1.1
 Host: localhost:8000
@@ -284,6 +316,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/password/reset-request" \
   -H "Content-Type: application/json" \
@@ -293,6 +326,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/password/reset-request" \
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "reset_token": "optional_token_or_null",
@@ -305,6 +339,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/password/reset-request" \
 ### 4.2 Confirm Password Reset (`POST /auth/password/reset-confirm`)
 
 #### Option A: Confirm with Email + OTP (Recommended for Mobile/Modern UI)
+
 ```http
 POST /api/v1/auth/password/reset-confirm HTTP/1.1
 Host: localhost:8000
@@ -318,6 +353,7 @@ Content-Type: application/json
 ```
 
 #### Option B: Confirm with Stateless Reset Token (e.g. Email link)
+
 ```http
 POST /api/v1/auth/password/reset-confirm HTTP/1.1
 Host: localhost:8000
@@ -330,6 +366,7 @@ Content-Type: application/json
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "status": "success",
@@ -340,9 +377,11 @@ Content-Type: application/json
 ---
 
 ### 4.3 General Email OTP Flow (`/auth/otp/request` & `/auth/otp/verify`)
+
 Used for generic email verifications (e.g., checkout verification or profile verification).
 
 #### Request OTP (`POST /auth/otp/request`)
+
 ```http
 POST /api/v1/auth/otp/request HTTP/1.1
 Host: localhost:8000
@@ -355,15 +394,18 @@ Content-Type: application/json
 ```
 
 **Response (`200 OK`)**:
+
 ```json
 {
   "message": "Verification code sent to your email.",
   "cooldown_seconds": 60
 }
 ```
-*(The frontend should start a countdown timer using `cooldown_seconds` before allowing resend).*
+
+_(The frontend should start a countdown timer using `cooldown_seconds` before allowing resend)._
 
 #### Verify OTP (`POST /auth/otp/verify`)
+
 ```http
 POST /api/v1/auth/otp/verify HTTP/1.1
 Host: localhost:8000
@@ -377,6 +419,7 @@ Content-Type: application/json
 ```
 
 **Response (`200 OK`)**:
+
 ```json
 {
   "message": "Verification code verified successfully.",
@@ -389,9 +432,11 @@ Content-Type: application/json
 ## 5. Admin Authentication Endpoints
 
 ### 5.1 Admin Login (`POST /auth/admin/login`)
+
 Authenticates administrative users and issues tokens with `"aud": "admin"`.
 
 #### Request
+
 ```http
 POST /api/v1/auth/admin/login HTTP/1.1
 Host: localhost:8000
@@ -404,6 +449,7 @@ Content-Type: application/json
 ```
 
 **cURL**:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/admin/login" \
   -H "Content-Type: application/json" \
@@ -414,6 +460,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/admin/login" \
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTAyNGE1Yi05YzBkLTRkMTYtYTA0Yy00ZjVkNzgyZTQyNTYiLCJhdWQiOiJhZG1pbiIsImV4cCI6MTcxNTkxNTgwMH0...",
@@ -426,9 +473,11 @@ curl -X POST "http://localhost:8000/api/v1/auth/admin/login" \
 ---
 
 ### 5.2 Admin Password Reset (`POST /auth/admin/password/reset`)
+
 Allows an authenticated administrator to update their password or another administrator's password. Requires valid admin Bearer token.
 
 #### Request
+
 ```http
 POST /api/v1/auth/admin/password/reset HTTP/1.1
 Host: localhost:8000
@@ -440,9 +489,11 @@ Content-Type: application/json
   "new_password": "NewStrongAdminPassword888!"
 }
 ```
-*(Leave `target_admin_id` as `null` to update self, or pass target UUID for super-admin modifications).*
+
+_(Leave `target_admin_id` as `null` to update self, or pass target UUID for super-admin modifications)._
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "status": "success",
@@ -457,6 +508,7 @@ Content-Type: application/json
 Immediately after obtaining a customer `access_token`, the frontend should fetch the authenticated user profile.
 
 #### Request
+
 ```http
 GET /api/v1/users/me HTTP/1.1
 Host: localhost:8000
@@ -464,12 +516,14 @@ Authorization: Bearer <customer_access_token>
 ```
 
 **cURL**:
+
 ```bash
 curl -X GET "http://localhost:8000/api/v1/users/me" \
   -H "Authorization: Bearer <customer_access_token>"
 ```
 
 #### Success Response (`200 OK`)
+
 ```json
 {
   "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
@@ -687,4 +741,3 @@ api.interceptors.response.use(
 
 export default api;
 ```
-

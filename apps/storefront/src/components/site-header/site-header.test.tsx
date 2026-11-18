@@ -144,7 +144,7 @@ describe('SiteHeader Component', () => {
     expect(screen.getByText('9+')).toBeInTheDocument()
   })
 
-  it('toggles cart dropdown and displays empty state and populated state', () => {
+  it('toggles cart slide-over panel and displays empty state and populated state with stepper controls', () => {
     renderSiteHeader('/en/products')
 
     const cartButton = screen.getByRole('button', { name: /cart is empty/i })
@@ -154,7 +154,8 @@ describe('SiteHeader Component', () => {
     fireEvent.click(cartButton)
     expect(cartButton).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getAllByText(/your bag is empty/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: /review bag/i }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /explore products/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /browse bundles/i })).toBeInTheDocument()
 
     // Close on Escape
     fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' })
@@ -166,13 +167,25 @@ describe('SiteHeader Component', () => {
         id: 'p1',
         name: 'Cyberpunk 2077 Key',
         priceMinor: 2999,
+        currency: 'USD',
       })
     })
 
     // Reopen cart
     fireEvent.click(cartButton)
     expect(screen.getAllByText('Cyberpunk 2077 Key').length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: /check out/i }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /checkout/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /view full bag/i })).toBeInTheDocument()
+
+    // Test quantity stepper
+    const increaseBtn = screen.getByRole('button', { name: /increase quantity/i })
+    fireEvent.click(increaseBtn)
+    expect(screen.getByLabelText(/quantity: 2/i)).toBeInTheDocument()
+
+    // Test remove item
+    const removeBtn = screen.getByRole('button', { name: /remove/i })
+    fireEvent.click(removeBtn)
+    expect(screen.getAllByText(/your bag is empty/i).length).toBeGreaterThan(0)
   })
 
   it('respects sticky=false prop', () => {
@@ -299,7 +312,7 @@ describe('SiteHeader Component', () => {
 
     // Open cart in RTL
     fireEvent.click(cartButton)
-    expect(screen.getAllByText(/حقيبتك/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/السلة/i).length).toBeGreaterThan(0)
   })
 
   it('guarantees zero transparency (bg-background, no header-glass) when mobile menu or cart is open', () => {
@@ -326,7 +339,7 @@ describe('SiteHeader Component', () => {
     expect(header).toHaveClass('bg-background')
     expect(header).not.toHaveClass('header-glass')
 
-    const cartDropdown = screen.getByRole('dialog', { name: /your bag/i })
+    const cartDropdown = screen.getByRole('dialog', { name: /bag|السلة/i })
     expect(cartDropdown).toHaveClass('bg-background')
     expect(cartDropdown).not.toHaveClass('header-glass')
   })
