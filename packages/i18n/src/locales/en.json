@@ -589,6 +589,43 @@
     "logoutConfirm": "End Session",
     "products": "Products Management",
     "orders": "Orders & Fulfillment",
-    "inventory": "Key Inventory"
+    "inventory": "Key Inventory",
+    "nav": {
+      "workstations": "Workstations",
+      "system": "System",
+      "dashboard": "Dashboard",
+      "products": "Products & SKUs",
+      "orders": "Orders & Fulfillment",
+      "inventory": "Key Pool Inventory",
+      "customers": "Customer Accounts",
+      "audit": "Security & Audit Log"
+    },
+    "emptyState": {
+      "products": {
+        "title": "No products yet",
+        "description": "Create and manage your catalog of digital game codes, software licenses, and gift cards.",
+        "action": "Add Product"
+      },
+      "orders": {
+        "title": "No orders yet",
+        "description": "Customer purchases, automatic license dispatches, and refund requests will show up here.",
+        "action": "View Storefront"
+      },
+      "inventory": {
+        "title": "Key pool repository is empty",
+        "description": "Securely ingest batches of encrypted activation codes into the automated delivery vault.",
+        "action": "Ingest Key Batch"
+      },
+      "customers": {
+        "title": "No customer accounts yet",
+        "description": "Registered buyer accounts, transaction histories, and security statuses will appear here.",
+        "action": "Search Directory"
+      },
+      "audit": {
+        "title": "No audit records found",
+        "description": "Immutable security logs, zero-trust session checks, and operator actions will be logged here.",
+        "action": "Refresh Log"
+      }
+    }
   }
 }
