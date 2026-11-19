@@ -1,5 +1,3 @@
-@import "tailwindcss";
-
 /* Ensure interactive elements consistently display pointer on hover */
 button,
 [role="button"],

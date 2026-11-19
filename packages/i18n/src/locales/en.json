@@ -600,6 +600,9 @@
       "customers": "Customer Accounts",
       "audit": "Security & Audit Log"
     },
+    "sidebar": {
+      "toggle": "Toggle sidebar"
+    },
     "emptyState": {
       "products": {
         "title": "No products yet",
