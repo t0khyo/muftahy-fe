@@ -1,29 +1,38 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, ShieldCheck, Mail, Phone, Calendar, User, CheckCircle2, AlertCircle } from 'lucide-react'
+import {
+  Loader2,
+  Mail,
+  Phone,
+  User,
+  CheckCircle2,
+  AlertCircle,
+  Copy,
+  Check,
+  IdCard,
+} from 'lucide-react'
 import { updateProfileRequestSchema, type UpdateProfileRequest } from '@workspace/domain/schemas/auth'
-import { formatDate } from '@workspace/domain/formatters/date'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import { Badge } from '@workspace/ui/components/badge'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { useProfile } from '../hooks/use-profile'
-import { VerifyEmailDialog } from '../../auth/components/verify-email-dialog'
+import { ProfileHero } from '../components/profile-hero'
+import { ProfileSecurityCard } from '../components/profile-security-card'
+import { ProfileShortcutsHub } from '../components/profile-shortcuts-hub'
 
 export function ProfilePage() {
   const { t } = useTranslation(['account', 'auth', 'common'])
-  const { lang = 'ar' } = useParams<{ lang: string }>()
   const { profile, isLoading, isError, updateProfile, isUpdating } = useProfile()
 
   const [isEditing, setIsEditing] = React.useState(false)
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
   const [serverError, setServerError] = React.useState<string | null>(null)
-  const [isVerifyDialogOpen, setIsVerifyDialogOpen] = React.useState(false)
+  const [copiedId, setCopiedId] = React.useState(false)
 
   const {
     register,
@@ -37,6 +46,17 @@ export function ProfilePage() {
       phone: profile?.phone || '',
     },
   })
+
+  const handleCopyId = async () => {
+    if (!profile?.id) return
+    try {
+      await navigator.clipboard.writeText(profile.id)
+      setCopiedId(true)
+      setTimeout(() => setCopiedId(false), 2000)
+    } catch {
+      // Fallback if clipboard API is restricted
+    }
+  }
 
   const onSave = async (data: UpdateProfileRequest) => {
     setServerError(null)
@@ -56,11 +76,52 @@ export function ProfilePage() {
 
   if (isLoading) {
     return (
-      <Card className="border-border shadow-xs">
-        <CardContent className="flex min-h-[300px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
+      <div className="space-y-6" data-testid="profile-loading-skeleton">
+        {/* Hero Skeleton */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <Skeleton className="size-16 sm:size-20 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-28 rounded-lg hidden sm:block" />
+          </div>
+        </div>
+
+        {/* Bento Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7">
+            <Card className="border-border shadow-xs">
+              <CardHeader className="pb-4">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-60 mt-1" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-5">
+            <Card className="border-border shadow-xs">
+              <CardHeader className="pb-4">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-52 mt-1" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -76,188 +137,246 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Email Verification Banner */}
-      <Alert className="border-primary/20 bg-primary/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
-          <div>
-            <AlertTitle className="text-sm font-semibold">{t('auth:verifyEmailTitle')}</AlertTitle>
-            <AlertDescription className="text-xs text-muted-foreground">
-              {t('auth:verifyEmailBanner')}
-            </AlertDescription>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          className="shrink-0"
-          onClick={() => setIsVerifyDialogOpen(true)}
-        >
-          {t('auth:verifyNow')}
-        </Button>
-      </Alert>
-
-      {/* Success or Error banners */}
+      {/* Notifications */}
       {successMessage && (
-        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          <AlertDescription>{successMessage}</AlertDescription>
+        <Alert className="border-success/30 bg-success/10 text-success dark:text-success">
+          <CheckCircle2 className="h-4 w-4 text-success" />
+          <AlertDescription className="text-xs font-medium">
+            {successMessage}
+          </AlertDescription>
         </Alert>
       )}
 
       {serverError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{serverError}</AlertDescription>
+          <AlertDescription className="text-xs">{serverError}</AlertDescription>
         </Alert>
       )}
 
-      {/* Main Profile Card */}
-      <Card className="border-border shadow-xs">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div>
-            <CardTitle className="text-xl font-bold">{t('profile.title')}</CardTitle>
-            <CardDescription className="text-xs mt-1">{t('profile.description')}</CardDescription>
-          </div>
-          {!isEditing && (
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-              {t('profile.editProfile')}
-            </Button>
-          )}
-        </CardHeader>
+      {/* 1. Hero Identity Card */}
+      <ProfileHero
+        profile={profile}
+        isEditing={isEditing}
+        onToggleEdit={() => {
+          if (isEditing) {
+            reset()
+          }
+          setIsEditing(!isEditing)
+        }}
+      />
 
-        <CardContent>
-          {isEditing ? (
-            <form onSubmit={handleSubmit(onSave)} className="space-y-4 max-w-lg">
-              <div className="space-y-1.5 text-start">
-                <Label htmlFor="edit-name">{t('profile.fullName')}</Label>
-                <Input
-                  id="edit-name"
-                  placeholder={t('auth:fullNamePlaceholder')}
-                  {...register('full_name')}
-                  disabled={isUpdating}
-                />
-                {errors.full_name && (
-                  <p className="text-xs text-destructive">{errors.full_name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5 text-start">
-                <Label htmlFor="edit-phone">{t('profile.phone')}</Label>
-                <Input
-                  id="edit-phone"
-                  placeholder={t('auth:phonePlaceholder')}
-                  {...register('phone')}
-                  disabled={isUpdating}
-                />
-                {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <Button type="submit" disabled={isUpdating}>
-                  {isUpdating ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{t('profile.saving')}</span>
-                    </span>
-                  ) : (
-                    <span>{t('profile.saveChanges')}</span>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    reset()
-                    setIsEditing(false)
-                  }}
-                  disabled={isUpdating}
-                >
-                  {t('profile.cancel')}
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-                  <User className="h-4 w-4" />
+      {/* 2. Bento Responsive Section (Personal Info + Security) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left: Personal Details (View or Edit Form) */}
+        <div className="lg:col-span-7">
+          <Card className="border-border bg-card shadow-xs">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                  <User className="size-4" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">{t('profile.fullName')}</p>
-                  <p className="text-sm font-medium text-foreground mt-0.5">{profile.full_name}</p>
+                  <CardTitle className="text-base font-bold text-foreground">
+                    {t('profile.personalInfo')}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                    {t('profile.personalInfoDesc')}
+                  </CardDescription>
                 </div>
               </div>
+            </CardHeader>
 
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('profile.email')}</p>
-                  <p className="text-sm font-medium text-foreground mt-0.5">{profile.email}</p>
-                </div>
-              </div>
+            <CardContent>
+              {isEditing ? (
+                <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+                  <div className="space-y-1.5 text-start">
+                    <Label htmlFor="edit-name" className="text-xs font-semibold">
+                      {t('profile.fullName')}
+                    </Label>
+                    <Input
+                      id="edit-name"
+                      placeholder={t('auth:fullNamePlaceholder')}
+                      {...register('full_name')}
+                      disabled={isUpdating}
+                      aria-invalid={Boolean(errors.full_name)}
+                    />
+                    {errors.full_name && (
+                      <p role="alert" className="text-xs text-destructive">
+                        {errors.full_name.message}
+                      </p>
+                    )}
+                  </div>
 
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-                  <Phone className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('profile.phone')}</p>
-                  <p className="text-sm font-medium text-foreground mt-0.5">
-                    {profile.phone || t('profile.notProvided')}
-                  </p>
-                </div>
-              </div>
+                  <div className="space-y-1.5 text-start">
+                    <Label htmlFor="edit-phone" className="text-xs font-semibold">
+                      {t('profile.phone')}
+                    </Label>
+                    <Input
+                      id="edit-phone"
+                      placeholder={t('auth:phonePlaceholder')}
+                      {...register('phone')}
+                      disabled={isUpdating}
+                      aria-invalid={Boolean(errors.phone)}
+                    />
+                    {errors.phone && (
+                      <p role="alert" className="text-xs text-destructive">
+                        {errors.phone.message}
+                      </p>
+                    )}
+                  </div>
 
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('profile.memberSince')}</p>
-                  <p className="text-sm font-medium text-foreground mt-0.5">
-                    {formatDate(profile.created_at, { locale: lang, dateStyle: 'medium' })}
-                  </p>
-                </div>
-              </div>
+                  {/* Readonly Identity Reference */}
+                  <div className="space-y-1.5 text-start pt-1">
+                    <Label className="text-xs font-semibold text-muted-foreground">
+                      {t('profile.email')}
+                    </Label>
+                    <Input
+                      value={profile.email}
+                      disabled
+                      className="bg-muted/50 cursor-not-allowed opacity-80"
+                    />
+                  </div>
 
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('profile.status')}</p>
-                  <div className="mt-1">
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                      {profile.is_active ? t('profile.active') : t('profile.inactive')}
-                    </Badge>
+                  <div className="flex items-center gap-2 pt-3 border-t border-border/60">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isUpdating}
+                      className="gap-2 text-xs font-semibold"
+                    >
+                      {isUpdating ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>{t('profile.saving')}</span>
+                        </>
+                      ) : (
+                        <span>{t('profile.saveChanges')}</span>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        reset()
+                        setIsEditing(false)
+                      }}
+                      disabled={isUpdating}
+                      className="text-xs"
+                    >
+                      {t('profile.cancel')}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-3">
+                  {/* Full Name */}
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-muted/20">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-card text-muted-foreground shrink-0 border border-border/50">
+                        <User className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">
+                          {t('profile.fullName')}
+                        </p>
+                        <p className="text-xs font-semibold text-foreground truncate mt-0.5">
+                          {profile.full_name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-muted/20">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-card text-muted-foreground shrink-0 border border-border/50">
+                        <Mail className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">
+                          {t('profile.email')}
+                        </p>
+                        <p className="text-xs font-semibold text-foreground truncate mt-0.5">
+                          {profile.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-muted/20">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-card text-muted-foreground shrink-0 border border-border/50">
+                        <Phone className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">
+                          {t('profile.phone')}
+                        </p>
+                        <p className="text-xs font-semibold text-foreground truncate mt-0.5">
+                          {profile.phone || t('profile.notProvided')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* User ID (Copyable) */}
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-muted/20">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-card text-muted-foreground shrink-0 border border-border/50">
+                        <IdCard className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">
+                          {t('profile.userId')}
+                        </p>
+                        <p className="text-xs font-mono text-muted-foreground truncate mt-0.5 max-w-[220px] sm:max-w-[320px]">
+                          {profile.id}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                      onClick={handleCopyId}
+                      aria-label={t('profile.copyId')}
+                    >
+                      {copiedId ? (
+                        <>
+                          <Check className="size-3.5 text-success" />
+                          <span className="text-[11px] text-success font-medium">
+                            {t('profile.copied')}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3.5" />
+                          <span className="text-[11px] hidden sm:inline">
+                            {t('profile.copyId')}
+                          </span>
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
-              </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground shrink-0">
-                  <span className="text-xs font-mono">ID</span>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('profile.userId')}</p>
-                  <p className="text-xs font-mono text-muted-foreground mt-0.5 break-all">
-                    {profile.id}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Right: Security & Authentication */}
+        <div className="lg:col-span-5">
+          <ProfileSecurityCard email={profile.email} />
+        </div>
+      </div>
 
-      {/* Email Verification Modal Dialog */}
-      <VerifyEmailDialog
-        email={profile.email}
-        open={isVerifyDialogOpen}
-        onOpenChange={setIsVerifyDialogOpen}
-      />
+      {/* 3. Account Shortcuts Hub */}
+      <ProfileShortcutsHub />
     </div>
   )
 }
