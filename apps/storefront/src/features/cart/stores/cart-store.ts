@@ -1,33 +1,47 @@
 import { create } from 'zustand'
-import type { SupportedCurrency } from '@workspace/domain/formatters/money'
+import { toPiasters } from '@workspace/domain/formatters/money'
+import type { ProductCategory, ProductVariant } from '@workspace/domain/schemas/product'
 
 export interface CartItem {
   id: string
-  productId: string
-  planId: string
-  slug: string
-  name: { en: string; ar: string } | string
-  planName?: { en: string; ar: string } | string
-  priceMinor: number
-  currency: SupportedCurrency
+  product_id: string
+  product_name: string
   quantity: number
+  is_preorder: boolean
+  unit_price_egp: string
+  category?: ProductCategory
+  variant?: ProductVariant
+  coverImage?: string
+  // Compatibility fields
+  slug?: string
+  name?: string | { en: string; ar: string }
+  planId?: string
+  planName?: string | { en: string; ar: string }
+  priceMinor?: number
+  currency?: string
   platform?: string
   region?: string
-  coverImage?: string
 }
 
 export interface CartInputItem {
   id?: string
+  product_id?: string
   productId?: string
-  planId?: string
+  product_name?: string
+  name?: string | { en: string; ar: string }
+  quantity?: number
+  is_preorder?: boolean
+  unit_price_egp?: string
+  priceMinor?: number
+  currency?: string
+  category?: ProductCategory
+  variant?: ProductVariant
+  coverImage?: string
   slug?: string
-  name: { en: string; ar: string } | string
-  planName?: { en: string; ar: string } | string
-  priceMinor: number
-  currency?: SupportedCurrency
+  planId?: string
+  planName?: string | { en: string; ar: string }
   platform?: string
   region?: string
-  coverImage?: string
 }
 
 export interface CartState {
@@ -44,29 +58,46 @@ export const useCartStore = create<CartState>((set) => ({
   count: 0,
   addItem: (item, quantity = 1) =>
     set((state) => {
-      const productId = item.productId ?? item.id ?? 'unknown'
-      const planId = item.planId ?? 'default'
-      const itemId = item.id ?? `${productId}:${planId}`
+      const productId = item.product_id ?? item.productId ?? item.id ?? 'unknown'
+      const itemId =
+        item.id ??
+        (item.planId && (item.productId ?? item.product_id)
+          ? `${item.productId ?? item.product_id}:${item.planId}`
+          : productId)
 
       const existing = state.items.find((i) => i.id === itemId)
       if (existing) {
-        // Idempotent: adding a plan already in the cart never increases its quantity
         return state
       }
 
+      const unitPrice =
+        item.unit_price_egp ??
+        (item.priceMinor !== undefined ? (item.priceMinor / 100).toFixed(2) : '0.00')
+
+      const nameStr =
+        item.product_name ??
+        (typeof item.name === 'string'
+          ? item.name
+          : (item.name?.en ?? 'Product'))
+
       const newItem: CartItem = {
         id: itemId,
-        productId,
-        planId,
-        slug: item.slug ?? productId,
-        name: item.name,
-        planName: item.planName,
-        priceMinor: item.priceMinor,
-        currency: item.currency ?? 'EGP',
+        product_id: productId,
+        product_name: nameStr,
         quantity: Math.max(1, quantity),
+        is_preorder: Boolean(item.is_preorder),
+        unit_price_egp: unitPrice,
+        category: item.category,
+        variant: item.variant,
+        coverImage: item.coverImage,
+        slug: item.slug ?? productId,
+        name: item.name ?? nameStr,
+        planId: item.planId,
+        planName: item.planName,
+        priceMinor: toPiasters(unitPrice),
+        currency: 'EGP',
         platform: item.platform,
         region: item.region,
-        coverImage: item.coverImage,
       }
 
       const nextItems = [...state.items, newItem]

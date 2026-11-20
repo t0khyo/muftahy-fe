@@ -53,9 +53,8 @@ describe('DesignPage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: /product cards/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Canva Pro - Direct Activation')).toBeInTheDocument()
-    expect(screen.getByText('Google AI Pro (Gemini Advanced)')).toBeInTheDocument()
-    expect(screen.getByText('Microsoft 365 Family / Personal')).toBeInTheDocument()
+    expect(screen.getAllByText('Windows 11 Professional').length).toBeGreaterThan(0)
+    expect(screen.getByText('Windows 11 Home')).toBeInTheDocument()
   })
 
   it('renders design system elements in Arabic (RTL) with Western digits', () => {
@@ -68,13 +67,12 @@ describe('DesignPage', () => {
     // Must use Western digits 0-9
     expect(screen.getAllByText(/1234567890/).length).toBeGreaterThan(0)
 
-    // Product Cards in Arabic
+    // Product Cards in Arabic (product titles are rendered as returned from backend)
     expect(
       screen.getByRole('heading', { level: 2, name: /بطاقات المنتجات/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('كانفا برو - تفعيل مباشر')).toBeInTheDocument()
-    expect(screen.getByText('جوجل AI برو (جيميني أدفانسد)')).toBeInTheDocument()
-    expect(screen.getByText('مايكروسوفت 365 عائلي / شخصي')).toBeInTheDocument()
+    expect(screen.getAllByText('Windows 11 Professional').length).toBeGreaterThan(0)
+    expect(screen.getByText('Windows 11 Home')).toBeInTheDocument()
   })
 })
 

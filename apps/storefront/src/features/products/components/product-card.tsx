@@ -1,242 +1,119 @@
-import * as React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { cn } from '@workspace/ui/lib/utils';
-import { getSummaryPlan, type Product } from '@workspace/domain/schemas/product';
-import { useCartStore } from '../../cart/stores/cart-store';
-import { Box } from 'lucide-react';
-import { AddToCartButton } from './add-to-cart-button';
-import { formatPrice } from './utils';
-import type {
-  Platform,
-  ProductCardData,
-  ProductCardPlan,
-  ProductCardTranslations,
-} from './types';
+import * as React from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
+import { cn } from '@workspace/ui/lib/utils'
+import { formatMoney } from '@workspace/domain/formatters/money'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
+import { useCartStore } from '../../cart/stores/cart-store'
+import { resolveProductImage } from '../utils/asset-resolver'
+import { AddToCartButton } from './add-to-cart-button'
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-interface BadgePillProps {
-  label: string;
-  isDiscount?: boolean;
+export interface ProductCardProps {
+  product?: ProductResponse
+  card?: Record<string, unknown>
+  locale?: string
+  priority?: boolean
+  className?: string
+  onAddToCart?: (product: ProductResponse) => void
 }
 
-function BadgePill({ label, isDiscount = false }: BadgePillProps) {
-  return (
-    <span
-      className={cn(
-        'absolute start-2.5 top-2.5 z-10',
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
-        'text-[10px] font-semibold leading-none',
-        isDiscount
-          ? 'bg-discount text-discount-foreground'
-          : 'bg-background/90 text-foreground backdrop-blur-xs shadow-xs'
-      )}
-    >
-      {label}
-    </span>
-  );
-}
+export function ProductCard({
+  product: productProp,
+  card: cardProp,
+  locale,
+  className,
+  onAddToCart,
+}: ProductCardProps) {
+  const { t, i18n } = useTranslation(['products', 'common'])
+  const currentLang = locale ?? (i18n.language === 'ar' ? 'ar' : 'en')
 
-// ─── Main Product Card ────────────────────────────────────────────────────────
-
-export interface BaseProductCardProps {
-  locale?: string;
-  translations?: ProductCardTranslations;
-  priority?: boolean;
-  className?: string;
-  renderLink?: (props: {
-    href: string;
-    className: string;
-    children: React.ReactNode;
-  }) => React.ReactNode;
-  renderImage?: (props: {
-    src: string;
-    alt: string;
-    width: number;
-    height: number;
-    className: string;
-    priority?: boolean;
-  }) => React.ReactNode;
-}
-
-export type ProductCardProps = BaseProductCardProps &
-  (
-    | {
-        card: ProductCardData;
-        product?: never;
-        onAddToCart?: (plan: ProductCardPlan) => void;
-      }
-    | {
-        product: Product;
-        card?: never;
-        onAddToCart?: (product: Product) => void;
-      }
-  );
-
-export function ProductCard(props: ProductCardProps) {
-  const { t, i18n } = useTranslation(['products', 'common']);
-  const currentLang = props.locale ?? (i18n.language === 'ar' ? 'ar' : 'en');
-  const isRtl = currentLang === 'ar';
-
-  // Support both `card` (template format) and `product` (domain model)
-  const isDomainProduct = 'product' in props && Boolean(props.product);
-  const domainProduct = isDomainProduct ? props.product : null;
-
-  const card: ProductCardData = React.useMemo(() => {
-    if (domainProduct) {
-      const p = domainProduct;
-      const summaryPlan = getSummaryPlan(p);
-      const title = p.title[isRtl ? 'ar' : 'en'] ?? p.title.en;
-      const desc = p.description[isRtl ? 'ar' : 'en'] ?? p.description.en;
-      const priceNum = (summaryPlan.price.amountMinor / 100).toFixed(2);
-      const originalPriceNum = summaryPlan.originalPrice
-        ? (summaryPlan.originalPrice.amountMinor / 100).toFixed(2)
-        : undefined;
-
-      const platformsMap: Platform[] =
-        p.platform === 'steam'
-          ? ['windows', 'mac']
-          : p.platform === 'microsoft' || p.platform === 'pc'
-            ? ['windows']
-            : ['web'];
-
+  // Support both product and fallback card
+  const product: ProductResponse = React.useMemo(() => {
+    if (productProp) return productProp
+    if (cardProp) {
+      const c = cardProp as Record<string, unknown>
       return {
-        slug: p.slug,
-        name: title,
-        imageUrl: p.coverImage,
-        imageAlt: title,
-        badge: p.featured ? 'offer' : null,
-        productType: p.category === 'subscriptions' ? 'subscription' : 'service',
-        activationType: 'ready_account',
-        platforms: platformsMap,
-        startingPrice: priceNum,
-        originalPrice: originalPriceNum,
-        startingPlanDuration:
-          summaryPlan.deliveryType === 'instant'
-            ? (isRtl ? 'تسليم فوري' : 'Instant')
-            : (isRtl ? 'شهر' : 'month'),
-        startingPlanDurationEn: summaryPlan.deliveryType === 'instant' ? 'Instant' : 'month',
-        trustNote: desc || (isRtl ? 'ضمان التسليم الفوري' : 'Instant Delivery Guaranteed'),
-        plans: [
-          {
-            id: summaryPlan.id,
-            label: summaryPlan.name[isRtl ? 'ar' : 'en'] ?? summaryPlan.name.en,
-            duration:
-              summaryPlan.deliveryType === 'instant'
-                ? (isRtl ? 'ترخيص فوري' : 'Instant License')
-                : (isRtl ? 'اشتراك' : 'Subscription'),
-            price: priceNum,
-            activationType: 'ready_account',
-          },
-        ],
-      };
+        id:
+          (typeof c.id === 'string' ? c.id : undefined) ??
+          (typeof c.slug === 'string' ? c.slug : undefined) ??
+          '00000000-0000-4000-8000-000000000001',
+        name: typeof c.name === 'string' ? c.name : 'Software License',
+        category: c.category === 'office' ? 'office' : 'windows',
+        variant: c.variant === 'oem' ? 'oem' : 'retail',
+        base_price:
+          (typeof c.originalPrice === 'string' ? c.originalPrice : undefined) ??
+          (typeof c.startingPrice === 'string' ? c.startingPrice : undefined) ??
+          '499.00',
+        sale_price: c.originalPrice ? (typeof c.startingPrice === 'string' ? c.startingPrice : null) : null,
+        effective_price:
+          (typeof c.startingPrice === 'string' ? c.startingPrice : undefined) ?? '499.00',
+        discount_percentage: typeof c.discountPercent === 'number' ? c.discountPercent : null,
+        stock_status: 'in_stock',
+        available_count: 10,
+        preorder_enabled: true,
+        description: typeof c.trustNote === 'string' ? c.trustNote : null,
+        is_active: true,
+      }
     }
-    const c = props.card!;
-    if (isRtl && c.nameAr) {
-      return { ...c, name: c.nameAr };
+    return {
+      id: '00000000-0000-4000-8000-000000000001',
+      name: 'Product',
+      category: 'windows',
+      variant: 'retail',
+      base_price: '499.00',
+      sale_price: null,
+      effective_price: '499.00',
+      discount_percentage: null,
+      stock_status: 'in_stock',
+      available_count: 10,
+      preorder_enabled: true,
+      description: null,
+      is_active: true,
+    } as ProductResponse
+  }, [productProp, cardProp])
+
+  const isInStock = product.stock_status === 'in_stock'
+  const isPreorder = product.stock_status === 'preorder'
+  const isOutOfStock = product.stock_status === 'out_of_stock'
+
+  const formattedEffectivePrice = formatMoney(Number(product.effective_price), {
+    currency: 'EGP',
+    locale: currentLang,
+  })
+
+  const formattedBasePrice = product.sale_price
+    ? formatMoney(Number(product.base_price), {
+        currency: 'EGP',
+        locale: currentLang,
+      })
+    : null
+
+  const coverImageUrl = resolveProductImage(product.category, product.variant)
+
+  const handleAddToCart = () => {
+    if (onAddToCart) {
+      onAddToCart(product)
+      return
     }
-    return c;
-  }, [domainProduct, props.card, isRtl]);
 
-  const isInStock = domainProduct ? domainProduct.inStock : true;
-
-  // Platform and Region Meta line
-  const metaText = React.useMemo(() => {
-    if (domainProduct) {
-      const platformKey = `platform${domainProduct.platform.charAt(0).toUpperCase() + domainProduct.platform.slice(1)}`;
-      const regionKey = `region${domainProduct.region.charAt(0).toUpperCase() + domainProduct.region.slice(1)}`;
-      const platformLabel = t(platformKey, { defaultValue: domainProduct.platform });
-      const regionLabel = t(regionKey, { defaultValue: domainProduct.region });
-      return [platformLabel, regionLabel].filter(Boolean).join(' • ');
-    }
-    if (card.platforms && card.platforms.length > 0) {
-      return card.platforms.map((p) => p.toUpperCase()).join(' • ');
-    }
-    return null;
-  }, [domainProduct, card.platforms, t]);
-
-  // Badge label
-  const badgeLabels: Record<string, string> = {
-    warranty: props.translations?.badge?.warranty ?? (isRtl ? 'ضمان' : 'Warranty'),
-    offer: props.translations?.badge?.offer ?? (isRtl ? 'عرض خاص' : 'Special Offer'),
-    new: props.translations?.badge?.new ?? (isRtl ? 'جديد' : 'New'),
-  };
-  const badgeLabel = card.badge ? badgeLabels[card.badge] : null;
-
-  // Discount calculation
-  const discountPercent = React.useMemo(() => {
-    if (domainProduct?.originalPrice && domainProduct.originalPrice.amountMinor > domainProduct.price.amountMinor) {
-      const orig = domainProduct.originalPrice.amountMinor;
-      const current = domainProduct.price.amountMinor;
-      return Math.round(((orig - current) / orig) * 100);
-    }
-    if (card.originalPrice && parseFloat(card.originalPrice) > parseFloat(card.startingPrice)) {
-      const orig = parseFloat(card.originalPrice);
-      const current = parseFloat(card.startingPrice);
-      return Math.round(((orig - current) / orig) * 100);
-    }
-    return null;
-  }, [domainProduct, card.originalPrice, card.startingPrice]);
-
-  const hasMultiplePrices = Boolean(
-    domainProduct &&
-      domainProduct.plans &&
-      domainProduct.plans.length > 1 &&
-      new Set(domainProduct.plans.map((p) => p.price.amountMinor)).size > 1
-  );
-
-  const defaultCurrency = domainProduct
-    ? (domainProduct.price.currency === 'USD' ? '$' : (isRtl ? 'ج.م' : domainProduct.price.currency))
-    : (isRtl ? 'ج.م' : '$');
-  const currency = props.translations?.currency ?? defaultCurrency;
-  const fromPriceText = props.translations?.startingFrom ?? t('fromPrice', { ns: 'products', defaultValue: isRtl ? 'يبدأ من' : 'From' });
-
-  const addToCartLabel = !isInStock
-    ? t('outOfStock', { ns: 'products', defaultValue: isRtl ? 'نفدت الكمية' : 'Out of stock' })
-    : (props.translations?.addToCart ?? t('addToCart', { ns: 'products', defaultValue: isRtl ? 'أضف إلى السلة' : 'Add to cart' }));
-  const addedLabel = props.translations?.addedToCart ?? (isRtl ? 'تمت الإضافة' : 'Added!');
-
-  const resolvedSummaryPlan = domainProduct ? getSummaryPlan(domainProduct) : null;
-  const productUrl = domainProduct && resolvedSummaryPlan
-    ? `/${currentLang}/products/${card.slug}?plan=${resolvedSummaryPlan.slug}`
-    : `/${currentLang}/products/${card.slug}`;
-  const [prevImageUrl, setPrevImageUrl] = React.useState(card.imageUrl);
-  const [imageError, setImageError] = React.useState(false);
-
-  if (prevImageUrl !== card.imageUrl) {
-    setPrevImageUrl(card.imageUrl);
-    setImageError(false);
+    useCartStore.getState().addItem({
+      product_id: product.id,
+      product_name: product.name,
+      unit_price_egp: product.effective_price,
+      is_preorder: isPreorder,
+      category: product.category,
+      variant: product.variant,
+      coverImage: coverImageUrl,
+    })
   }
 
-  const hasImage = Boolean(card.imageUrl) && !imageError;
+  const addToCartLabel = isOutOfStock && !product.preorder_enabled
+    ? t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of stock' })
+    : isPreorder
+      ? t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })
+      : t('addToCart', { ns: 'products', defaultValue: 'Add to cart' })
 
-  const handleAddToCart = (plan: ProductCardPlan) => {
-    if ('product' in props && props.product) {
-      if (props.onAddToCart) {
-        props.onAddToCart(props.product);
-      } else {
-        const summary = getSummaryPlan(props.product);
-        useCartStore.getState().addItem({
-          id: `${props.product.id}:${summary.id}`,
-          productId: props.product.id,
-          planId: summary.id,
-          slug: props.product.slug,
-          name: props.product.title,
-          planName: summary.name,
-          priceMinor: summary.price.amountMinor,
-          currency: summary.price.currency,
-          platform: props.product.platform,
-          region: props.product.region,
-          coverImage: props.product.coverImage,
-        });
-      }
-    } else if ('card' in props && props.card) {
-      if (props.onAddToCart) {
-        props.onAddToCart(plan);
-      }
-    }
-  };
+  const productUrl = `/${currentLang}/products/${product.id}`
 
   return (
     <article
@@ -246,125 +123,108 @@ export function ProductCard(props: ProductCardProps) {
         'p-3 sm:p-3.5 lg:p-4 h-full',
         'transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs',
         'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-        !isInStock && 'opacity-70',
-        props.className
+        isOutOfStock && !product.preorder_enabled && 'opacity-70',
+        className,
       )}
     >
-      {/* 1 ── Cover Area (4:3, prominent whole-artwork surface, never cropped) */}
-      <div className='relative aspect-4/3 w-full rounded-xl bg-secondary/35 p-4 sm:p-5 flex items-center justify-center overflow-hidden'>
-        {hasImage && card.imageUrl ? (
-          props.renderImage ? (
-            props.renderImage({
-              src: card.imageUrl,
-              alt: card.imageAlt || card.name,
-              width: 640,
-              height: 480,
-              className: 'h-full w-full object-contain transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none',
-              priority: props.priority,
-            })
-          ) : (
-            <img
-              src={card.imageUrl}
-              alt={card.imageAlt || card.name}
-              width={640}
-              height={480}
-              loading={props.priority ? 'eager' : 'lazy'}
-              decoding='async'
-              onError={() => setImageError(true)}
-              className='h-full w-full object-contain transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none'
-            />
-          )
-        ) : (
-          <div
-            role='img'
-            aria-label={card.imageAlt || card.name}
-            className='flex items-center justify-center transition-transform duration-300 ease-out lg:group-hover:scale-[1.03] motion-reduce:transform-none'
-          >
-            <Box className='size-12 sm:size-14 text-primary' aria-hidden='true' />
-          </div>
-        )}
+      {/* 1 ── Header / Thumbnail */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-secondary/40 mb-3 sm:mb-3.5">
+        <Link to={productUrl} tabIndex={-1} className="block size-full">
+          <img
+            src={coverImageUrl}
+            alt={product.name}
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        </Link>
 
-        {/* Optional Label / Badge */}
-        {discountPercent ? (
-          <BadgePill label={`-${discountPercent}%`} isDiscount />
-        ) : badgeLabel ? (
-          <BadgePill label={badgeLabel} />
-        ) : null}
-      </div>
-
-      {/* 2 ── Optional Meta Line (Platform / Region) */}
-      {metaText && (
-        <div className='text-xs text-muted-foreground truncate pt-2.5 text-start font-normal leading-none'>
-          {metaText}
-        </div>
-      )}
-
-      {/* 3 ── Title (2 lines max, 14/15/16px) */}
-      <h2 className='text-sm sm:text-[15px] lg:text-base font-medium line-clamp-2 leading-snug pt-1 text-start'>
-        {props.renderLink ? (
-          props.renderLink({
-            href: productUrl,
-            className: cn(
-              'text-foreground outline-none',
-              'after:absolute after:inset-0 after:z-0 after:content-[""]',
-              'focus-visible:underline hover:text-primary transition-colors'
-            ),
-            children: card.name,
-          })
-        ) : (
-          <Link
-            to={productUrl}
-            className={cn(
-              'text-foreground outline-none',
-              'after:absolute after:inset-0 after:z-0 after:content-[""]',
-              'focus-visible:underline hover:text-primary transition-colors'
-            )}
-          >
-            {card.name}
-          </Link>
-        )}
-      </h2>
-
-      {/* 4 ── Bottom Stack Pinned to Bottom: Price, Delivery, Pill Button */}
-      <div className='mt-auto flex flex-col gap-2.5 pt-3'>
-        {/* Price Row: Calm regular-weight "From X" */}
-        <div className='flex items-baseline gap-1.5 flex-wrap text-start leading-none'>
-          {hasMultiplePrices && (
-            <span className='text-xs text-muted-foreground font-normal'>{fromPriceText}</span>
-          )}
-          <span className='text-[15px] sm:text-base font-normal text-foreground tabular-nums'>
-            {formatPrice(card.startingPrice, currentLang)} {currency}
+        {/* Top Badges */}
+        <div className="absolute start-2 top-2 z-10 flex flex-wrap gap-1.5 items-center">
+          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-background/90 text-foreground backdrop-blur-xs shadow-xs">
+            {t(`categories.${product.category}`, {
+              ns: 'products',
+              defaultValue: product.category,
+            })}
           </span>
-          {card.originalPrice && parseFloat(card.originalPrice) > parseFloat(card.startingPrice) && (
-            <span className='text-xs text-muted-foreground line-through tabular-nums'>
-              {formatPrice(card.originalPrice, currentLang)}
+          {product.variant && (
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-secondary text-secondary-foreground">
+              {t(`variants.${product.variant}`, {
+                ns: 'products',
+                defaultValue: product.variant,
+              })}
             </span>
           )}
         </div>
 
-        {/* Add to Cart Pill Button (44/44/40 px) */}
-        <AddToCartButton
-          productName={card.name}
-          plans={card.plans}
-          locale={currentLang}
-          currency={currency}
-          label={addToCartLabel}
-          addedLabel={addedLabel}
-          disabled={!isInStock}
-          choosePlanTitle={props.translations?.choosePlan ?? (isRtl ? 'اختر خطة' : 'Choose a plan')}
-          choosePlanSubtitle={
-            props.translations?.choosePlanSubtitle ??
-            (isRtl ? 'حدد المدة الأنسب لاحتياجاتك' : 'Select the duration that best suits your needs')
-          }
-          activationPersonalInviteLabel={
-            props.translations?.activation?.personalInvite ?? (isRtl ? 'دعوة شخصية' : 'Personal Invite')
-          }
-          activationReadyAccountLabel={
-            props.translations?.activation?.readyAccount ?? (isRtl ? 'حساب جاهز' : 'Ready Account')
-          }
-          onAddToCart={handleAddToCart}
-        />
+        {/* Stock Status Badge */}
+        <div className="absolute end-2 top-2 z-10">
+          {isInStock && (
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 backdrop-blur-xs">
+              {t('stock.in_stock', { ns: 'products', defaultValue: 'In Stock' })}
+            </span>
+          )}
+          {isPreorder && (
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 backdrop-blur-xs">
+              {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
+            </span>
+          )}
+          {isOutOfStock && (
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground border border-border/40 backdrop-blur-xs">
+              {t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of Stock' })}
+            </span>
+          )}
+        </div>
+
+        {/* Discount Tag */}
+        {product.discount_percentage && product.discount_percentage > 0 && (
+          <div className="absolute start-2 bottom-2 z-10">
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-destructive text-destructive-foreground shadow-xs">
+              -{product.discount_percentage}%
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 2 ── Content */}
+      <div className="flex flex-1 flex-col justify-between text-start">
+        <div className="space-y-1 mb-3">
+          <h3 className="font-semibold text-foreground text-sm sm:text-base leading-snug line-clamp-2">
+            <Link
+              to={productUrl}
+              className="hover:text-primary transition-colors focus:outline-none"
+            >
+              {product.name}
+            </Link>
+          </h3>
+          {product.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2">
+              {product.description}
+            </p>
+          )}
+        </div>
+
+        {/* 3 ── Price & CTA */}
+        <div className="pt-2 border-t border-border/30 space-y-2.5">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
+              {formattedEffectivePrice}
+            </span>
+            {formattedBasePrice && (
+              <span className="text-xs sm:text-sm text-muted-foreground line-through tabular-nums">
+                {formattedBasePrice}
+              </span>
+            )}
+          </div>
+
+          <AddToCartButton
+            productName={product.name}
+            label={addToCartLabel}
+            addedLabel={t('added', { ns: 'products', defaultValue: 'Added' })}
+            disabled={isOutOfStock && !product.preorder_enabled}
+            onClick={handleAddToCart}
+          />
+        </div>
       </div>
     </article>
-  );
+  )
 }

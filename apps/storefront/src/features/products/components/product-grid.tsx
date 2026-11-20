@@ -1,15 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
-import type { Product, ProductListFilter } from '@workspace/domain/schemas/product'
-import { useProducts } from '../hooks/use-products'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
+import { useProducts, type ProductCatalogFilters } from '../hooks/use-products'
 import { ProductCard } from './product-card'
 import { ProductCardSkeleton } from './product-card-skeleton'
 
 export interface ProductGridProps {
-  products?: Product[]
-  filter?: ProductListFilter
-  onAddToCart?: (product: Product) => void
+  products?: ProductResponse[]
+  filter?: ProductCatalogFilters
+  onAddToCart?: (product: ProductResponse) => void
   className?: string
   priorityCount?: number
 }
@@ -22,12 +22,9 @@ export function ProductGrid({
   priorityCount = 4,
 }: ProductGridProps) {
   const { t } = useTranslation(['products', 'common'])
-  const { data: result, isLoading, isError, refetch } = useProducts({
-    filter,
-    enabled: directProducts === undefined,
-  })
+  const { data: resultProducts, isLoading, isError, refetch } = useProducts(filter)
 
-  const products = directProducts ?? result?.items
+  const products = directProducts ?? resultProducts
 
   if (directProducts === undefined && isLoading) {
     return (
@@ -79,4 +76,3 @@ export function ProductGrid({
     </div>
   )
 }
-

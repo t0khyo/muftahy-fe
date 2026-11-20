@@ -96,38 +96,33 @@ describe('Cart Store & Selectors', () => {
     expect(useCartStore.getState().count).toBe(2)
   })
 
-  it('groups currency subtotals accurately without mixing currencies', () => {
+  it('computes currency subtotal accurately in EGP', () => {
     const items: CartItem[] = [
       {
         id: '1',
-        productId: 'p1',
-        planId: 'pl1',
-        slug: 's1',
-        name: 'Product 1',
-        priceMinor: 50000, // 500 EGP
-        currency: 'EGP',
-        quantity: 2, // 1000 EGP
+        product_id: 'p1',
+        product_name: 'Product 1',
+        quantity: 2,
+        is_preorder: false,
+        unit_price_egp: '500.00',
       },
       {
         id: '2',
-        productId: 'p2',
-        planId: 'pl2',
-        slug: 's2',
-        name: 'Product 2',
-        priceMinor: 5000, // 50 USD
-        currency: 'USD',
-        quantity: 1, // 50 USD
+        product_id: 'p2',
+        product_name: 'Product 2',
+        quantity: 1,
+        is_preorder: true,
+        unit_price_egp: '250.50',
       },
     ]
 
     const subtotals = getCurrencySubtotals(items, 'en')
-    expect(subtotals.length).toBe(2)
+    expect(subtotals.length).toBe(1)
 
-    const egp = subtotals.find((s) => s.currency === 'EGP')
-    const usd = subtotals.find((s) => s.currency === 'USD')
-
-    expect(egp?.amountMinor).toBe(100000)
-    expect(usd?.amountMinor).toBe(5000)
+    const egp = subtotals[0]
+    expect(egp.currency).toBe('EGP')
+    // (500.00 * 2) + 250.50 = 1250.50 EGP = 125050 piasters
+    expect(egp.amountMinor).toBe(125050)
   })
 
   it('preserves metadata fields (platform, region, coverImage) on added items', () => {

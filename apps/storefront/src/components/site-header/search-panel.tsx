@@ -19,7 +19,6 @@ export function SearchPanel({
 }: SearchPanelProps) {
   const { lang } = useParams<{ lang: string }>()
   const currentLang = lang || 'en'
-  const isAr = currentLang === 'ar'
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation(['header', 'nav', 'common'])
@@ -30,11 +29,9 @@ export function SearchPanel({
   const sheetRef = React.useRef<HTMLDivElement | null>(null)
 
   // Live products matching query through the service layer
-  const { data: searchResult } = useProducts({
-    filter: query.trim() ? { search: query.trim() } : undefined,
-    enabled: isOpen && query.trim().length > 0,
-  })
-  const liveResults = searchResult?.items
+  const { data: liveResults = [] } = useProducts(
+    isOpen && query.trim().length > 0 ? { search: query.trim() } : undefined,
+  )
 
   // Quick links derived from nav links
   const quickLinks = React.useMemo(() => getLocalizedNavLinks(currentLang), [currentLang])
@@ -232,13 +229,13 @@ export function SearchPanel({
                       {liveResults.map((prod) => (
                         <li key={prod.id}>
                           <Link
-                            to={`/${currentLang}/products/${prod.slug}`}
+                            to={`/${currentLang}/products/${prod.id}`}
                             onClick={handleLinkClick}
                             className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-secondary/60 text-sm text-foreground/90 hover:text-foreground transition-colors group"
                           >
-                            <span>{prod.title[isAr ? 'ar' : 'en'] ?? prod.title.en}</span>
+                            <span>{prod.name}</span>
                             <span className="text-xs text-muted-foreground tabular-nums">
-                              {(prod.price.amountMinor / 100).toFixed(2)} {prod.price.currency}
+                              {prod.effective_price} EGP
                             </span>
                           </Link>
                         </li>

@@ -28,7 +28,7 @@ export function AdminProductsRoute() {
         title={t('admin:emptyState.products.title', 'No products yet')}
         description={t(
           'admin:emptyState.products.description',
-          'Create and manage your catalog of digital game codes, software licenses, and gift cards.'
+          'Create and manage your catalog of Microsoft Windows and Office digital license keys.'
         )}
         actionLabel={t('admin:emptyState.products.action', 'Add Product')}
       />

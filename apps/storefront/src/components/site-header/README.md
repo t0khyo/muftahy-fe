@@ -14,7 +14,7 @@ Apple.com-style sticky global navigation bar for the Muftahy storefront. Manages
   - `sentinelId?: string` — ID of the DOM scroll sentinel (default: `'nav-sentinel'`).
 - `SiteHeaderProps` — interface for the above.
 - `HeaderNavLink` — `{ id, labelKey: 'nav.${NavKey}', href, children?: HeaderNavLink[], isPlaceholder?: boolean }`.
-- `NavKey` — `'games' | 'software' | 'giftCards' | 'subscriptions' | 'deals'`.
+- `NavKey` — `'allProducts' | 'products' | 'windows' | 'office' | 'games' | 'software' | 'giftCards' | 'subscriptions' | 'deals'`.
 - `SiteHeaderConfig` — `{ sticky, searchEnabled, mobileBreakpoint, quickLinksSource, navLinks }`.
 - `SITE_HEADER_CONFIG: SiteHeaderConfig` — the config singleton from `site-header.config.ts`.
 - `getLocalizedNavLinks(lang: string): HeaderNavLink[]` — prepends the active `/:lang` prefix to all nav link hrefs.

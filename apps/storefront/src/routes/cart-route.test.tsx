@@ -68,15 +68,12 @@ describe("CartRoute (Shopping Cart Page)", () => {
   it("renders 2-column layout with line items and order summary sidebar when populated", () => {
     act(() => {
       useCartStore.getState().addItem({
-        id: "cyberpunk:standard",
-        productId: "cyberpunk",
-        slug: "cyberpunk-2077",
-        name: "Cyberpunk 2077",
-        planName: "Standard Edition",
-        priceMinor: 2999,
-        currency: "USD",
-        platform: "steam",
-        region: "global",
+        product_id: "00000000-0000-4000-8000-000000000001",
+        product_name: "Windows 11 Professional",
+        unit_price_egp: "349.00",
+        is_preorder: false,
+        category: "windows",
+        variant: "retail",
       })
     })
 
@@ -86,8 +83,7 @@ describe("CartRoute (Shopping Cart Page)", () => {
     expect(
       screen.getByRole("heading", { name: /shopping cart/i })
     ).toBeInTheDocument()
-    expect(screen.getByText("Cyberpunk 2077")).toBeInTheDocument()
-    expect(screen.getByText("(Standard Edition)")).toBeInTheDocument()
+    expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
 
     // Order summary and Proceed to checkout
     expect(
@@ -106,7 +102,7 @@ describe("CartRoute (Shopping Cart Page)", () => {
 
     // Test item removal
     const removeButton = screen.getByRole("button", {
-      name: /remove cyberpunk 2077/i,
+      name: /remove/i,
     })
     fireEvent.click(removeButton)
     expect(
@@ -117,12 +113,12 @@ describe("CartRoute (Shopping Cart Page)", () => {
   it("renders in Arabic RTL mode with localized strings", () => {
     act(() => {
       useCartStore.getState().addItem({
-        id: "windows:pro",
-        productId: "windows",
-        slug: "windows-11-pro",
-        name: { en: "Windows 11 Pro", ar: "ويندوز 11 برو" },
-        priceMinor: 4999,
-        currency: "USD",
+        product_id: "00000000-0000-4000-8000-000000000001",
+        product_name: "Windows 11 Professional",
+        unit_price_egp: "349.00",
+        is_preorder: false,
+        category: "windows",
+        variant: "retail",
       })
     })
 
@@ -131,7 +127,7 @@ describe("CartRoute (Shopping Cart Page)", () => {
     expect(document.documentElement.dir).toBe("rtl")
     expect(document.documentElement.lang).toBe("ar")
 
-    expect(screen.getByText("ويندوز 11 برو")).toBeInTheDocument()
+    expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
     expect(
       screen.getByRole("heading", { name: /ملخص الطلب/i })
     ).toBeInTheDocument()

@@ -1,69 +1,49 @@
 import * as React from 'react'
 import { useSearchParams } from 'react-router'
-import type {
-  ProductCategory,
-  ProductListFilter,
-  ProductPlatform,
-  ProductRegion,
-  ProductSortOption,
-} from '@workspace/domain/schemas/product'
+import type { ProductCategory, StockStatus } from '@workspace/domain/schemas/product'
+import type { ProductCatalogFilters } from './use-products'
+
+export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest'
 
 export interface ProductFiltersState {
-  categories: ProductCategory[]
-  platforms: ProductPlatform[]
-  regions: ProductRegion[]
-  priceMin?: number
-  priceMax?: number
-  inStock: boolean
-  onSale: boolean
-  sort: ProductSortOption
-  page: number
+  category?: ProductCategory
+  variant?: 'retail' | 'oem'
+  stockStatus?: StockStatus
+  inStockOnly: boolean
+  sort: SortOption
   search?: string
+  page: number
 }
 
 export interface ActiveFilterChip {
   id: string
-  type: 'category' | 'platform' | 'region' | 'price' | 'inStock' | 'onSale'
+  type: 'category' | 'variant' | 'stock'
   value?: string
-  labelKey?: string
   labelFallback: string
-}
-
-function parseArrayParam<T extends string>(searchParams: URLSearchParams, param: string): T[] {
-  const raw = searchParams.getAll(param)
-  return raw
-    .flatMap((item) => item.split(','))
-    .map((s) => s.trim())
-    .filter(Boolean) as T[]
 }
 
 export function useProductFilters() {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const categories = React.useMemo(
-    () => parseArrayParam<ProductCategory>(searchParams, 'category'),
-    [searchParams],
-  )
-  const platforms = React.useMemo(
-    () => parseArrayParam<ProductPlatform>(searchParams, 'platform'),
-    [searchParams],
-  )
-  const regions = React.useMemo(
-    () => parseArrayParam<ProductRegion>(searchParams, 'region'),
-    [searchParams],
-  )
+  const categoryParam = searchParams.get('category') as ProductCategory | null
+  const category: ProductCategory | undefined =
+    categoryParam === 'windows' || categoryParam === 'office' ? categoryParam : undefined
 
-  const priceMinParam = searchParams.get('minPrice')
-  const priceMaxParam = searchParams.get('maxPrice')
-  const priceMin = priceMinParam && !isNaN(Number(priceMinParam)) ? Number(priceMinParam) : undefined
-  const priceMax = priceMaxParam && !isNaN(Number(priceMaxParam)) ? Number(priceMaxParam) : undefined
+  const variantParam = searchParams.get('variant') as 'retail' | 'oem' | null
+  const variant: 'retail' | 'oem' | undefined =
+    variantParam === 'retail' || variantParam === 'oem' ? variantParam : undefined
 
-  const inStock = searchParams.get('inStock') === 'true' || searchParams.get('inStock') === '1'
-  const onSale = searchParams.get('onSale') === 'true' || searchParams.get('onSale') === '1'
+  const stockParam = searchParams.get('stock') as StockStatus | null
+  const stockStatus: StockStatus | undefined =
+    stockParam === 'in_stock' || stockParam === 'preorder' || stockParam === 'out_of_stock'
+      ? stockParam
+      : undefined
 
-  const sortParam = searchParams.get('sort') as ProductSortOption | null
-  const validSorts: ProductSortOption[] = ['featured', 'best-selling', 'price-asc', 'price-desc', 'newest']
-  const sort: ProductSortOption = sortParam && validSorts.includes(sortParam) ? sortParam : 'featured'
+  const inStockOnly = searchParams.get('inStock') === 'true' || searchParams.get('inStock') === '1'
+
+  const sortParam = searchParams.get('sort') as SortOption | null
+  const validSorts: SortOption[] = ['featured', 'price-asc', 'price-desc', 'newest']
+  const sort: SortOption = sortParam && validSorts.includes(sortParam) ? sortParam : 'featured'
 
   const pageParam = searchParams.get('page')
   const page = pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0 ? Number(pageParam) : 1
@@ -72,45 +52,33 @@ export function useProductFilters() {
 
   const filtersState: ProductFiltersState = React.useMemo(
     () => ({
-      categories,
-      platforms,
-      regions,
-      priceMin,
-      priceMax,
-      inStock,
-      onSale,
+      category,
+      variant,
+      stockStatus,
+      inStockOnly,
       sort,
-      page,
       search,
+      page,
     }),
-    [categories, platforms, regions, priceMin, priceMax, inStock, onSale, sort, page, search],
+    [category, variant, stockStatus, inStockOnly, sort, search, page],
   )
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0
-    count += platforms.length
-    count += regions.length
-    if (priceMin !== undefined || priceMax !== undefined) count += 1
-    if (inStock) count += 1
-    if (onSale) count += 1
+    if (variant) count += 1
+    if (stockStatus) count += 1
+    if (inStockOnly) count += 1
     return count
-  }, [platforms, regions, priceMin, priceMax, inStock, onSale])
+  }, [variant, stockStatus, inStockOnly])
 
-  // Helper to update search params while preserving unrelated ones
   const updateParams = React.useCallback(
-    (updates: Record<string, string | string[] | null | undefined>, resetPage = true) => {
+    (updates: Record<string, string | null | undefined>, resetPage = true) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev)
           for (const [key, value] of Object.entries(updates)) {
             next.delete(key)
-            if (value === null || value === undefined) {
-              // already deleted
-            } else if (Array.isArray(value)) {
-              if (value.length > 0) {
-                next.set(key, value.join(','))
-              }
-            } else if (value.trim() !== '') {
+            if (value !== null && value !== undefined && value.trim() !== '') {
               next.set(key, value.trim())
             }
           }
@@ -125,62 +93,36 @@ export function useProductFilters() {
     [setSearchParams],
   )
 
-  const toggleCategory = React.useCallback(
-    (cat: ProductCategory) => {
-      const next = categories.includes(cat)
-        ? categories.filter((c) => c !== cat)
-        : [...categories, cat]
-      updateParams({ category: next })
-    },
-    [categories, updateParams],
-  )
-
-  const togglePlatform = React.useCallback(
-    (plat: ProductPlatform) => {
-      const next = platforms.includes(plat)
-        ? platforms.filter((p) => p !== plat)
-        : [...platforms, plat]
-      updateParams({ platform: next })
-    },
-    [platforms, updateParams],
-  )
-
-  const toggleRegion = React.useCallback(
-    (reg: ProductRegion) => {
-      const next = regions.includes(reg)
-        ? regions.filter((r) => r !== reg)
-        : [...regions, reg]
-      updateParams({ region: next })
-    },
-    [regions, updateParams],
-  )
-
-  const setPriceRange = React.useCallback(
-    (min?: number, max?: number) => {
-      updateParams({
-        minPrice: min !== undefined ? String(min) : null,
-        maxPrice: max !== undefined ? String(max) : null,
-      })
+  const setCategory = React.useCallback(
+    (cat?: ProductCategory) => {
+      updateParams({ category: cat ?? null })
     },
     [updateParams],
   )
 
-  const setInStock = React.useCallback(
+  const setVariant = React.useCallback(
+    (v?: 'retail' | 'oem') => {
+      updateParams({ variant: v ?? null })
+    },
+    [updateParams],
+  )
+
+  const setStockStatus = React.useCallback(
+    (s?: StockStatus) => {
+      updateParams({ stock: s ?? null })
+    },
+    [updateParams],
+  )
+
+  const setInStockOnly = React.useCallback(
     (val: boolean) => {
       updateParams({ inStock: val ? 'true' : null })
     },
     [updateParams],
   )
 
-  const setOnSale = React.useCallback(
-    (val: boolean) => {
-      updateParams({ onSale: val ? 'true' : null })
-    },
-    [updateParams],
-  )
-
   const setSort = React.useCallback(
-    (newSort: ProductSortOption) => {
+    (newSort: SortOption) => {
       updateParams({ sort: newSort === 'featured' ? null : newSort }, false)
     },
     [updateParams],
@@ -208,74 +150,38 @@ export function useProductFilters() {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams()
-        // preserve search query 'q' and 'category' if present
         const q = prev.get('q')
         if (q) next.set('q', q)
-        const category = prev.get('category')
-        if (category) next.set('category', category)
+        const cat = prev.get('category')
+        if (cat) next.set('category', cat)
         return next
       },
       { replace: true },
     )
   }, [setSearchParams])
 
-  const removeFilter = React.useCallback(
-    (type: ActiveFilterChip['type'], value?: string) => {
-      switch (type) {
-        case 'category':
-          if (value) toggleCategory(value as ProductCategory)
-          break
-        case 'platform':
-          if (value) togglePlatform(value as ProductPlatform)
-          break
-        case 'region':
-          if (value) toggleRegion(value as ProductRegion)
-          break
-        case 'price':
-          setPriceRange(undefined, undefined)
-          break
-        case 'inStock':
-          setInStock(false)
-          break
-        case 'onSale':
-          setOnSale(false)
-          break
-      }
-    },
-    [toggleCategory, togglePlatform, toggleRegion, setPriceRange, setInStock, setOnSale],
-  )
-
-  // Convert to ProductListFilter format for service query
-  const queryFilter: ProductListFilter = React.useMemo(
+  const queryFilter: ProductCatalogFilters = React.useMemo(
     () => ({
-      category: categories.length > 0 ? categories : undefined,
-      platform: platforms.length > 0 ? platforms : undefined,
-      region: regions.length > 0 ? regions : undefined,
-      priceMin,
-      priceMax,
-      inStock: inStock ? true : undefined,
-      onSale: onSale ? true : undefined,
+      category,
+      variant,
+      stock_status: stockStatus,
+      inStockOnly,
       sort,
-      page,
-      pageSize: 24,
       search,
     }),
-    [categories, platforms, regions, priceMin, priceMax, inStock, onSale, sort, page, search],
+    [category, variant, stockStatus, inStockOnly, sort, search],
   )
 
   return {
     state: filtersState,
     queryFilter,
     activeFiltersCount,
-    toggleCategory,
-    togglePlatform,
-    toggleRegion,
-    setPriceRange,
-    setInStock,
-    setOnSale,
+    setCategory,
+    setVariant,
+    setStockStatus,
+    setInStockOnly,
     setSort,
     setPage,
     clearAll,
-    removeFilter,
   }
 }

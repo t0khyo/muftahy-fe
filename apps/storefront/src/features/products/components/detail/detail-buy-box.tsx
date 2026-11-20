@@ -1,18 +1,13 @@
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Check, ShieldCheck, Headphones, Lock, ShoppingCart } from 'lucide-react'
-import { cn } from '@workspace/ui/lib/utils'
+import { Check, Headphones, ShieldCheck, ShoppingCart, Zap } from 'lucide-react'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { RadioGroup, RadioGroupItem } from '@workspace/ui/components/radio-group'
-import { formatMoneyFromMinor } from '@workspace/domain/formatters/money'
-import type { Product, ProductPlan } from '@workspace/domain/schemas/product'
-import { resolveLocalizedName } from '../../../cart/lib/cart-selectors'
+import { formatMoney } from '@workspace/domain/formatters/money'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 
 export interface DetailBuyBoxProps {
-  product: Product
-  selectedPlan: ProductPlan
-  onSelectPlan: (planSlug: string) => void
+  product: ProductResponse
   onAddToCart: () => void
   isInCart: boolean
   isJustAdded: boolean
@@ -21,8 +16,6 @@ export interface DetailBuyBoxProps {
 
 export function DetailBuyBox({
   product,
-  selectedPlan,
-  onSelectPlan,
   onAddToCart,
   isInCart,
   isJustAdded,
@@ -31,51 +24,24 @@ export function DetailBuyBox({
   const { t } = useTranslation(['detail', 'products', 'common'])
   const navigate = useNavigate()
 
-  const isRtl = lang === 'ar'
-  const isOutOfStock = selectedPlan.stock === 0
-  const isLowStock = selectedPlan.stock > 0 && selectedPlan.stock <= 5
+  const isInStock = product.stock_status === 'in_stock'
+  const isPreorder = product.stock_status === 'preorder'
+  const isOutOfStock = product.stock_status === 'out_of_stock'
 
-  const productTitle = resolveLocalizedName(product.title, lang)
-  const productTagline = resolveLocalizedName(product.tagline, lang)
-  const regionNote = resolveLocalizedName(product.regionNote, lang)
+  const formattedEffectivePrice = formatMoney(Number(product.effective_price), {
+    currency: 'EGP',
+    locale: lang,
+  })
 
-  // Platform & Region localized labels
-  const platformKey = `platform${product.platform.charAt(0).toUpperCase() + product.platform.slice(1)}`
-  const regionKey = `region${product.region.charAt(0).toUpperCase() + product.region.slice(1)}`
-  const platformLabel = t(platformKey, { ns: 'products', defaultValue: product.platform })
-  const regionLabel = t(regionKey, { ns: 'products', defaultValue: product.region })
-
-  // Discount
-  const hasDiscount = Boolean(
-    selectedPlan.originalPrice &&
-      selectedPlan.originalPrice.currency === selectedPlan.price.currency &&
-      selectedPlan.originalPrice.amountMinor > selectedPlan.price.amountMinor,
-  )
-
-  const discountPercent = hasDiscount
-    ? Math.round(
-        ((selectedPlan.originalPrice!.amountMinor - selectedPlan.price.amountMinor) /
-          selectedPlan.originalPrice!.amountMinor) *
-          100,
-      )
-    : null
-
-  const formattedPrice = formatMoneyFromMinor(
-    selectedPlan.price.amountMinor,
-    selectedPlan.price.currency,
-    lang,
-  )
-
-  const formattedOriginalPrice = hasDiscount
-    ? formatMoneyFromMinor(
-        selectedPlan.originalPrice!.amountMinor,
-        selectedPlan.originalPrice!.currency,
-        lang,
-      )
+  const formattedBasePrice = product.sale_price
+    ? formatMoney(Number(product.base_price), {
+        currency: 'EGP',
+        locale: lang,
+      })
     : null
 
   const handleActionClick = () => {
-    if (isOutOfStock) return
+    if (isOutOfStock && !product.preorder_enabled) return
     if (isInCart) {
       navigate(`/${lang}/cart`)
       return
@@ -83,203 +49,127 @@ export function DetailBuyBox({
     onAddToCart()
   }
 
-  return (
-    <div className="flex flex-col gap-5 text-start w-full">
-      {/* 1. Badges & Region Note */}
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" className="h-7 px-3 text-xs font-medium">
-            {platformLabel}
-          </Badge>
-          <Badge variant="outline" className="h-7 px-3 text-xs font-medium">
-            {regionLabel}
-          </Badge>
-          {product.featured && (
-            <Badge variant="default" className="h-7 px-3 text-xs font-medium">
-              {t('bestSeller', { ns: 'products', defaultValue: isRtl ? 'الأكثر مبيعاً' : 'Best Seller' })}
-            </Badge>
-          )}
-        </div>
+  const actionButtonText = isJustAdded
+    ? t('added', { ns: 'common', defaultValue: 'Added!' })
+    : isInCart
+      ? t('viewCart', { ns: 'common', defaultValue: 'View in Cart' })
+      : isPreorder
+        ? t('stock.preorder', { ns: 'products', defaultValue: 'Preorder Now' })
+        : t('addToCart', { ns: 'products', defaultValue: 'Add to Cart' })
 
-        {regionNote && (
-          <div className="rounded-xl bg-muted/60 border border-border/50 px-3.5 py-2 text-xs text-muted-foreground leading-relaxed">
-            {regionNote}
-          </div>
+  return (
+    <div className="flex flex-col gap-6 text-start w-full">
+      {/* 1. Category & Variant Badges */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary" className="h-7 px-3 text-xs font-semibold uppercase">
+          {t(`categories.${product.category}`, {
+            ns: 'products',
+            defaultValue: product.category,
+          })}
+        </Badge>
+        {product.variant && (
+          <Badge variant="outline" className="h-7 px-3 text-xs font-semibold uppercase">
+            {t(`variants.${product.variant}`, {
+              ns: 'products',
+              defaultValue: product.variant,
+            })}
+          </Badge>
         )}
       </div>
 
-      {/* 2. Title & Tagline */}
+      {/* 2. Product Title & Short Description */}
       <div className="space-y-2">
-        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-foreground leading-tight line-clamp-3">
-          {productTitle}
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
+          {product.name}
         </h1>
-        {productTagline && (
-          <p className="text-base text-muted-foreground leading-relaxed">
-            {productTagline}
+        {product.description && (
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {product.description}
           </p>
         )}
       </div>
 
-      {/* 3. Plan Picker (Radio Group - only if 2+ plans) */}
-      {product.plans && product.plans.length > 1 && (
-        <fieldset className="space-y-2.5">
-          <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('choosePlan')}
-          </legend>
-          <RadioGroup
-            value={selectedPlan.slug}
-            onValueChange={(val) => {
-              if (val) onSelectPlan(val)
-            }}
-            className="grid gap-2.5"
-          >
-            {product.plans.map((plan) => {
-              const isSelected = plan.slug === selectedPlan.slug
-              const isPlanDisabled = plan.stock === 0
-              const planName = resolveLocalizedName(plan.name, lang)
-              const planPrice = formatMoneyFromMinor(
-                plan.price.amountMinor,
-                plan.price.currency,
-                lang,
-              )
-
-              return (
-                <label
-                  key={plan.slug}
-                  className={cn(
-                    'relative flex items-center justify-between rounded-xl border p-3.5 sm:p-4 cursor-pointer transition-all select-none',
-                    isSelected
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-input hover:border-border bg-card',
-                    isPlanDisabled && 'opacity-60 cursor-not-allowed',
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem
-                      value={plan.slug}
-                      disabled={isPlanDisabled}
-                      aria-label={`${planName} - ${planPrice}`}
-                    />
-                    <div>
-                      <span className="font-medium text-sm sm:text-base text-foreground block">
-                        {planName}
-                      </span>
-                      {isPlanDisabled && (
-                        <span className="text-xs text-destructive">
-                          {t('outOfStock')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="font-semibold text-sm sm:text-base text-foreground tabular-nums">
-                    {planPrice}
-                  </span>
-                </label>
-              )
-            })}
-          </RadioGroup>
-        </fieldset>
-      )}
-
-      {/* 4. Price & Discount Row */}
-      <div className="flex flex-wrap items-baseline gap-3 pt-2">
-        <span className="text-3xl sm:text-4xl font-bold text-foreground tabular-nums tracking-tight">
-          {formattedPrice}
-        </span>
-        {hasDiscount && (
-          <>
-            <span className="text-base text-muted-foreground line-through tabular-nums">
-              {formattedOriginalPrice}
+      {/* 3. Price Display Card */}
+      <div className="rounded-2xl border border-border/40 bg-secondary/30 p-5 space-y-4">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="text-3xl sm:text-4xl font-bold text-foreground tabular-nums">
+            {formattedEffectivePrice}
+          </span>
+          {formattedBasePrice && (
+            <span className="text-base sm:text-lg text-muted-foreground line-through tabular-nums">
+              {formattedBasePrice}
             </span>
-            <Badge variant="destructive" className="h-6 px-2 text-xs font-bold">
-              -{discountPercent}%
+          )}
+          {product.discount_percentage && product.discount_percentage > 0 && (
+            <Badge variant="destructive" className="text-xs font-bold">
+              -{product.discount_percentage}%
             </Badge>
-          </>
-        )}
-      </div>
-
-      {/* 5. Delivery Line & Low Stock */}
-      <div className="space-y-1.5 text-xs">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-          <span className="font-medium text-foreground">
-            {t('instantDelivery')}
-          </span>
-          <span>•</span>
-          <span>
-            {isRtl ? 'عبر البريد الإلكتروني والحساب' : 'Via email & dashboard'}
-          </span>
+          )}
         </div>
 
-        {isLowStock && (
-          <div className="text-warning font-medium">
-            {t('lowStock')} ({t('lowStock', { ns: 'products', count: selectedPlan.stock })})
-          </div>
-        )}
-      </div>
+        {/* Stock Status Indicator */}
+        <div className="pt-2 border-t border-border/30">
+          {isInStock && (
+            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>
+                {t('stock.in_stock', { ns: 'products', defaultValue: 'In Stock' })}
+                {product.available_count > 0 && ` (${product.available_count} keys available)`}
+              </span>
+            </div>
+          )}
+          {isPreorder && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                <span className="size-2 rounded-full bg-amber-500" />
+                <span>{t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('preorderDisclaimer', {
+                  ns: 'products',
+                  defaultValue: 'Preorder item: code will be fulfilled upon restock.',
+                })}
+              </p>
+            </div>
+          )}
+          {isOutOfStock && !product.preorder_enabled && (
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <span className="size-2 rounded-full bg-muted-foreground" />
+              <span>{t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of Stock' })}</span>
+            </div>
+          )}
+        </div>
 
-      {/* 6. Purchase Action Button */}
-      <div className="space-y-2 pt-2">
+        {/* Action Button */}
         <Button
           type="button"
           size="lg"
-          disabled={isOutOfStock}
+          disabled={isOutOfStock && !product.preorder_enabled}
           onClick={handleActionClick}
-          className={cn(
-            'w-full h-12 rounded-full font-medium text-base transition-all active:scale-[0.98] shadow-sm',
-            isInCart
-              ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-              : 'bg-primary text-primary-foreground hover:bg-primary/90',
-          )}
+          className="w-full h-12 rounded-full font-medium text-sm sm:text-base gap-2 cursor-pointer shadow-md transition-all active:scale-[0.98]"
         >
-          {isOutOfStock ? (
-            t('outOfStock')
-          ) : isJustAdded ? (
-            <span className="flex items-center gap-2">
-              <Check className="size-5" />
-              {t('added')}
-            </span>
-          ) : isInCart ? (
-            <span className="flex items-center gap-2">
-              <ShoppingCart className="size-5" />
-              {t('inCart')}
-            </span>
+          {isJustAdded ? (
+            <Check className="size-5 shrink-0 animate-in zoom-in-75" />
           ) : (
-            t('addToCart')
+            <ShoppingCart className="size-5 shrink-0" />
           )}
+          <span>{actionButtonText}</span>
         </Button>
-
-        {isInCart && (
-          <div className="text-center">
-            <Link
-              to={`/${lang}/cart`}
-              className="text-xs text-primary underline underline-offset-4 hover:text-primary/80 transition-colors font-medium inline-block py-1"
-            >
-              {t('viewCart')}
-            </Link>
-          </div>
-        )}
       </div>
 
-      {/* 7. Trust Stamp Grid (3 distinct badges, no duplicate delivery claim) */}
-      <div className="grid grid-cols-3 gap-px bg-border/40 border border-border/40 rounded-xl overflow-hidden mt-2">
-        <div className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-secondary/30 text-center">
+      {/* 4. Trust Badges */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/20 border border-border/30">
+          <Zap className="size-4 text-primary shrink-0" aria-hidden="true" />
+          <span>{lang === 'ar' ? 'تسليم فوري للمفتاح' : 'Instant digital key delivery'}</span>
+        </div>
+        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/20 border border-border/30">
           <ShieldCheck className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <span className="text-[11px] leading-tight text-muted-foreground font-medium">
-            {t('verifiedLicense', { defaultValue: isRtl ? 'ترخيص رسمي' : 'Official license' })}
-          </span>
+          <span>{lang === 'ar' ? 'ترخيص أصلي 100%' : '100% Genuine license'}</span>
         </div>
-        <div className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-secondary/30 text-center">
+        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/20 border border-border/30">
           <Headphones className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <span className="text-[11px] leading-tight text-muted-foreground font-medium">
-            {t('activationSupport', { defaultValue: isRtl ? 'دعم التفعيل' : 'Activation support' })}
-          </span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-secondary/30 text-center">
-          <Lock className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <span className="text-[11px] leading-tight text-muted-foreground font-medium">
-            {t('buyerProtection', { defaultValue: isRtl ? 'حماية المشتري' : 'Buyer protection' })}
-          </span>
+          <span>{lang === 'ar' ? 'دعم فني عبر واتساب' : 'WhatsApp customer support'}</span>
         </div>
       </div>
     </div>

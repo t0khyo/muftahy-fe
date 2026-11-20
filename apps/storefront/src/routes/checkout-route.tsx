@@ -20,7 +20,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react'
-import { formatMoneyFromMinor } from '@workspace/domain/formatters/money'
+import { formatMoneyFromMinor, toPiasters } from '@workspace/domain/formatters/money'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
@@ -621,10 +621,13 @@ export function CheckoutRoute() {
               {/* Item Previews */}
               <div className="space-y-3 max-h-72 overflow-y-auto divide-y divide-border/20 pe-1">
                 {items.map((item) => {
-                  const title = resolveLocalizedName(item.name, lang)
+                  const title = resolveLocalizedName(item.name, lang) || item.product_name
+                  const lineTotalMinor = item.unit_price_egp
+                    ? toPiasters(item.unit_price_egp) * item.quantity
+                    : (item.priceMinor ?? 0) * item.quantity
                   const lineTotal = formatMoneyFromMinor(
-                    item.priceMinor * item.quantity,
-                    item.currency,
+                    lineTotalMinor,
+                    'EGP',
                     lang,
                   )
 

@@ -36,9 +36,10 @@ export function DesktopNav({ isSearchOpen, className = '' }: DesktopNavProps) {
       } ${className}`}
     >
       {links.map((link) => {
-        const isActive =
-          location.pathname === link.href ||
-          location.pathname + location.search === link.href
+        const currentPathAndSearch = location.pathname + location.search
+        const isActive = link.href.includes('?')
+          ? currentPathAndSearch === link.href
+          : location.pathname === link.href && !location.search
 
         return (
           <Link

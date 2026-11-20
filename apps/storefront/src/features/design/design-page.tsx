@@ -33,7 +33,7 @@ import {
 } from '@workspace/ui/components/table'
 import { ProductCard } from '../products/components/product-card'
 import { ProductCardSkeleton } from '../products/components/product-card-skeleton'
-import { SAMPLE_PRODUCTS } from '../products/components/sample-data'
+import { MOCK_PRODUCTS } from '@workspace/api/adapters/mock/product-mock-adapter'
 
 export function DesignPage() {
   const { t, i18n } = useTranslation(['design', 'common', 'products'])
@@ -248,14 +248,11 @@ export function DesignPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="global">
-                    {t('regionGlobal', { ns: 'products' })}
+                  <SelectItem value="windows">
+                    {t('categories.windows', { ns: 'products', defaultValue: 'Windows' })}
                   </SelectItem>
-                  <SelectItem value="gcc">
-                    {t('regionGcc', { ns: 'products' })}
-                  </SelectItem>
-                  <SelectItem value="eg">
-                    {t('regionEg', { ns: 'products' })}
+                  <SelectItem value="office">
+                    {t('categories.office', { ns: 'products', defaultValue: 'Office' })}
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -406,8 +403,8 @@ export function DesignPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {SAMPLE_PRODUCTS.map((card) => (
-            <ProductCard key={card.slug} card={card} onAddToCart={() => {}} />
+          {MOCK_PRODUCTS.slice(0, 3).map((product) => (
+            <ProductCard key={product.id} product={product} onAddToCart={() => {}} />
           ))}
           <div className="flex flex-col gap-2">
             <span className="text-caption text-muted-foreground text-start">

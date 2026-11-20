@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useProductCollection } from '../../products/hooks/use-product-collection'
+import { useProducts } from '../../products/hooks/use-products'
 import { ProductCard } from '../../products/components/product-card'
 import { ProductCardSkeleton } from '../../products/components/product-card-skeleton'
 import type { BundlesSectionConfig } from '../home.config'
@@ -11,7 +11,7 @@ export interface BundlesSectionProps {
 
 export function BundlesSection({ config, className = '' }: BundlesSectionProps) {
   const { t } = useTranslation(['home', 'common'])
-  const { data: products, isLoading } = useProductCollection({ collection: 'deals' })
+  const { data: products = [], isLoading } = useProducts({ category: 'office' })
   const headingId = `${config.id}-heading`
 
   return (
@@ -26,7 +26,7 @@ export function BundlesSection({ config, className = '' }: BundlesSectionProps) 
             id={headingId}
             className="text-h4 font-bold tracking-tight text-foreground"
           >
-            {t(config.titleKey as never, { ns: 'home', defaultValue: 'Bundles (Productivity-Led)' })}
+            {t(config.titleKey as never, { ns: 'home', defaultValue: 'Office Suites & Bundles' })}
           </h2>
           {config.subtitleKey && (
             <p className="text-sm text-muted-foreground">
@@ -36,7 +36,7 @@ export function BundlesSection({ config, className = '' }: BundlesSectionProps) 
         </div>
 
         {/* Real Product Cards or Skeletons while loading */}
-        {isLoading || !products || products.length === 0 ? (
+        {isLoading || products.length === 0 ? (
           <div
             data-testid="bundles-skeleton"
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
@@ -59,4 +59,3 @@ export function BundlesSection({ config, className = '' }: BundlesSectionProps) 
     </section>
   )
 }
-

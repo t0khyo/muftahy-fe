@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Sheet,
@@ -14,29 +13,24 @@ import {
   AccordionTrigger,
 } from '@workspace/ui/components/accordion'
 import { Switch } from '@workspace/ui/components/switch'
-import { Input } from '@workspace/ui/components/input'
 import { Button } from '@workspace/ui/components/button'
 import { X } from 'lucide-react'
-import type {
-  ProductFilterCounts,
-  ProductPlatform,
-  ProductRegion,
-} from '@workspace/domain/schemas/product'
+import { cn } from '@workspace/ui/lib/utils'
+import type { ProductCategory, StockStatus } from '@workspace/domain/schemas/product'
 import type { ProductFiltersState } from '../hooks/use-product-filters'
-import { FilterGroup } from './filter-group'
+import type { FilterCounts } from '../hooks/use-filter-counts'
 
 export interface FilterSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   state: ProductFiltersState
-  counts?: ProductFilterCounts
+  counts?: FilterCounts
   totalResults: number
   activeFiltersCount: number
-  onTogglePlatform: (plat: ProductPlatform) => void
-  onToggleRegion: (reg: ProductRegion) => void
-  onSetPriceRange: (min?: number, max?: number) => void
-  onSetInStock: (val: boolean) => void
-  onSetOnSale: (val: boolean) => void
+  onSetCategory: (cat?: ProductCategory) => void
+  onSetVariant: (variant?: 'retail' | 'oem') => void
+  onSetStockStatus: (status?: StockStatus) => void
+  onSetInStockOnly: (val: boolean) => void
   onClearAll: () => void
 }
 
@@ -47,47 +41,13 @@ export function FilterSheet({
   counts,
   totalResults,
   activeFiltersCount,
-  onTogglePlatform,
-  onToggleRegion,
-  onSetPriceRange,
-  onSetInStock,
-  onSetOnSale,
+  onSetCategory,
+  onSetVariant,
+  onSetStockStatus,
+  onSetInStockOnly,
   onClearAll,
 }: FilterSheetProps) {
   const { t } = useTranslation(['products', 'common'])
-
-  const [minPriceInput, setMinPriceInput] = React.useState(state.priceMin !== undefined ? String(state.priceMin) : '')
-  const [prevMin, setPrevMin] = React.useState(state.priceMin)
-  const [maxPriceInput, setMaxPriceInput] = React.useState(state.priceMax !== undefined ? String(state.priceMax) : '')
-  const [prevMax, setPrevMax] = React.useState(state.priceMax)
-
-  if (prevMin !== state.priceMin) {
-    setPrevMin(state.priceMin)
-    setMinPriceInput(state.priceMin !== undefined ? String(state.priceMin) : '')
-  }
-
-  if (prevMax !== state.priceMax) {
-    setPrevMax(state.priceMax)
-    setMaxPriceInput(state.priceMax !== undefined ? String(state.priceMax) : '')
-  }
-
-  const handlePriceBlur = () => {
-    const min = minPriceInput ? parseFloat(minPriceInput) : undefined
-    const max = maxPriceInput ? parseFloat(maxPriceInput) : undefined
-    if (min !== state.priceMin || max !== state.priceMax) {
-      onSetPriceRange(min, max)
-    }
-  }
-
-  const getPlatformLabel = (val: string) => {
-    const key = `platform${val.charAt(0).toUpperCase() + val.slice(1)}`
-    return t(key as never, { defaultValue: val })
-  }
-
-  const getRegionLabel = (val: string) => {
-    const key = `region${val.charAt(0).toUpperCase() + val.slice(1)}`
-    return t(key as never, { defaultValue: val })
-  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -99,18 +59,20 @@ export function FilterSheet({
         {/* Header */}
         <SheetHeader className="flex-row items-center justify-between border-b border-border/40 px-5 py-4">
           <div className="flex items-center gap-2">
-            <SheetTitle className="text-base font-semibold">
+            <SheetTitle className="text-base font-semibold text-foreground">
               {t('listing.filters', { defaultValue: 'Filters' })}
             </SheetTitle>
             {activeFiltersCount > 0 && (
-              <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                ({activeFiltersCount})
+              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-primary-foreground">
+                {activeFiltersCount}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-3">
             {activeFiltersCount > 0 && (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={onClearAll}
@@ -119,134 +81,169 @@ export function FilterSheet({
                 {t('listing.clearAll', { defaultValue: 'Clear all' })}
               </Button>
             )}
+
             <SheetClose
               render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-8 rounded-full cursor-pointer text-muted-foreground hover:text-foreground"
+                <button
+                  type="button"
+                  aria-label={t('close', { ns: 'common', defaultValue: 'Close' })}
+                  className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors"
                 />
               }
             >
-              <X className="size-4" />
-              <span className="sr-only">
-                {t('common.close', { defaultValue: 'Close' })}
-              </span>
+              <X className="size-5" aria-hidden="true" />
             </SheetClose>
           </div>
         </SheetHeader>
 
-        {/* Scrollable Filters Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+        {/* Scrollable Filter Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 text-start">
           <Accordion
-            defaultValue={['platform', 'region', 'price']}
-            className="w-full"
+            defaultValue={['category', 'variant', 'availability']}
+            className="w-full space-y-4"
           >
-            {/* Platform */}
-            {counts?.platforms && counts.platforms.length > 0 && (
-              <AccordionItem value="platform">
-                <AccordionTrigger className="text-sm font-medium py-3.5 hover:no-underline">
-                  {t('platform', { defaultValue: 'Platform' })}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <FilterGroup
-                    title={t('platform', { defaultValue: 'Platform' })}
-                    options={counts.platforms}
-                    selectedValues={state.platforms}
-                    onToggle={(val) => onTogglePlatform(val as ProductPlatform)}
-                    getLabel={getPlatformLabel}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* Region */}
-            {counts?.regions && counts.regions.length > 0 && (
-              <AccordionItem value="region">
-                <AccordionTrigger className="text-sm font-medium py-3.5 hover:no-underline">
-                  {t('listing.region', { defaultValue: 'Region' })}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <FilterGroup
-                    title={t('listing.region', { defaultValue: 'Region' })}
-                    options={counts.regions}
-                    selectedValues={state.regions}
-                    onToggle={(val) => onToggleRegion(val as ProductRegion)}
-                    getLabel={getRegionLabel}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* Price Range */}
-            <AccordionItem value="price">
-              <AccordionTrigger className="text-sm font-medium py-3.5 hover:no-underline">
-                {t('listing.priceRange', { defaultValue: 'Price range' })}
+            {/* Category Accordion */}
+            <AccordionItem value="category" className="border-border/40">
+              <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-2">
+                {t('category', { defaultValue: 'Category' })}
               </AccordionTrigger>
-              <AccordionContent>
-                <div className="flex items-center gap-3 pt-1 pb-2">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      placeholder={t('listing.priceMin', { defaultValue: 'Min' })}
-                      value={minPriceInput}
-                      onChange={(e) => setMinPriceInput(e.target.value)}
-                      onBlur={handlePriceBlur}
-                      className="h-10 text-sm"
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground">–</span>
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      placeholder={t('listing.priceMax', { defaultValue: 'Max' })}
-                      value={maxPriceInput}
-                      onChange={(e) => setMaxPriceInput(e.target.value)}
-                      onBlur={handlePriceBlur}
-                      className="h-10 text-sm"
-                    />
-                  </div>
-                </div>
+              <AccordionContent className="pt-2 pb-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => onSetCategory(undefined)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    !state.category
+                      ? 'bg-secondary font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('all', { ns: 'common', defaultValue: 'All' })}</span>
+                  {counts && <span className="text-xs">{counts.total}</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetCategory('windows')}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    state.category === 'windows'
+                      ? 'bg-secondary font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('categories.windows', { defaultValue: 'Windows' })}</span>
+                  {counts && <span className="text-xs">{counts.windowsCount}</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetCategory('office')}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    state.category === 'office'
+                  ? 'bg-secondary font-medium text-foreground'
+                  : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('categories.office', { defaultValue: 'Office' })}</span>
+                  {counts && <span className="text-xs">{counts.officeCount}</span>}
+                </button>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Variant Accordion */}
+            <AccordionItem value="variant" className="border-border/40">
+              <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-2">
+                {t('variant', { defaultValue: 'License Variant' })}
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => onSetVariant(undefined)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    !state.variant
+                      ? 'bg-secondary font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('all', { ns: 'common', defaultValue: 'All' })}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetVariant('retail')}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    state.variant === 'retail'
+                      ? 'bg-secondary font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('variants.retail', { defaultValue: 'Retail' })}</span>
+                  {counts && <span className="text-xs">{counts.retailCount}</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetVariant('oem')}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    state.variant === 'oem'
+                      ? 'bg-secondary font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('variants.oem', { defaultValue: 'OEM' })}</span>
+                  {counts && <span className="text-xs">{counts.oemCount}</span>}
+                </button>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Availability Accordion */}
+            <AccordionItem value="availability" className="border-border/40">
+              <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-2">
+                {t('stock.availability', { defaultValue: 'Availability' })}
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-2 space-y-3">
+                <label
+                  htmlFor="filter-sheet-instock"
+                  className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 select-none"
+                >
+                  <span className="text-sm font-normal text-foreground">
+                    {t('listing.inStockOnly', { defaultValue: 'In stock only' })}
+                  </span>
+                  <Switch
+                    id="filter-sheet-instock"
+                    checked={state.inStockOnly}
+                    onCheckedChange={onSetInStockOnly}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSetStockStatus(
+                      state.stockStatus === 'preorder' ? undefined : 'preorder',
+                    )
+                  }
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                    state.stockStatus === 'preorder'
+                      ? 'bg-secondary font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/50',
+                  )}
+                >
+                  <span>{t('stock.preorder', { defaultValue: 'Preorder Allowed' })}</span>
+                  {counts && <span className="text-xs">{counts.preorderCount}</span>}
+                </button>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-
-          {/* Toggles */}
-          <div className="flex flex-col gap-3 pt-2 border-t border-border/40">
-            <label
-              htmlFor="sheet-toggle-instock"
-              className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-secondary/60 select-none"
-            >
-              <span className="text-sm font-medium text-foreground">
-                {t('listing.inStockOnly', { defaultValue: 'In stock only' })}
-              </span>
-              <Switch
-                id="sheet-toggle-instock"
-                checked={state.inStock}
-                onCheckedChange={onSetInStock}
-              />
-            </label>
-
-            <label
-              htmlFor="sheet-toggle-onsale"
-              className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-secondary/60 select-none"
-            >
-              <span className="text-sm font-medium text-foreground">
-                {t('listing.onSale', { defaultValue: 'On sale' })}
-              </span>
-              <Switch
-                id="sheet-toggle-onsale"
-                checked={state.onSale}
-                onCheckedChange={onSetOnSale}
-              />
-            </label>
-          </div>
         </div>
 
-        {/* Sticky Action Footer */}
-        <div className="border-t border-border/40 p-4 bg-background/95 backdrop-blur-xs">
+        {/* Footer with Apply CTA */}
+        <div className="border-t border-border/40 p-4 bg-background">
           <Button
-            className="w-full h-11 rounded-full text-sm font-medium"
+            type="button"
+            className="w-full h-12 rounded-full font-medium text-sm cursor-pointer"
             onClick={() => onOpenChange(false)}
           >
             {t('listing.showResults', {

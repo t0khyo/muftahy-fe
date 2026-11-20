@@ -68,3 +68,13 @@ export const formatMoneyFromMinor = (
   const majorAmount = amountMinor / Math.pow(10, decimals)
   return formatMoney(majorAmount, { currency, locale })
 }
+
+/**
+ * Convert an EGP decimal string (e.g. "349.00" or "49.5") losslessly to integer piasters (minor units).
+ */
+export function toPiasters(decimalStr: string): number {
+  const [units = '0', fraction = '00'] = decimalStr.split('.')
+  const normalizedFraction = fraction.padEnd(2, '0').slice(0, 2)
+  return Number.parseInt(units || '0', 10) * 100 + Number.parseInt(normalizedFraction || '0', 10)
+}
+

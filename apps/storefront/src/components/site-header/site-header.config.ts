@@ -1,4 +1,8 @@
 export type NavKey =
+  | 'allProducts'
+  | 'products'
+  | 'windows'
+  | 'office'
   | 'games'
   | 'software'
   | 'giftCards'
@@ -30,34 +34,19 @@ export const SITE_HEADER_CONFIG: SiteHeaderConfig = {
   quickLinksSource: 'navLinks',
   navLinks: [
     {
-      id: 'software',
-      labelKey: 'nav.software',
-      href: '/products?category=software',
-      isPlaceholder: true,
+      id: 'all-products',
+      labelKey: 'nav.allProducts',
+      href: '/products',
     },
     {
-      id: 'subscriptions',
-      labelKey: 'nav.subscriptions',
-      href: '/products?category=subscriptions',
-      isPlaceholder: true,
+      id: 'windows',
+      labelKey: 'nav.windows',
+      href: '/products?category=windows',
     },
     {
-      id: 'gift-cards',
-      labelKey: 'nav.giftCards',
-      href: '/products?category=gift-cards',
-      isPlaceholder: true,
-    },
-    {
-      id: 'games',
-      labelKey: 'nav.games',
-      href: '/products?category=games',
-      isPlaceholder: true,
-    },
-    {
-      id: 'deals',
-      labelKey: 'nav.deals',
-      href: '/products?deals=true',
-      isPlaceholder: true,
+      id: 'office',
+      labelKey: 'nav.office',
+      href: '/products?category=office',
     },
   ],
 }

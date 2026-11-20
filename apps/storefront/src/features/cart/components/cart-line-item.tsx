@@ -1,13 +1,13 @@
-import * as React from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Gamepad2, KeyRound, Minus, Plus, Trash2 } from 'lucide-react'
-import { formatMoneyFromMinor } from '@workspace/domain/formatters/money'
+import { KeyRound, Minus, Plus, Trash2 } from 'lucide-react'
+import { formatMoneyFromMinor, toPiasters } from '@workspace/domain/formatters/money'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import { CART_CONFIG } from '../cart.config'
 import type { CartItem } from '../stores/cart-store'
 import { resolveLocalizedName } from '../lib/cart-selectors'
+import { resolveProductImage } from '../../products/utils/asset-resolver'
 import { useProduct } from '../../products/hooks/use-products'
 
 export interface CartLineItemProps {
@@ -25,50 +25,46 @@ export function CartLineItem({
   onRemove,
   removeButtonRef,
 }: CartLineItemProps) {
-  const { t } = useTranslation(['cart', 'common'])
-  const { data: product } = useProduct(item.slug)
-
-  const resolvedPlan = React.useMemo(() => {
-    if (!product || !product.plans) return null
-    return (
-      product.plans.find((p) => p.id === item.planId || p.slug === item.planId) ??
-      product.plans[0]
-    )
-  }, [product, item.planId])
+  const { t } = useTranslation(['cart', 'products', 'common'])
+  const { data: product } = useProduct(item.product_id || item.slug || '')
 
   const maxAllowed = Math.min(
-    resolvedPlan?.stock ?? CART_CONFIG.maxQuantityPerLine,
+    product?.available_count && product.available_count > 0
+      ? product.available_count
+      : CART_CONFIG.maxQuantityPerLine,
     CART_CONFIG.maxQuantityPerLine,
   )
-  const isOutOfStock = resolvedPlan ? resolvedPlan.stock === 0 : false
-  const isLowStock = resolvedPlan ? resolvedPlan.stock > 0 && resolvedPlan.stock <= 3 : false
 
-  const productName = resolveLocalizedName(item.name, lang)
-  const planLabel = resolveLocalizedName(item.planName, lang)
-  const formattedUnitPrice = formatMoneyFromMinor(item.priceMinor, item.currency, lang)
+  const isOutOfStock = product ? product.stock_status === 'out_of_stock' : false
+  const isLowStock =
+    product && product.stock_status === 'in_stock' && product.available_count <= 3
+
+  const productName = resolveLocalizedName(item.name, lang) || item.product_name
+  const unitPiasters = toPiasters(item.unit_price_egp)
+  const formattedUnitPrice = formatMoneyFromMinor(unitPiasters, 'EGP', lang)
   const formattedLineTotal = formatMoneyFromMinor(
-    item.priceMinor * item.quantity,
-    item.currency,
+    unitPiasters * item.quantity,
+    'EGP',
     lang,
   )
 
   const increaseLabel = t('increaseQuantityFor', {
     product: productName,
-    plan: planLabel || productName,
+    plan: productName,
   })
   const decreaseLabel = t('decreaseQuantityFor', {
     product: productName,
-    plan: planLabel || productName,
+    plan: productName,
   })
   const removeLabel = t('removeItemFor', {
     product: productName,
-    plan: planLabel || productName,
+    plan: productName,
   })
 
-  // Artwork resolution
-  const coverImage = item.coverImage || product?.coverImage
-  const platform = item.platform || product?.platform
-  const region = item.region || product?.region
+  const category = item.category ?? product?.category ?? 'windows'
+  const variant = item.variant ?? product?.variant ?? null
+  const coverImage =
+    item.coverImage || resolveProductImage(category, variant)
 
   return (
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 sm:py-5">
@@ -82,11 +78,6 @@ export function CartLineItem({
               alt=""
               className="size-full object-cover"
             />
-          ) : platform === 'steam' || platform === 'playstation' || platform === 'xbox' ? (
-            <Gamepad2
-              className="size-7 lg:size-8 text-muted-foreground/80"
-              aria-hidden="true"
-            />
           ) : (
             <KeyRound
               className="size-7 lg:size-8 text-muted-foreground/80"
@@ -95,39 +86,51 @@ export function CartLineItem({
           )}
         </div>
 
-        {/* Title, Plan, Tags, Unit Price */}
+        {/* Title, Variant, Preorder Badge, Unit Price */}
         <div className="space-y-1 min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to={`/${lang}/products/${item.slug}`}
+              to={`/${lang}/products/${item.product_id}`}
               className="font-semibold text-foreground hover:text-primary transition-colors text-base line-clamp-2 leading-snug"
             >
               {productName}
             </Link>
 
-            {planLabel && (
-              <span className="text-xs text-muted-foreground font-normal">
-                ({planLabel})
-              </span>
-            )}
-
-            {isOutOfStock && (
-              <Badge variant="destructive" className="text-[11px] px-2 py-0.5">
-                {t('outOfStock', { defaultValue: 'Out of stock' })}
+            {variant && (
+              <Badge variant="outline" className="text-[11px] px-2 py-0.5 uppercase">
+                {t(`variants.${variant}`, { ns: 'products', defaultValue: variant })}
               </Badge>
             )}
 
-            {isLowStock && !isOutOfStock && (
+            {item.is_preorder && (
+              <Badge
+                variant="outline"
+                className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[11px] font-medium"
+              >
+                {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
+              </Badge>
+            )}
+
+            {isOutOfStock && !item.is_preorder && (
+              <Badge variant="destructive" className="text-[11px] px-2 py-0.5">
+                {t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of stock' })}
+              </Badge>
+            )}
+
+            {isLowStock && (
               <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-warning border-warning/40">
-                {t('limitedStock', { count: resolvedPlan?.stock ?? 0 })}
+                {t('lowStock', { count: product?.available_count ?? 0, ns: 'products' })}
               </Badge>
             )}
           </div>
 
-          {(platform || region) && (
-            <div className="text-xs text-muted-foreground/80 uppercase tracking-wide truncate">
-              {[platform, region].filter(Boolean).join(' • ')}
-            </div>
+          {item.is_preorder && (
+            <p className="text-xs text-muted-foreground">
+              {t('preorderDisclaimer', {
+                ns: 'products',
+                defaultValue: 'Preorder item: code will be fulfilled upon restock.',
+              })}
+            </p>
           )}
 
           <div className="text-xs text-muted-foreground tabular-nums">
@@ -146,7 +149,7 @@ export function CartLineItem({
             variant="ghost"
             size="icon"
             className="h-11 w-9 lg:h-9 lg:w-8 rounded-none rounded-s-lg text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-transform"
-            disabled={item.quantity <= 1 || isOutOfStock}
+            disabled={item.quantity <= 1 || (isOutOfStock && !item.is_preorder)}
             onClick={() => onUpdateQuantity(item.id, item.quantity - 1, maxAllowed)}
             aria-label={decreaseLabel}
           >
@@ -166,7 +169,7 @@ export function CartLineItem({
             variant="ghost"
             size="icon"
             className="h-11 w-9 lg:h-9 lg:w-8 rounded-none rounded-e-lg text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-transform"
-            disabled={item.quantity >= maxAllowed || isOutOfStock}
+            disabled={item.quantity >= maxAllowed || (isOutOfStock && !item.is_preorder)}
             onClick={() => onUpdateQuantity(item.id, item.quantity + 1, maxAllowed)}
             aria-label={increaseLabel}
           >

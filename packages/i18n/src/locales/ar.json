@@ -28,6 +28,9 @@
   "nav": {
     "home": "الرئيسية",
     "products": "المنتجات",
+    "allProducts": "جميع المنتجات",
+    "windows": "ويندوز",
+    "office": "أوفيس",
     "cart": "سلة التسوق",
     "account": "الحساب",
     "games": "ألعاب",
@@ -39,7 +42,7 @@
   "header": {
     "skipToContent": "الانتقال إلى المحتوى الرئيسي",
     "search": "بحث",
-    "searchPlaceholder": "ابحث عن المفاتيح والبرامج والاشتراكات...",
+    "searchPlaceholder": "ابحث عن مفاتيح ويندوز وأوفيس...",
     "quickLinks": "روابط سريعة",
     "closeSearch": "إغلاق البحث",
     "openMenu": "فتح القائمة",
@@ -222,7 +225,27 @@
   },
   "products": {
     "title": "مفاتيح وتراخيص رقمية",
-    "subtitle": "تسليم فوري لأفضل الألعاب والبرامج والاشتراكات",
+    "subtitle": "تسليم فوري للمفاتيح والتراخيص الأصلية لويندوز وأوفيس",
+    "categories": {
+      "windows": "ويندوز",
+      "office": "أوفيس"
+    },
+    "variants": {
+      "retail": "تجزئة (Retail)",
+      "oem": "مُصنّع (OEM)"
+    },
+    "stock": {
+      "in_stock": "متوفر",
+      "preorder": "طلب مسبق",
+      "out_of_stock": "نفدت الكمية"
+    },
+    "preorderBadge": "طلب مسبق",
+    "preorderDisclaimer": "عنصر طلب مسبق: سيتم تسليم الكود فور توفر المخزون.",
+    "added": "تمت الإضافة",
+    "variantRetail": "تجزئة (Retail)",
+    "variantOem": "مُصنّع (OEM)",
+    "categoryWindows": "ويندوز",
+    "categoryOffice": "أوفيس",
     "addToCart": "أضف إلى السلة",
     "outOfStock": "نفدت الكمية",
     "instantDelivery": "تسليم فوري",
@@ -643,7 +666,7 @@
     "emptyState": {
       "products": {
         "title": "لا توجد منتجات بعد",
-        "description": "قم بإنشاء وإدارة كتالوج أكواد الألعاب وتراخيص البرامج وبطاقات الهدايا الرقمية.",
+        "description": "أنشئ وأدر كتالوج مفاتيح وتراخيص مايكروسوفت ويندوز وأوفيس الرقمية.",
         "action": "إضافة منتج"
       },
       "orders": {

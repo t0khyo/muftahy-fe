@@ -3,93 +3,95 @@ import { getProductService } from '../../factory'
 import { MockProductAdapter } from './product-mock-adapter'
 
 describe('MockProductAdapter', () => {
-  const adapter = new MockProductAdapter()
-
   it('lists all products without filter', async () => {
-    const result = await adapter.list()
-    expect(result.items.length).toBeGreaterThanOrEqual(4)
-    expect(result.total).toBeGreaterThanOrEqual(4)
-    expect(result.page).toBe(1)
+    const adapter = new MockProductAdapter()
+    const products = await adapter.getProducts()
+    expect(products.length).toBe(6)
+    expect(products.every((p) => p.is_active)).toBe(true)
   })
 
-  it('filters by category (single and array)', async () => {
-    const games = await adapter.list({ category: 'games' })
-    expect(games.items.length).toBeGreaterThan(0)
-    expect(games.items.every((p) => p.category === 'games')).toBe(true)
+  it('filters by category (windows vs office)', async () => {
+    const adapter = new MockProductAdapter()
+    const windows = await adapter.getProducts({ category: 'windows' })
+    expect(windows.length).toBe(4)
+    expect(windows.every((p) => p.category === 'windows')).toBe(true)
 
-    const multi = await adapter.list({ category: ['games', 'software'] })
-    expect(multi.items.length).toBeGreaterThan(games.items.length)
-    expect(multi.items.every((p) => p.category === 'games' || p.category === 'software')).toBe(true)
+    const office = await adapter.getProducts({ category: 'office' })
+    expect(office.length).toBe(2)
+    expect(office.every((p) => p.category === 'office')).toBe(true)
   })
 
-  it('filters by inStock, onSale, and price range', async () => {
-    const inStock = await adapter.list({ inStock: true })
-    expect(inStock.items.every((p) => p.inStock)).toBe(true)
-
-    const onSale = await adapter.list({ onSale: true })
-    expect(
-      onSale.items.every(
-        (p) => p.originalPrice && p.originalPrice.amountMinor > p.price.amountMinor,
-      ),
-    ).toBe(true)
-
-    const priceFiltered = await adapter.list({ priceMin: 50, priceMax: 1000 })
-    expect(
-      priceFiltered.items.every(
-        (p) => (p.price.amountMinor / 100) >= 50 && (p.price.amountMinor / 100) <= 1000,
-      ),
-    ).toBe(true)
+  it('returns canonical categories', async () => {
+    const adapter = new MockProductAdapter()
+    const categories = await adapter.getCategories()
+    expect(categories).toEqual(['windows', 'office'])
   })
 
-  it('sorts by price asc and desc', async () => {
-    const asc = await adapter.list({ sort: 'price-asc' })
-    for (let i = 1; i < asc.items.length; i++) {
-      expect(asc.items[i].price.amountMinor).toBeGreaterThanOrEqual(
-        asc.items[i - 1].price.amountMinor,
-      )
-    }
-
-    const desc = await adapter.list({ sort: 'price-desc' })
-    for (let i = 1; i < desc.items.length; i++) {
-      expect(desc.items[i].price.amountMinor).toBeLessThanOrEqual(
-        desc.items[i - 1].price.amountMinor,
-      )
-    }
+  it('retrieves a product by valid UUID', async () => {
+    const adapter = new MockProductAdapter()
+    const product = await adapter.getProductById('00000000-0000-4000-8000-000000000001')
+    expect(product.name).toBe('Windows 11 Professional')
+    expect(product.variant).toBe('retail')
+    expect(product.effective_price).toBe('349.00')
   })
 
-  it('returns filter counts for only available options', async () => {
-    const counts = await adapter.getFilterCounts()
-    expect(counts.total).toBeGreaterThan(0)
-    expect(counts.categories.length).toBeGreaterThan(0)
-    // Steam, Microsoft, Xbox, PlayStation exist; Nintendo has 0 products and must NOT be in platforms list
-    expect(counts.platforms.some((p) => p.value === 'nintendo')).toBe(false)
-    expect(counts.platforms.some((p) => p.value === 'steam')).toBe(true)
+  it('throws on non-existent product ID', async () => {
+    const adapter = new MockProductAdapter()
+    await expect(
+      adapter.getProductById('00000000-0000-4000-8000-999999999999'),
+    ).rejects.toThrow('Product not found')
   })
 
-  it('retrieves product by slug', async () => {
-    const product = await adapter.getBySlug('windows-11-pro')
-    expect(product).not.toBeNull()
-    expect(product?.slug).toBe('windows-11-pro')
+  it('creates and appends a new product', async () => {
+    const adapter = new MockProductAdapter()
+    const created = await adapter.createProduct({
+      name: 'Windows 11 Enterprise',
+      category: 'windows',
+      variant: 'retail',
+      base_price: '599.00',
+      sale_price: '499.00',
+      preorder_enabled: true,
+      description: 'Enterprise edition for corporate workstations.',
+    })
+
+    expect(created.id).toBeDefined()
+    expect(created.name).toBe('Windows 11 Enterprise')
+    expect(created.discount_percentage).toBe(17)
+    expect(created.effective_price).toBe('499.00')
+
+    const all = await adapter.getProducts()
+    expect(all.length).toBe(7)
   })
 
-  it('lists products by collection (best-sellers, deals, new)', async () => {
-    const bestSellers = await adapter.listByCollection('best-sellers')
-    expect(bestSellers.length).toBeGreaterThan(0)
+  it('updates an existing product', async () => {
+    const adapter = new MockProductAdapter()
+    const updated = await adapter.updateProduct(
+      '00000000-0000-4000-8000-000000000001',
+      {
+        sale_price: '319.00',
+      },
+    )
 
-    const deals = await adapter.listByCollection('deals')
-    expect(deals.length).toBeGreaterThan(0)
-    expect(
-      deals.every(
-        (p) => p.originalPrice && p.originalPrice.amountMinor > p.price.amountMinor,
-      ),
-    ).toBe(true)
+    expect(updated.sale_price).toBe('319.00')
+    expect(updated.effective_price).toBe('319.00')
+    expect(updated.discount_percentage).toBe(36)
+  })
 
-    const newReleases = await adapter.listByCollection('new')
-    expect(newReleases.length).toBeGreaterThan(0)
+  it('soft-deactivates product on delete', async () => {
+    const adapter = new MockProductAdapter()
+    const result = await adapter.deleteProduct('00000000-0000-4000-8000-000000000001')
+    expect(result.message).toContain('deactivated')
+
+    const activeOnly = await adapter.getProducts({ only_active: true })
+    expect(activeOnly.some((p) => p.id === '00000000-0000-4000-8000-000000000001')).toBe(false)
+
+    const all = await adapter.getProducts({ only_active: false })
+    expect(all.some((p) => p.id === '00000000-0000-4000-8000-000000000001')).toBe(true)
   })
 
   it('returns safe mock keys matching XXXXX-XXXXX-XXXXX pattern', async () => {
-    const key = await adapter.getSampleLicenseKey('prod-001')
+    const adapter = new MockProductAdapter()
+    const key = await adapter.getSampleLicenseKey('00000000-0000-4000-8000-000000000001')
     expect(key).toBe('XXXXX-XXXXX-XXXXX')
   })
 
@@ -98,30 +100,4 @@ describe('MockProductAdapter', () => {
     const s2 = getProductService()
     expect(s1).toBe(s2)
   })
-
-  it('provides bilingual detail sections and plans for all products', async () => {
-    const list = await adapter.list()
-    for (const p of list.items) {
-      expect(p.plans?.length).toBeGreaterThan(0)
-      expect(p.specs).toBeDefined()
-      expect(p.activationSteps?.length).toBeGreaterThan(0)
-      expect(p.includes?.length).toBeGreaterThan(0)
-      expect(p.faq?.length).toBeGreaterThan(0)
-      expect(p.relatedSlugs?.length).toBeGreaterThan(0)
-      // Every relatedSlug must point to a valid product slug
-      for (const relSlug of p.relatedSlugs ?? []) {
-        const rel = await adapter.getBySlug(relSlug)
-        expect(rel).not.toBeNull()
-      }
-    }
-
-    const w11 = await adapter.getBySlug('windows-11-pro')
-    expect(w11?.plans?.length).toBe(2)
-    expect(w11?.plans?.some((plan) => plan.stock <= 5)).toBe(true)
-
-    const psn = await adapter.getBySlug('playstation-network-card-100-sar')
-    expect(psn?.plans?.every((plan) => plan.stock === 0)).toBe(true)
-    expect(psn?.regionNote).toBeDefined()
-  })
 })
-

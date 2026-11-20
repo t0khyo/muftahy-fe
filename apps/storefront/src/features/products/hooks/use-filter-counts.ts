@@ -1,20 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
-import { getProductService } from '@workspace/api/factory'
-import type { ProductFilterCounts, ProductListFilter } from '@workspace/domain/schemas/product'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 
-export interface UseFilterCountsOptions {
-  filter?: ProductListFilter
-  enabled?: boolean
+export interface FilterCounts {
+  windowsCount: number
+  officeCount: number
+  retailCount: number
+  oemCount: number
+  inStockCount: number
+  preorderCount: number
+  total: number
 }
 
-export function useFilterCounts(options: UseFilterCountsOptions = {}) {
-  const { filter, enabled = true } = options
-  const productService = getProductService()
-
-  return useQuery<ProductFilterCounts>({
-    queryKey: ['product-filter-counts', filter],
-    queryFn: () => productService.getFilterCounts(filter),
-    enabled,
-  })
+export function calculateFilterCounts(products: ProductResponse[] = []): FilterCounts {
+  return {
+    windowsCount: products.filter((p) => p.category === 'windows').length,
+    officeCount: products.filter((p) => p.category === 'office').length,
+    retailCount: products.filter((p) => p.variant === 'retail').length,
+    oemCount: products.filter((p) => p.variant === 'oem').length,
+    inStockCount: products.filter((p) => p.stock_status === 'in_stock').length,
+    preorderCount: products.filter((p) => p.stock_status === 'preorder').length,
+    total: products.length,
+  }
 }
-

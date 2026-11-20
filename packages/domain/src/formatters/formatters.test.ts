@@ -1,7 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { formatDate } from './date'
-import { formatMoney, formatMoneyFromMinor } from './money'
+import { formatMoney, formatMoneyFromMinor, toPiasters } from './money'
 import { formatNumber } from './number'
+
+describe('toPiasters', () => {
+  it('converts two-decimal string to piasters without float drift', () => {
+    expect(toPiasters('349.00')).toBe(34900)
+    expect(toPiasters('499.99')).toBe(49999)
+  })
+
+  it('handles single-decimal and integer strings correctly', () => {
+    expect(toPiasters('49.5')).toBe(4950)
+    expect(toPiasters('100')).toBe(10000)
+  })
+
+  it('handles small decimal values', () => {
+    expect(toPiasters('0.05')).toBe(5)
+    expect(toPiasters('0.99')).toBe(99)
+    expect(toPiasters('0')).toBe(0)
+  })
+})
+
 
 describe('formatMoney', () => {
   it('formats USD in English', () => {

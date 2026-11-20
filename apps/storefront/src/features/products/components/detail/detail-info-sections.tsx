@@ -1,181 +1,129 @@
-import { useTranslation } from 'react-i18next'
-import { Check, MessageCircle } from 'lucide-react'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@workspace/ui/components/accordion'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@workspace/ui/components/table'
-import type { Product } from '@workspace/domain/schemas/product'
-import { resolveLocalizedName } from '../../../cart/lib/cart-selectors'
+import { Check, MessageCircle, ShieldCheck, Zap } from 'lucide-react'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 
 export interface DetailInfoSectionsProps {
-  product: Product
+  product: ProductResponse
   lang: string
 }
 
 export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
-  const { t } = useTranslation(['detail', 'products', 'common'])
   const isRtl = lang === 'ar'
-
-  const productTitle = resolveLocalizedName(product.title, lang)
-  const productDescription = resolveLocalizedName(product.description, lang)
 
   const encodedMessage = encodeURIComponent(
     isRtl
-      ? `مرحباً، لدي استفسار بخصوص ${productTitle}`
-      : `Hi, I have a question about ${productTitle}`,
+      ? `مرحباً، لدي استفسار بخصوص ${product.name}`
+      : `Hi, I have a question about ${product.name}`,
   )
   const whatsappUrl = `https://wa.me/201158172869?text=${encodedMessage}`
 
   return (
-    <div className="max-w-2xl w-full text-start space-y-12 sm:space-y-16">
-      {/* 1. What You Get */}
-      <section aria-labelledby="heading-what-you-get" className="space-y-4">
+    <div className="max-w-3xl w-full text-start space-y-10">
+      {/* 1. License Overview & Description */}
+      <section aria-labelledby="heading-about" className="space-y-4">
         <h2
-          id="heading-what-you-get"
-          className="font-heading text-xl sm:text-2xl font-semibold text-foreground"
+          id="heading-about"
+          className="text-xl sm:text-2xl font-bold text-foreground"
         >
-          {t('whatYouGet')}
+          {lang === 'ar' ? 'حول الترخيص' : 'About this license'}
         </h2>
-        <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-          {productDescription}
-        </p>
-
-        {product.includes && product.includes.length > 0 && (
-          <ul className="space-y-2.5 pt-2">
-            {product.includes.map((inc, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-3 text-sm sm:text-[15px] text-foreground"
-              >
-                <div className="size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="size-3.5" aria-hidden="true" />
-                </div>
-                <span>{resolveLocalizedName(inc, lang)}</span>
-              </li>
-            ))}
-          </ul>
+        {product.description && (
+          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+            {product.description}
+          </p>
         )}
+
+        <ul className="space-y-2.5 pt-2">
+          <li className="flex items-start gap-3 text-sm sm:text-[15px] text-foreground">
+            <div className="size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <Check className="size-3.5" aria-hidden="true" />
+            </div>
+            <span>
+              {lang === 'ar'
+                ? 'مفتاح ترخيص رقمي رسمي أصلي 100%'
+                : '100% Genuine official digital license key'}
+            </span>
+          </li>
+          <li className="flex items-start gap-3 text-sm sm:text-[15px] text-foreground">
+            <div className="size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <Check className="size-3.5" aria-hidden="true" />
+            </div>
+            <span>
+              {lang === 'ar'
+                ? 'تفعيل دائم لمدى الحياة لجهاز حاسوب واحد'
+                : 'Permanent lifetime activation for 1 PC'}
+            </span>
+          </li>
+          <li className="flex items-start gap-3 text-sm sm:text-[15px] text-foreground">
+            <div className="size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <Check className="size-3.5" aria-hidden="true" />
+            </div>
+            <span>
+              {lang === 'ar'
+                ? 'تحديثات نظام التشغيل والتطبيقات الرسمية من مايكروسوفت'
+                : 'Official updates directly from Microsoft'}
+            </span>
+          </li>
+        </ul>
       </section>
 
-      {/* 2. Activation Steps */}
-      {product.activationSteps && product.activationSteps.length > 0 && (
-        <section aria-labelledby="heading-activation" className="space-y-4">
-          <h2
-            id="heading-activation"
-            className="font-heading text-xl sm:text-2xl font-semibold text-foreground"
-          >
-            {t('howToActivate')}
-          </h2>
-          <ol className="space-y-3.5">
-            {product.activationSteps.map((step, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-3.5 text-sm sm:text-[15px] text-foreground"
-              >
-                <span className="size-8 rounded-full bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
-                  {i + 1}
-                </span>
-                <span className="leading-relaxed pt-1">
-                  {resolveLocalizedName(step, lang)}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-
-      {/* 3. Product Details (Specification Table) */}
-      {product.specs && (
-        <section aria-labelledby="heading-specs" className="space-y-4">
-          <h2
-            id="heading-specs"
-            className="font-heading text-xl sm:text-2xl font-semibold text-foreground"
-          >
-            {t('details')}
-          </h2>
-          <div className="rounded-2xl border border-border/50 overflow-hidden bg-card">
-            <Table>
-              <TableBody>
-                <TableRow className="border-b border-border/40 bg-secondary/15">
-                  <TableCell className="font-medium text-muted-foreground w-1/3 text-xs sm:text-sm">
-                    {t('licenseType')}
-                  </TableCell>
-                  <TableCell className="text-foreground text-xs sm:text-sm font-medium">
-                    {resolveLocalizedName(product.specs.licenseType, lang)}
-                  </TableCell>
-                </TableRow>
-                <TableRow className="border-b border-border/40">
-                  <TableCell className="font-medium text-muted-foreground w-1/3 text-xs sm:text-sm">
-                    {t('edition')}
-                  </TableCell>
-                  <TableCell className="text-foreground text-xs sm:text-sm font-medium">
-                    {resolveLocalizedName(product.specs.edition, lang)}
-                  </TableCell>
-                </TableRow>
-                <TableRow className="border-b border-border/40 bg-secondary/15">
-                  <TableCell className="font-medium text-muted-foreground w-1/3 text-xs sm:text-sm">
-                    {t('language')}
-                  </TableCell>
-                  <TableCell className="text-foreground text-xs sm:text-sm font-medium">
-                    {resolveLocalizedName(product.specs.language, lang)}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium text-muted-foreground w-1/3 text-xs sm:text-sm">
-                    {t('delivery')}
-                  </TableCell>
-                  <TableCell className="text-foreground text-xs sm:text-sm font-medium">
-                    {resolveLocalizedName(product.specs.deliveryTime, lang)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+      {/* 2. Digital Key Delivery & Activation */}
+      <section aria-labelledby="heading-delivery" className="space-y-4">
+        <h2
+          id="heading-delivery"
+          className="text-xl sm:text-2xl font-bold text-foreground"
+        >
+          {lang === 'ar' ? 'التسليم والتفعيل' : 'Delivery & Activation'}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl border border-border/40 bg-card space-y-2">
+            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+              <Zap className="size-4 shrink-0" />
+              <span>{lang === 'ar' ? 'التسليم الرقمي' : 'Digital Fulfillment'}</span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              {product.stock_status === 'preorder'
+                ? lang === 'ar'
+                  ? 'هذا المنتج تحت الطلب المسبق. سيتم تسليم المفتاح فور توفر المخزون الجديد.'
+                  : 'This item is on preorder. The key will be dispatched as soon as the restock arrives.'
+                : lang === 'ar'
+                  ? 'يظهر المفتاح فوراً في حسابك وعلى الشاشة بعد تأكيد عملية الدفع.'
+                  : 'Keys are revealed on-screen immediately upon payment approval.'}
+            </p>
           </div>
-        </section>
-      )}
+          <div className="p-4 rounded-xl border border-border/40 bg-card space-y-2">
+            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+              <ShieldCheck className="size-4 shrink-0" />
+              <span>{lang === 'ar' ? 'الضمان والاستبدال' : 'Warranty & Guarantee'}</span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              {lang === 'ar'
+                ? 'نضمن صلاحية جميع المفاتيح بنسبة 100%. في حال واجهت أي صعوبة، يتم استبدال المفتاح فوراً.'
+                : 'All keys are guaranteed 100% valid. In case of any activation issue, an instant replacement is provided.'}
+            </p>
+          </div>
+        </div>
+      </section>
 
-      {/* 4. Common Questions (Accordion) */}
-      {product.faq && product.faq.length > 0 && (
-        <section aria-labelledby="heading-faq" className="space-y-4">
-          <h2
-            id="heading-faq"
-            className="font-heading text-xl sm:text-2xl font-semibold text-foreground"
-          >
-            {t('faq')}
-          </h2>
-          <Accordion className="w-full divide-y divide-border/40 border-y border-border/40">
-            {product.faq.map((item, idx) => (
-              <AccordionItem key={idx} value={`faq-${idx}`}>
-                <AccordionTrigger className="text-sm sm:text-base font-medium py-4 text-start">
-                  {resolveLocalizedName(item.question, lang)}
-                </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground pb-4 leading-relaxed">
-                  {resolveLocalizedName(item.answer, lang)}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </section>
-      )}
-
-      {/* 5. Contact Support Line */}
-      <section className="pt-2">
+      {/* 3. Need Help / WhatsApp */}
+      <section aria-labelledby="heading-support" className="p-5 rounded-2xl border border-border/40 bg-secondary/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h3 id="heading-support" className="font-semibold text-foreground text-base">
+            {lang === 'ar' ? 'هل لديك أي استفسار؟' : 'Have a question?'}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {lang === 'ar'
+              ? 'فريق الدعم الفني متواجد عبر واتساب للمساعدة في خطوات التفعيل والطلب.'
+              : 'Our support team is available on WhatsApp to assist with order and activation steps.'}
+          </p>
+        </div>
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full border border-border/60 bg-secondary/30 hover:bg-secondary/60 px-5 py-3 text-sm sm:text-base text-foreground transition-all active:scale-[0.98] font-medium group"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm transition-colors cursor-pointer shrink-0"
         >
-          <MessageCircle className="size-5 text-emerald-500 group-hover:scale-110 transition-transform" />
-          <span>{t('askUs')}</span>
+          <MessageCircle className="size-4" />
+          <span>{lang === 'ar' ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}</span>
         </a>
       </section>
     </div>

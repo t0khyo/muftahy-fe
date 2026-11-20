@@ -1,10 +1,9 @@
 import * as React from 'react'
-import { useParams, useSearchParams } from 'react-router'
+import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { getSummaryPlan, type ProductPlan } from '@workspace/domain/schemas/product'
 import { useCartStore } from '../../cart/stores/cart-store'
-import { resolveLocalizedName } from '../../cart/lib/cart-selectors'
 import { useProduct } from '../hooks/use-products'
+import { resolveProductImage } from '../utils/asset-resolver'
 import { DetailBreadcrumb } from '../components/detail/detail-breadcrumb'
 import { DetailMedia } from '../components/detail/detail-media'
 import { DetailBuyBox } from '../components/detail/detail-buy-box'
@@ -16,106 +15,52 @@ import { DetailNotFound } from '../components/detail/detail-not-found'
 import { DetailError } from '../components/detail/detail-error'
 
 export function ProductDetailPage() {
-  const { lang = 'ar', slug = '' } = useParams<{ lang: string; slug: string }>()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { lang = 'ar', id = '' } = useParams<{ lang: string; id: string }>()
   const { t } = useTranslation(['detail', 'common'])
 
-  const { data: product, isLoading, isError, refetch } = useProduct(slug)
+  const { data: product, isLoading, isError, refetch } = useProduct(id)
   const cartItems = useCartStore((s) => s.items)
   const addItem = useCartStore((s) => s.addItem)
 
-  // Local UI feedback state
   const [isJustAdded, setIsJustAdded] = React.useState(false)
   const [liveAnnouncement, setLiveAnnouncement] = React.useState('')
   const feedbackTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Sticky buy box & mobile bar refs
   const buyBoxContainerRef = React.useRef<HTMLDivElement | null>(null)
   const [isMobileBarVisible, setIsMobileBarVisible] = React.useState(false)
 
-  // Resolve selected plan from searchParams and product.plans
-  const queryPlanSlug = searchParams.get('plan')
-
-  const selectedPlan: ProductPlan | null = React.useMemo(() => {
-    if (!product) return null
-    if (!product.plans || product.plans.length === 0) {
-      return getSummaryPlan(product)
-    }
-
-    if (queryPlanSlug) {
-      const match = product.plans.find((p) => p.slug === queryPlanSlug)
-      if (match) return match
-    }
-
-    // Default to summaryPlan when query is absent or unknown
-    return getSummaryPlan(product)
-  }, [product, queryPlanSlug])
-
-  // Normalize URL query parameter if missing or unknown
-  React.useEffect(() => {
-    if (!product || !selectedPlan) return
-
-    if (queryPlanSlug !== selectedPlan.slug) {
-      const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('plan', selectedPlan.slug)
-      setSearchParams(nextParams, { replace: true })
-    }
-  }, [product, selectedPlan, queryPlanSlug, searchParams, setSearchParams])
-
-  // Handle plan selection
-  const handleSelectPlan = React.useCallback(
-    (newPlanSlug: string) => {
-      // Clear transient feedback when switching plans
-      if (feedbackTimerRef.current) {
-        clearTimeout(feedbackTimerRef.current)
-      }
-      setIsJustAdded(false)
-
-      const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('plan', newPlanSlug)
-      setSearchParams(nextParams, { replace: true })
-    },
-    [searchParams, setSearchParams],
-  )
-
-  // Check if selected plan is in cart
   const isInCart = React.useMemo(() => {
-    if (!product || !selectedPlan) return false
-    const itemId = `${product.id}:${selectedPlan.id}`
-    return cartItems.some(
-      (i) => i.id === itemId || (i.productId === product.id && i.planId === selectedPlan.id),
-    )
-  }, [product, selectedPlan, cartItems])
+    if (!product) return false
+    return cartItems.some((i) => i.product_id === product.id || i.id === product.id)
+  }, [product, cartItems])
 
-  // Handle Add To Cart
+  const coverImageUrl = product
+    ? resolveProductImage(product.category, product.variant)
+    : ''
+
   const handleAddToCart = React.useCallback(() => {
-    if (!product || !selectedPlan || selectedPlan.stock === 0) return
+    if (!product || (product.stock_status === 'out_of_stock' && !product.preorder_enabled)) return
+
+    const isPreorder = product.stock_status === 'preorder'
 
     addItem(
       {
-        id: `${product.id}:${selectedPlan.id}`,
-        productId: product.id,
-        planId: selectedPlan.id,
-        slug: product.slug,
-        name: product.title,
-        planName: selectedPlan.name,
-        priceMinor: selectedPlan.price.amountMinor,
-        currency: selectedPlan.price.currency,
-        platform: product.platform,
-        region: product.region,
-        coverImage: product.coverImage,
+        product_id: product.id,
+        product_name: product.name,
+        unit_price_egp: product.effective_price,
+        is_preorder: isPreorder,
+        category: product.category,
+        variant: product.variant,
+        coverImage: coverImageUrl,
       },
       1,
     )
 
-    // Trigger visual feedback
     setIsJustAdded(true)
-    const title = resolveLocalizedName(product.title, lang)
-    const planName = resolveLocalizedName(selectedPlan.name, lang)
     setLiveAnnouncement(
       t('liveAddedAnnouncement', {
-        product: `${title} (${planName})`,
-        defaultValue: `${title} added to your cart`,
+        product: product.name,
+        defaultValue: `${product.name} added to your cart`,
       }),
     )
 
@@ -125,7 +70,7 @@ export function ProductDetailPage() {
     feedbackTimerRef.current = setTimeout(() => {
       setIsJustAdded(false)
     }, 2000)
-  }, [product, selectedPlan, addItem, lang, t])
+  }, [product, addItem, coverImageUrl, t])
 
   React.useEffect(() => {
     return () => {
@@ -135,8 +80,6 @@ export function ProductDetailPage() {
     }
   }, [])
 
-  // Mobile Sticky Bar IntersectionObserver:
-  // Shows sticky bar only when the buy box has passed entirely above the viewport
   React.useEffect(() => {
     const el = buyBoxContainerRef.current
     if (!el || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
@@ -145,7 +88,6 @@ export function ProductDetailPage() {
 
     const checkVisibility = () => {
       const rect = el.getBoundingClientRect()
-      // Only show when the bottom of buy box is above the viewport top
       setIsMobileBarVisible(rect.bottom < 0)
     }
 
@@ -175,47 +117,37 @@ export function ProductDetailPage() {
     return <DetailError onRetry={() => refetch()} />
   }
 
-  if (!product || !selectedPlan) {
+  if (!product) {
     return <DetailNotFound lang={lang} />
   }
 
-  const productTitle = resolveLocalizedName(product.title, lang)
-
   return (
     <div className="site-container py-8 sm:py-10">
-      {/* Polite Live Region for Assistive Technology Announcements */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {liveAnnouncement}
       </div>
 
-      {/* 1. Breadcrumb */}
       <DetailBreadcrumb
         category={product.category}
-        productTitle={productTitle}
+        productTitle={product.name}
         lang={lang}
       />
 
-      {/* 2. Top 12-Column Grid: Media (7) + Buy Box (5) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        {/* Media (7 columns) */}
         <div className="lg:col-span-7 w-full">
           <DetailMedia
-            coverImage={product.coverImage}
-            productTitle={productTitle}
-            media={product.media}
+            coverImage={coverImageUrl}
+            productTitle={product.name}
             lang={lang}
           />
         </div>
 
-        {/* Buy Box (5 columns) */}
         <div
           ref={buyBoxContainerRef}
           className="lg:col-span-5 w-full lg:sticky lg:top-24"
         >
           <DetailBuyBox
             product={product}
-            selectedPlan={selectedPlan}
-            onSelectPlan={handleSelectPlan}
             onAddToCart={handleAddToCart}
             isInCart={isInCart}
             isJustAdded={isJustAdded}
@@ -224,21 +156,18 @@ export function ProductDetailPage() {
         </div>
       </div>
 
-      {/* 3. Lower Content Sections: What You Get, Activation, Specs, FAQ, Contact */}
       <div className="border-t border-border/40 mt-12 sm:mt-16 pt-10 sm:pt-14">
         <DetailInfoSections product={product} lang={lang} />
       </div>
 
-      {/* 4. You May Also Like (Related Products Rail) */}
       <DetailRelatedRail
-        currentSlug={product.slug}
-        relatedSlugs={product.relatedSlugs}
+        currentId={product.id}
+        category={product.category}
         lang={lang}
       />
 
-      {/* 5. Mobile Sticky Bottom Bar (Progressive enhancement below md) */}
       <DetailStickyMobileBar
-        selectedPlan={selectedPlan}
+        product={product}
         isVisible={isMobileBarVisible}
         isInCart={isInCart}
         isJustAdded={isJustAdded}

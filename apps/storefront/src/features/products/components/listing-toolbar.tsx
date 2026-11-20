@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontalIcon, XIcon } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
@@ -10,15 +9,20 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { cn } from '@workspace/ui/lib/utils'
-import type { ProductSortOption } from '@workspace/domain/schemas/product'
-import type { ActiveFilterChip, ProductFiltersState } from '../hooks/use-product-filters'
+import type {
+  ActiveFilterChip,
+  ProductFiltersState,
+  SortOption,
+} from '../hooks/use-product-filters'
 
 export interface ListingToolbarProps {
   totalResults: number
   state: ProductFiltersState
   activeFiltersCount: number
-  onSortChange: (sort: ProductSortOption) => void
-  onRemoveFilter: (type: ActiveFilterChip['type'], value?: string) => void
+  onSortChange: (sort: SortOption) => void
+  onRemoveVariant?: () => void
+  onRemoveStockStatus?: () => void
+  onRemoveInStockOnly?: () => void
   onClearAll: () => void
   onOpenMobileFilters: () => void
   className?: string
@@ -29,149 +33,95 @@ export function ListingToolbar({
   state,
   activeFiltersCount,
   onSortChange,
-  onRemoveFilter,
+  onRemoveVariant,
+  onRemoveStockStatus,
+  onRemoveInStockOnly,
   onClearAll,
   onOpenMobileFilters,
   className,
 }: ListingToolbarProps) {
   const { t } = useTranslation(['products', 'common'])
 
-  // Build list of active filter chips (excluding category which is controlled by CategoryRow above)
-  const activeChips = React.useMemo<ActiveFilterChip[]>(() => {
-    const chips: ActiveFilterChip[] = []
-
-    for (const plat of state.platforms) {
-      const key = `platform${plat.charAt(0).toUpperCase() + plat.slice(1)}`
-      chips.push({
-        id: `plat-${plat}`,
-        type: 'platform',
-        value: plat,
-        labelFallback: t(key as never, { defaultValue: plat }),
-      })
-    }
-
-    for (const reg of state.regions) {
-      const key = `region${reg.charAt(0).toUpperCase() + reg.slice(1)}`
-      chips.push({
-        id: `reg-${reg}`,
-        type: 'region',
-        value: reg,
-        labelFallback: t(key as never, { defaultValue: reg }),
-      })
-    }
-
-    if (state.priceMin !== undefined || state.priceMax !== undefined) {
-      const minText = state.priceMin !== undefined ? `${state.priceMin}` : '0'
-      const maxText = state.priceMax !== undefined ? `${state.priceMax}` : '∞'
-      chips.push({
-        id: 'price-range',
-        type: 'price',
-        labelFallback: `${minText} – ${maxText}`,
-      })
-    }
-
-    if (state.inStock) {
-      chips.push({
-        id: 'filter-instock',
-        type: 'inStock',
-        labelFallback: t('listing.inStockOnly', { defaultValue: 'In stock only' }),
-      })
-    }
-
-    if (state.onSale) {
-      chips.push({
-        id: 'filter-onsale',
-        type: 'onSale',
-        labelFallback: t('listing.onSale', { defaultValue: 'On sale' }),
-      })
-    }
-
-    return chips
-  }, [state, t])
-
   const sortLabel = t('listing.sort', { defaultValue: 'Sort' })
+
+  const chips: ActiveFilterChip[] = []
+  if (state.variant) {
+    chips.push({
+      id: `variant-${state.variant}`,
+      type: 'variant',
+      labelFallback: t(`variants.${state.variant}`, { defaultValue: state.variant }),
+    })
+  }
+  if (state.stockStatus === 'preorder') {
+    chips.push({
+      id: 'stock-preorder',
+      type: 'stock',
+      labelFallback: t('stock.preorder', { defaultValue: 'Preorder' }),
+    })
+  }
+  if (state.inStockOnly) {
+    chips.push({
+      id: 'stock-instock',
+      type: 'stock',
+      labelFallback: t('listing.inStockOnly', { defaultValue: 'In stock only' }),
+    })
+  }
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      {/* ── Main Toolbar Bar (48px min height) ── */}
       <div className="flex min-h-[48px] items-center justify-between gap-3 flex-wrap">
-        {/* Leading: Result count text (Desktop / Tablet) */}
         <div className="hidden lg:flex items-baseline gap-2">
           <span className="text-sm font-medium text-foreground tabular-nums">
-            {totalResults === 1
-              ? t('listing.resultCountOne', { count: totalResults, defaultValue: '1 product' })
-              : t('listing.resultCount', { count: totalResults, defaultValue: `${totalResults} products` })}
+            {t('listing.showing', {
+              count: totalResults,
+              total: totalResults,
+              defaultValue: `Showing ${totalResults} products`,
+            })}
           </span>
         </div>
 
-        {/* Mobile Toolbar Bar: Filters button + Sort */}
-        <div className="flex lg:hidden w-full items-center justify-between gap-2.5">
+        {/* Mobile Filter Trigger Button */}
+        <div className="flex lg:hidden items-center gap-2">
           <Button
+            type="button"
             variant="outline"
             size="sm"
             onClick={onOpenMobileFilters}
-            className="flex-1 h-10 gap-2 rounded-xl text-xs font-medium border-border/80"
+            className="h-10 px-3.5 gap-2 rounded-full font-medium text-xs border-border/80 text-foreground cursor-pointer"
+            aria-label={t('listing.filters', { defaultValue: 'Filters' })}
           >
-            <SlidersHorizontalIcon className="size-3.5 shrink-0" />
-            <span>
-              {activeFiltersCount > 0
-                ? t('listing.filtersCount', { count: activeFiltersCount, defaultValue: `Filters (${activeFiltersCount})` })
-                : t('listing.filters', { defaultValue: 'Filters' })}
-            </span>
+            <SlidersHorizontalIcon className="size-3.5" aria-hidden="true" />
+            <span>{t('listing.filters', { defaultValue: 'Filters' })}</span>
+            {activeFiltersCount > 0 && (
+              <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {activeFiltersCount}
+              </span>
+            )}
           </Button>
 
-          {/* Sort dropdown mobile */}
-          <div className="flex-1">
-            <Select
-              value={state.sort}
-              onValueChange={(val) => onSortChange(val as ProductSortOption)}
-            >
-              <SelectTrigger
-                className="w-full h-10 rounded-xl text-xs font-medium border-border/80"
-                aria-label={sortLabel}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="end">
-                <SelectItem value="featured">
-                  {t('listing.sortFeatured', { defaultValue: 'Featured' })}
-                </SelectItem>
-                <SelectItem value="best-selling">
-                  {t('listing.sortBestSelling', { defaultValue: 'Best selling' })}
-                </SelectItem>
-                <SelectItem value="price-asc">
-                  {t('listing.sortPriceLow', { defaultValue: 'Price: low to high' })}
-                </SelectItem>
-                <SelectItem value="price-desc">
-                  {t('listing.sortPriceHigh', { defaultValue: 'Price: high to low' })}
-                </SelectItem>
-                <SelectItem value="newest">
-                  {t('listing.sortNewest', { defaultValue: 'Newest' })}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            ({totalResults})
+          </span>
         </div>
 
-        {/* Trailing: Desktop Sort Dropdown */}
-        <div className="hidden lg:flex items-center gap-2 ms-auto">
-          <span className="text-xs text-muted-foreground">{sortLabel}:</span>
+        {/* Sort Select Dropdown */}
+        <div className="flex items-center gap-2 ms-auto">
+          <span className="text-xs font-medium text-muted-foreground hidden sm:inline">
+            {sortLabel}:
+          </span>
           <Select
             value={state.sort}
-            onValueChange={(val) => onSortChange(val as ProductSortOption)}
+            onValueChange={(val) => onSortChange(val as SortOption)}
           >
             <SelectTrigger
-              className="h-9 min-w-[150px] rounded-lg text-xs font-medium border-border/60 hover:border-border transition-colors"
               aria-label={sortLabel}
+              className="h-10 w-[160px] sm:w-[180px] rounded-full text-xs font-medium border-border/80 bg-background"
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="end">
               <SelectItem value="featured">
                 {t('listing.sortFeatured', { defaultValue: 'Featured' })}
-              </SelectItem>
-              <SelectItem value="best-selling">
-                {t('listing.sortBestSelling', { defaultValue: 'Best selling' })}
               </SelectItem>
               <SelectItem value="price-asc">
                 {t('listing.sortPriceLow', { defaultValue: 'Price: low to high' })}
@@ -187,35 +137,40 @@ export function ListingToolbar({
         </div>
       </div>
 
-      {/* ── Active Filter Chips Row (32px chips, 13px text) ── */}
-      {activeChips.length > 0 && (
-        <div
-          role="region"
-          aria-label={t('listing.filters', { defaultValue: 'Active filters' })}
-          className="flex items-center gap-2 flex-wrap pt-0.5"
-        >
-          {activeChips.map((chip) => (
-            <button
+      {/* ── Active Filter Chips Row ── */}
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-xs text-muted-foreground me-1 hidden sm:inline">
+            {t('listing.filters', { defaultValue: 'Filters' })}:
+          </span>
+
+          {chips.map((chip) => (
+            <span
               key={chip.id}
-              type="button"
-              onClick={() => onRemoveFilter(chip.type, chip.value)}
-              className={cn(
-                'inline-flex h-8 items-center gap-1.5 rounded-full px-3',
-                'border border-border/60 bg-secondary/50 text-foreground hover:bg-secondary',
-                'text-xs font-medium transition-all outline-none active:scale-95',
-                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-              )}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-secondary/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
             >
               <span>{chip.labelFallback}</span>
-              <XIcon className="size-3 text-muted-foreground hover:text-foreground shrink-0" />
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (chip.type === 'variant') onRemoveVariant?.()
+                  else if (chip.id === 'stock-instock') onRemoveInStockOnly?.()
+                  else if (chip.id === 'stock-preorder') onRemoveStockStatus?.()
+                }}
+                className="cursor-pointer text-muted-foreground hover:text-foreground rounded-full p-0.5"
+                aria-label={t('remove', { ns: 'common', defaultValue: 'Remove' })}
+              >
+                <XIcon className="size-3" aria-hidden="true" />
+              </button>
+            </span>
           ))}
 
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             onClick={onClearAll}
-            className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 cursor-pointer"
           >
             {t('listing.clearAll', { defaultValue: 'Clear all' })}
           </Button>
@@ -224,4 +179,3 @@ export function ListingToolbar({
     </div>
   )
 }
-

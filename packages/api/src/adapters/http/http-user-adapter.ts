@@ -1,6 +1,7 @@
-import type {
-  UpdateProfileRequest,
-  UserProfile,
+import {
+  type UpdateProfileRequest,
+  type UserProfile,
+  userProfileSchema,
 } from '@workspace/domain/schemas/auth'
 import type { UserService } from '../../services/user-service'
 import type { NativeFetchClient } from './fetch-client'
@@ -13,15 +14,17 @@ export class HttpUserAdapter implements UserService {
   }
 
   async getProfile(): Promise<UserProfile> {
-    return this.client.request<UserProfile>('/users/me', {
+    const raw = await this.client.request<unknown>('/users/me', {
       method: 'GET',
     })
+    return userProfileSchema.parse(raw)
   }
 
   async updateProfile(payload: UpdateProfileRequest): Promise<UserProfile> {
-    return this.client.request<UserProfile>('/users/me', {
+    const raw = await this.client.request<unknown>('/users/me', {
       method: 'PATCH',
       body: payload,
     })
+    return userProfileSchema.parse(raw)
   }
 }

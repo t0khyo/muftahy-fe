@@ -1,6 +1,10 @@
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import { cn } from '@workspace/ui/lib/utils'
-import type { FilterOptionCount } from '@workspace/domain/schemas/product'
+
+export interface FilterOptionCount {
+  value: string
+  count: number
+}
 
 export interface FilterGroupProps {
   title: string

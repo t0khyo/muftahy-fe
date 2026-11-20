@@ -12,24 +12,27 @@ import {
   type CarouselApi,
 } from '@workspace/ui/components/carousel'
 import { cn } from '@workspace/ui/lib/utils'
-import type { ProductCollection } from '@workspace/domain/schemas/product'
-import { useProductCollection } from '../hooks/use-product-collection'
+import type { ProductCategory, ProductResponse } from '@workspace/domain/schemas/product'
+import { useProducts } from '../hooks/use-products'
 import { ProductCard } from './product-card'
 import { ProductRailSkeleton } from './product-rail-skeleton'
 
 export interface ProductRailProps {
   id: string
-  collection: ProductCollection
   titleKey: string
   viewAllHref: string
+  category?: ProductCategory
+  collection?: string
+  products?: ProductResponse[]
   className?: string
 }
 
 export function ProductRail({
   id,
-  collection,
   titleKey,
   viewAllHref,
+  category,
+  products: directProducts,
   className = '',
 }: ProductRailProps) {
   const { lang } = useParams<{ lang: string }>()
@@ -38,11 +41,13 @@ export function ProductRail({
   const { t } = useTranslation(['home', 'common'])
 
   const {
-    data: products,
+    data: fetchedProducts,
     isLoading,
     isError,
     refetch,
-  } = useProductCollection({ collection })
+  } = useProducts(directProducts ? undefined : { category })
+
+  const products = directProducts ?? fetchedProducts
 
   const headingId = `${id}-heading`
 
@@ -53,19 +58,19 @@ export function ProductRail({
   React.useEffect(() => {
     if (!api) return
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCount(api.scrollSnapList().length)
-    setCurrent(api.selectedScrollSnap())
-
     const onSelect = () => {
+      setCount(api.scrollSnapList().length)
       setCurrent(api.selectedScrollSnap())
     }
+
+    queueMicrotask(onSelect)
 
     api.on('select', onSelect)
     api.on('reInit', onSelect)
 
     return () => {
       api.off('select', onSelect)
+      api.off('reInit', onSelect)
     }
   }, [api])
 
@@ -107,11 +112,11 @@ export function ProductRail({
         </div>
 
         {/* Rail Content: Loading / Error / Empty / Loaded */}
-        {isLoading ? (
+        {isLoading && !directProducts ? (
           <div aria-busy="true">
             <ProductRailSkeleton />
           </div>
-        ) : isError ? (
+        ) : isError && !directProducts ? (
           <div
             data-testid={`rail-error-${id}`}
             className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center space-y-3"
@@ -156,7 +161,6 @@ export function ProductRail({
           >
             {/* Desktop Flex Row with Flanking Outside Buttons */}
             <div className="flex items-center gap-3 lg:gap-4">
-              {/* Desktop Side Arrow: Previous (flanking outside, never on top of cards) */}
               <CarouselPrevious
                 variant="outline"
                 size="icon"
@@ -181,7 +185,6 @@ export function ProductRail({
                 </CarouselContent>
               </div>
 
-              {/* Desktop Side Arrow: Next (flanking outside, never on top of cards) */}
               <CarouselNext
                 variant="outline"
                 size="icon"
@@ -216,7 +219,7 @@ export function ProductRail({
                         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                         isActive
                           ? 'h-1.5 w-5 lg:h-2 lg:w-6 bg-primary shadow-xs'
-                          : 'size-1.5 lg:size-2 bg-muted-foreground/30 hover:bg-muted-foreground/60'
+                          : 'size-1.5 lg:size-2 bg-muted-foreground/30 hover:bg-muted-foreground/60',
                       )}
                     />
                   )

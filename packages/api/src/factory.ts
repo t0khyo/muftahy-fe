@@ -8,6 +8,7 @@ import { TokenStorage } from './adapters/http/token-storage'
 import { NativeFetchClient } from './adapters/http/fetch-client'
 import { HttpAuthAdapter } from './adapters/http/http-auth-adapter'
 import { HttpUserAdapter } from './adapters/http/http-user-adapter'
+import { HttpProductAdapter } from './adapters/http/http-product-adapter'
 
 export interface ApiServices {
   products: ProductService
@@ -17,20 +18,61 @@ export interface ApiServices {
 
 export type AppScope = 'storefront' | 'admin'
 
-function getImportMetaEnv(): Record<string, string | undefined> | undefined {
+function getEnvMockFlag(): string | undefined {
   try {
-    return (import.meta as unknown as { env?: Record<string, string | undefined> })?.env
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_USE_MOCK_API !== undefined) {
+      return import.meta.env.VITE_USE_MOCK_API
+    }
   } catch {
-    return undefined
+    // ignore
   }
+  if (typeof process !== 'undefined') {
+    return process.env?.VITE_USE_MOCK_API
+  }
+  return undefined
 }
 
-function getProcessEnv(): Record<string, string | undefined> | undefined {
+function getEnvApiUrl(): string | undefined {
   try {
-    return typeof process !== 'undefined' ? process.env : undefined
+    if (typeof import.meta !== 'undefined') {
+      const url = import.meta.env?.VITE_API_URL || import.meta.env?.API_URL
+      if (url) return url
+    }
   } catch {
-    return undefined
+    // ignore
   }
+  if (typeof process !== 'undefined') {
+    return process.env?.VITE_API_URL || process.env?.API_URL
+  }
+  return undefined
+}
+
+function getEnvMode(): string | undefined {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== undefined) {
+      return import.meta.env.MODE
+    }
+  } catch {
+    // ignore
+  }
+  if (typeof process !== 'undefined') {
+    return process.env?.NODE_ENV
+  }
+  return undefined
+}
+
+function getEnvLiveApiTest(): string | undefined {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TEST_WITH_LIVE_API !== undefined) {
+      return import.meta.env.VITE_TEST_WITH_LIVE_API
+    }
+  } catch {
+    // ignore
+  }
+  if (typeof process !== 'undefined') {
+    return process.env?.VITE_TEST_WITH_LIVE_API
+  }
+  return undefined
 }
 
 function normalizeApiUrl(rawUrl: string): string {
@@ -45,54 +87,32 @@ function normalizeApiUrl(rawUrl: string): string {
 }
 
 function isMockApiPreferred(): boolean {
-  const metaEnv = getImportMetaEnv()
-  const procEnv = getProcessEnv()
+  const isVitest = typeof process !== 'undefined' && Boolean(process.env?.VITEST)
+  const mode = getEnvMode()
+  const isTestEnvironment = isVitest || mode === 'test'
 
-  // In test runners (Vitest), always default to mock adapters per AGENTS.md
-  const isTestEnvironment =
-    (typeof process !== 'undefined' && Boolean(process.env?.VITEST)) ||
-    metaEnv?.MODE === 'test' ||
-    procEnv?.NODE_ENV === 'test'
-
-  if (isTestEnvironment && procEnv?.VITE_TEST_WITH_LIVE_API !== 'true') {
+  if (isTestEnvironment && getEnvLiveApiTest() !== 'true') {
     return true
   }
 
-  // If explicitly disabled
-  if (metaEnv?.VITE_USE_MOCK_API === 'false' || procEnv?.VITE_USE_MOCK_API === 'false') {
+  const mockFlag = getEnvMockFlag()
+  if (mockFlag === 'false') {
     return false
   }
-
-  // If explicitly enabled
-  if (metaEnv?.VITE_USE_MOCK_API === 'true' || procEnv?.VITE_USE_MOCK_API === 'true') {
+  if (mockFlag === 'true') {
     return true
   }
 
-  // If live API URL is provided, prefer HTTP
-  const hasLiveUrl = Boolean(
-    metaEnv?.VITE_API_URL ||
-    metaEnv?.API_URL ||
-    procEnv?.VITE_API_URL ||
-    procEnv?.API_URL
-  )
-  if (hasLiveUrl) {
+  const liveUrl = getEnvApiUrl()
+  if (liveUrl) {
     return false
   }
 
-  // Default to mock for standalone frontend development per AGENTS.md
   return true
 }
 
 function getApiBaseUrl(): string {
-  const metaEnv = getImportMetaEnv()
-  const procEnv = getProcessEnv()
-
-  const rawUrl =
-    metaEnv?.VITE_API_URL ||
-    metaEnv?.API_URL ||
-    procEnv?.VITE_API_URL ||
-    procEnv?.API_URL
-
+  const rawUrl = getEnvApiUrl()
   if (rawUrl) {
     return normalizeApiUrl(rawUrl)
   }
@@ -101,16 +121,27 @@ function getApiBaseUrl(): string {
 }
 
 class ServiceRegistry {
-  private productService: ProductService | null = null
+  private readonly productServices = new Map<string, ProductService>()
   private readonly authServices = new Map<string, AuthService>()
   private readonly userServices = new Map<string, UserService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
 
-  getProductService(): ProductService {
-    if (!this.productService) {
-      this.productService = new MockProductAdapter()
+  getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService {
+    const useMock = options?.useMock ?? isMockApiPreferred()
+    const key = useMock ? 'mock' : 'http'
+    let service = this.productServices.get(key)
+    if (!service) {
+      if (useMock) {
+        service = new MockProductAdapter()
+      } else {
+        const client = new NativeFetchClient({
+          baseURL: options?.baseURL ?? getApiBaseUrl(),
+        })
+        service = new HttpProductAdapter(client)
+      }
+      this.productServices.set(key, service)
     }
-    return this.productService
+    return service
   }
 
   getTokenStorage(app: AppScope = 'storefront'): TokenStorage {
@@ -171,7 +202,8 @@ class ServiceRegistry {
 }
 
 export const services = new ServiceRegistry()
-export const getProductService = (): ProductService => services.getProductService()
+export const getProductService = (options?: { useMock?: boolean; baseURL?: string }): ProductService =>
+  services.getProductService(options)
 export const getAuthService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): AuthService =>
   services.getAuthService(app, options)
 export const getUserService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): UserService =>

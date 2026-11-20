@@ -73,6 +73,18 @@ describe('SiteHeader Component', () => {
     }
   })
 
+  it('highlights category navbar link when on matching category route and does not double-highlight all products', () => {
+    renderSiteHeader('/en/products?category=windows')
+
+    const windowsLink = screen.getByRole('link', { name: /^windows$/i })
+    expect(windowsLink).toHaveClass('font-medium')
+    expect(windowsLink).toHaveClass('text-foreground')
+
+    const allProductsLink = screen.getByRole('link', { name: /^all products$/i })
+    expect(allProductsLink).not.toHaveClass('font-medium')
+    expect(allProductsLink).toHaveClass('text-foreground/80')
+  })
+
   it('toggles mobile menu and aria-expanded state on hamburger click', () => {
     renderSiteHeader('/en/products')
 

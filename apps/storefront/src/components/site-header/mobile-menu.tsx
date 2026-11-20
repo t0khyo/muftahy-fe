@@ -81,9 +81,10 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
         {/* Large Nav Links with Staggered Animation */}
         <nav aria-label="Mobile" className="flex flex-col space-y-4 pt-2 text-start">
           {links.map((link, index) => {
-            const isActive =
-              location.pathname === link.href ||
-              location.pathname + location.search === link.href
+            const currentPathAndSearch = location.pathname + location.search
+            const isActive = link.href.includes('?')
+              ? currentPathAndSearch === link.href
+              : location.pathname === link.href && !location.search
 
             return (
               <div

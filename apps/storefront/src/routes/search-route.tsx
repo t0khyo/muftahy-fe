@@ -9,43 +9,38 @@ export function SearchRoute() {
   const query = searchParams.get('q') || ''
   const { t } = useTranslation(['search', 'common'])
 
-  const { data: result, isLoading } = useProducts({
-    filter: query ? { search: query } : undefined,
-    enabled: true,
-  })
-  const products = result?.items
+  const { data: products = [], isLoading } = useProducts(query ? { search: query } : undefined)
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6">
       <div className="mb-6 space-y-1 text-start">
-        <h1 className="font-heading text-heading font-bold text-foreground">
-          {t('title', { ns: 'search' })}
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+          {t('title', { ns: 'search', defaultValue: 'Search Products' })}
         </h1>
         {query && (
-          <p className="text-body text-muted-foreground">
-            {t('resultsFor', { ns: 'search', query })}
+          <p className="text-sm text-muted-foreground">
+            {t('resultsFor', { ns: 'search', query, defaultValue: `Results for "${query}"` })}
           </p>
         )}
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <ProductCardSkeleton key={i} />
           ))}
         </div>
-      ) : products && products.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      ) : products.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       ) : (
         <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          <p>{t('noResults', { ns: 'search', query })}</p>
+          <p>{t('noResults', { ns: 'search', query, defaultValue: 'No products found' })}</p>
         </div>
       )}
     </div>
   )
 }
-

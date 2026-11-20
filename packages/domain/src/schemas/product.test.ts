@@ -1,151 +1,91 @@
 import { describe, expect, it } from 'vitest'
-import { getSummaryPlan, productSchema, type Product } from './product'
+import {
+  productCreateSchema,
+  productResponseSchema,
+  productUpdateSchema,
+  type ProductResponse,
+} from './product'
 
-describe('productSchema & getSummaryPlan', () => {
-  const baseProduct: Product = {
-    id: 'test-001',
-    slug: 'test-product',
-    title: { en: 'Test Product', ar: 'منتج تجريبي' },
-    description: { en: 'Description', ar: 'الوصف' },
-    price: { amountMinor: 1000, currency: 'USD' },
-    category: 'software',
-    platform: 'pc',
-    region: 'global',
-    coverImage: '/images/test.webp',
-    inStock: true,
-    featured: false,
-    deliveryType: 'instant',
-    includes: [],
-    activationSteps: [],
-    faq: [],
-    relatedSlugs: [],
-    media: [],
-    plans: [],
+describe('productResponseSchema', () => {
+  const validProduct: ProductResponse = {
+    id: '00000000-0000-4000-8000-000000000001',
+    name: 'Windows 11 Professional',
+    category: 'windows',
+    variant: 'retail',
+    base_price: '499.00',
+    sale_price: '349.00',
+    effective_price: '349.00',
+    discount_percentage: 30,
+    stock_status: 'in_stock',
+    available_count: 14,
+    preorder_enabled: true,
+    description: 'Genuine Microsoft Windows 11 Pro digital retail license key.',
+    is_active: true,
   }
 
-  it('validates a product with plans, specs, and details', () => {
-    const fullProduct = {
-      ...baseProduct,
-      tagline: { en: 'Fast & Secure', ar: 'سريع وآمن' },
-      regionNote: { en: 'Global key', ar: 'مفتاح عالمي' },
-      includes: [{ en: 'License Key', ar: 'مفتاح الترخيص' }],
-      activationSteps: [{ en: 'Enter code', ar: 'أدخل الرمز' }],
-      specs: {
-        licenseType: { en: 'Retail', ar: 'تجزئة' },
-        edition: { en: 'Standard', ar: 'قياسي' },
-        language: { en: 'All', ar: 'الكل' },
-        deliveryTime: { en: 'Instant', ar: 'فوري' },
-      },
-      faq: [{ question: { en: 'Q?', ar: 'س؟' }, answer: { en: 'A', ar: 'ج' } }],
-      relatedSlugs: ['other-slug'],
-      plans: [
-        {
-          id: 'p1',
-          slug: '1-pc',
-          name: { en: '1 PC', ar: 'جهاز 1' },
-          price: { amountMinor: 1000, currency: 'USD' },
-          stock: 10,
-          deliveryType: 'instant',
-        },
-      ],
-      defaultPlanSlug: '1-pc',
-    }
-
-    const parsed = productSchema.parse(fullProduct)
-    expect(parsed.plans?.length).toBe(1)
-    expect(parsed.specs?.licenseType.en).toBe('Retail')
+  it('validates a complete active product', () => {
+    const result = productResponseSchema.safeParse(validProduct)
+    expect(result.success).toBe(true)
   })
 
-  it('returns synthesized plan when product has no plans array', () => {
-    const summary = getSummaryPlan(baseProduct)
-    expect(summary.slug).toBe('default')
-    expect(summary.price.amountMinor).toBe(1000)
-    expect(summary.stock).toBe(10)
+  it('validates a product with null variant and null sale_price', () => {
+    const productWithNulls = {
+      ...validProduct,
+      variant: null,
+      sale_price: null,
+      discount_percentage: null,
+      description: null,
+    }
+    const result = productResponseSchema.safeParse(productWithNulls)
+    expect(result.success).toBe(true)
   })
 
-  it('selects default plan when it is in stock', () => {
-    const product: Product = {
-      ...baseProduct,
-      defaultPlanSlug: 'plan-b',
-      plans: [
-        {
-          id: 'p-a',
-          slug: 'plan-a',
-          name: { en: 'Plan A', ar: 'خطة أ' },
-          price: { amountMinor: 800, currency: 'USD' },
-          stock: 5,
-          deliveryType: 'instant',
-        },
-        {
-          id: 'p-b',
-          slug: 'plan-b',
-          name: { en: 'Plan B', ar: 'خطة ب' },
-          price: { amountMinor: 1500, currency: 'USD' },
-          stock: 10,
-          deliveryType: 'instant',
-        },
-      ],
-    }
-
-    const summary = getSummaryPlan(product)
-    expect(summary.slug).toBe('plan-b')
-    expect(summary.price.amountMinor).toBe(1500)
+  it('defaults is_active to true when omitted in payload', () => {
+    const { is_active: _omitted, ...withoutActive } = validProduct
+    const parsed = productResponseSchema.parse(withoutActive)
+    expect(parsed.is_active).toBe(true)
   })
 
-  it('falls back to first in-stock plan when default is out of stock', () => {
-    const product: Product = {
-      ...baseProduct,
-      defaultPlanSlug: 'plan-b',
-      plans: [
-        {
-          id: 'p-a',
-          slug: 'plan-a',
-          name: { en: 'Plan A', ar: 'خطة أ' },
-          price: { amountMinor: 800, currency: 'USD' },
-          stock: 5,
-          deliveryType: 'instant',
-        },
-        {
-          id: 'p-b',
-          slug: 'plan-b',
-          name: { en: 'Plan B', ar: 'خطة ب' },
-          price: { amountMinor: 1500, currency: 'USD' },
-          stock: 0,
-          deliveryType: 'instant',
-        },
-      ],
-    }
-
-    const summary = getSummaryPlan(product)
-    expect(summary.slug).toBe('plan-a')
-    expect(summary.price.amountMinor).toBe(800)
+  it('rejects invalid uuid, invalid category, or negative available_count', () => {
+    expect(
+      productResponseSchema.safeParse({ ...validProduct, id: 'invalid-id' }).success,
+    ).toBe(false)
+    expect(
+      productResponseSchema.safeParse({ ...validProduct, category: 'gaming' }).success,
+    ).toBe(false)
+    expect(
+      productResponseSchema.safeParse({ ...validProduct, available_count: -1 }).success,
+    ).toBe(false)
   })
 
-  it('returns default plan when all plans are out of stock', () => {
-    const product: Product = {
-      ...baseProduct,
-      defaultPlanSlug: 'plan-b',
-      plans: [
-        {
-          id: 'p-a',
-          slug: 'plan-a',
-          name: { en: 'Plan A', ar: 'خطة أ' },
-          price: { amountMinor: 800, currency: 'USD' },
-          stock: 0,
-          deliveryType: 'instant',
-        },
-        {
-          id: 'p-b',
-          slug: 'plan-b',
-          name: { en: 'Plan B', ar: 'خطة ب' },
-          price: { amountMinor: 1500, currency: 'USD' },
-          stock: 0,
-          deliveryType: 'instant',
-        },
-      ],
-    }
+  it('rejects unsupported stock_status', () => {
+    expect(
+      productResponseSchema.safeParse({ ...validProduct, stock_status: 'backorder' }).success,
+    ).toBe(false)
+  })
+})
 
-    const summary = getSummaryPlan(product)
-    expect(summary.slug).toBe('plan-b')
+describe('productCreateSchema & productUpdateSchema', () => {
+  it('validates valid product creation input', () => {
+    const createInput = {
+      name: 'Office 2021 Professional Plus',
+      category: 'office',
+      variant: 'retail',
+      base_price: '899.00',
+      sale_price: '699.00',
+      preorder_enabled: true,
+      description: 'One-time purchase for 1 PC.',
+    }
+    const result = productCreateSchema.safeParse(createInput)
+    expect(result.success).toBe(true)
+  })
+
+  it('validates partial updates in productUpdateSchema', () => {
+    const updateInput = {
+      sale_price: '299.00',
+      is_active: false,
+    }
+    const result = productUpdateSchema.safeParse(updateInput)
+    expect(result.success).toBe(true)
   })
 })

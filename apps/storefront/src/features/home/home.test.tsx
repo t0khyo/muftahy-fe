@@ -1,15 +1,15 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider, type UseQueryResult } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
-import type { Product } from '@workspace/domain/schemas/product'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { ThemeProvider } from '../../app/theme-provider'
 import { HomePage } from './components/home-page'
 import { ProductRail } from '../products/components/product-rail'
 import { DEFAULT_HOME_CONFIG, type HomeConfig } from './home.config'
-import * as useProductCollectionModule from '../products/hooks/use-product-collection'
+import * as useProductsModule from '../products/hooks/use-products'
 
 function renderHomePage(
   initialRoute = '/en',
@@ -135,7 +135,7 @@ describe('Home Page Skeleton', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
-  it('renders unified Browse block with heading, subtitle, category bento tiles and platform pills', async () => {
+  it('renders unified Browse block with heading, subtitle, and category bento tiles', async () => {
     const { container } = renderHomePage('/en')
     const browseSection = container.querySelector<HTMLElement>('#browse')!
     expect(browseSection).toBeInTheDocument()
@@ -143,30 +143,14 @@ describe('Home Page Skeleton', () => {
     expect(within(browseSection).getByText(/browse catalog/i)).toBeInTheDocument()
     expect(within(browseSection).getByText(/explore keys, licenses, and subscriptions/i)).toBeInTheDocument()
 
-    // 4 Category tiles in prioritized order: Software, Subscriptions, Gift cards, Games
+    // 2 Category tiles: Windows and Office
     const categoryLinks = within(browseSection)
       .getAllByRole('link')
       .filter((l) => l.getAttribute('href')?.includes('category='))
     expect(categoryLinks.map((l) => l.getAttribute('href'))).toEqual([
-      '/en/products?category=software',
-      '/en/products?category=subscriptions',
-      '/en/products?category=gift-cards',
-      '/en/products?category=games',
+      '/en/products?category=windows',
+      '/en/products?category=office',
     ])
-
-    // Platform pill row with All Platforms (no -mx-4, preserving 16px container padding on mobile)
-    const allPlatformsLink = within(browseSection).getByRole('link', { name: /all platforms/i })
-    expect(allPlatformsLink).toBeInTheDocument()
-    expect(allPlatformsLink.parentElement?.className).not.toContain('-mx-4')
-
-    // Microsoft platform tile is first after All Platforms
-    await waitFor(() => {
-      const platformLinks = within(browseSection)
-        .getAllByRole('link')
-        .filter((l) => l.getAttribute('href')?.includes('platform='))
-      expect(platformLinks.length).toBeGreaterThan(0)
-      expect(platformLinks[0]).toHaveAttribute('href', '/en/products?platform=microsoft')
-    })
   })
 
   it('renders unified Browse block in Arabic RTL', async () => {
@@ -175,9 +159,8 @@ describe('Home Page Skeleton', () => {
     expect(browseSection).toBeInTheDocument()
 
     expect(within(browseSection).getByRole('heading', { name: /تصفح المنتجات/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /^ألعاب/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /^برمجيات/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /جميع المنصات/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /ويندوز/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /أوفيس/i })).toBeInTheDocument()
     expect(document.documentElement.dir).toBe('rtl')
   })
 
@@ -316,12 +299,12 @@ describe('Home Page Skeleton', () => {
   })
 
   it('shows skeleton cards when a rail is loading', () => {
-    vi.spyOn(useProductCollectionModule, 'useProductCollection').mockReturnValue({
+    vi.spyOn(useProductsModule, 'useProducts').mockReturnValue({
       data: undefined,
       isLoading: true,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as UseQueryResult<Product[], Error>)
+    } as unknown as UseQueryResult<ProductResponse[], Error>)
 
     renderHomePage('/en')
 
@@ -333,12 +316,12 @@ describe('Home Page Skeleton', () => {
   })
 
   it('shows empty message when a rail has no products', async () => {
-    vi.spyOn(useProductCollectionModule, 'useProductCollection').mockReturnValue({
+    vi.spyOn(useProductsModule, 'useProducts').mockReturnValue({
       data: [],
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as UseQueryResult<Product[], Error>)
+    } as unknown as UseQueryResult<ProductResponse[], Error>)
 
     renderHomePage('/en')
 
@@ -350,25 +333,12 @@ describe('Home Page Skeleton', () => {
   it('shows error state with retry button, and one failing rail does not break other sections or page', async () => {
     const refetchMock = vi.fn()
 
-    // best-sellers fails
-    vi.spyOn(useProductCollectionModule, 'useProductCollection').mockImplementation(
-      ({ collection }) => {
-        if (collection === 'best-sellers') {
-          return {
-            data: undefined,
-            isLoading: false,
-            isError: true,
-            refetch: refetchMock,
-          } as unknown as UseQueryResult<Product[], Error>
-        }
-        return {
-          data: [],
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        } as unknown as UseQueryResult<Product[], Error>
-      },
-    )
+    vi.spyOn(useProductsModule, 'useProducts').mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: refetchMock,
+    } as unknown as UseQueryResult<ProductResponse[], Error>)
 
     renderHomePage('/en')
 
@@ -486,7 +456,8 @@ describe('Home Page Skeleton', () => {
     // Arabic browse block
     const browseSection = container.querySelector<HTMLElement>('#browse')!
     expect(within(browseSection).getByRole('heading', { name: /تصفح المنتجات/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /^ألعاب/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /ويندوز/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /أوفيس/i })).toBeInTheDocument()
 
     // Arabic How It Works section
     const howItWorks = container.querySelector<HTMLElement>('#how-it-works')!

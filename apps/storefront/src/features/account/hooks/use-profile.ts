@@ -8,11 +8,12 @@ export const USER_PROFILE_QUERY_KEY = ['user', 'profile'] as const
 export function useProfile() {
   const queryClient = useQueryClient()
   const userService = getUserService('storefront')
-  const { refreshProfile } = useAuth()
+  const { user, refreshProfile } = useAuth()
 
   const query = useQuery({
     queryKey: USER_PROFILE_QUERY_KEY,
     queryFn: () => userService.getProfile(),
+    initialData: user ?? undefined,
   })
 
   const updateMutation = useMutation({

@@ -1,51 +1,92 @@
 import { useQuery } from '@tanstack/react-query'
 import { getProductService } from '@workspace/api/factory'
-import type { Product, ProductListFilter, ProductListResult } from '@workspace/domain/schemas/product'
+import type {
+  ProductCategory,
+  ProductResponse,
+  StockStatus,
+} from '@workspace/domain/schemas/product'
 
-export interface UseProductsOptions {
-  filter?: ProductListFilter
-  enabled?: boolean
+export interface ProductCatalogFilters {
+  category?: ProductCategory
+  variant?: 'retail' | 'oem'
+  stock_status?: StockStatus
+  inStockOnly?: boolean
+  search?: string
+  sort?: 'featured' | 'price-asc' | 'price-desc' | 'newest'
 }
 
-export function useProducts(options: UseProductsOptions = {}) {
-  const { filter, enabled = true } = options
+export function useProducts(filters?: ProductCatalogFilters) {
   const productService = getProductService()
 
-  return useQuery<ProductListResult>({
-    queryKey: ['products', filter],
-    queryFn: () => productService.list(filter),
-    enabled,
-  })
-}
+  return useQuery<ProductResponse[]>({
+    queryKey: ['products', filters?.category],
+    queryFn: () => productService.getProducts({ category: filters?.category }),
+    staleTime: 5 * 60 * 1000,
+    select: (products) => {
+      let filtered = [...products]
 
-export function useProduct(slug: string, options: { enabled?: boolean } = {}) {
-  const { enabled = true } = options
-  const productService = getProductService()
+      if (filters?.variant) {
+        filtered = filtered.filter((p) => p.variant === filters.variant)
+      }
 
-  return useQuery<Product | null>({
-    queryKey: ['product', slug],
-    queryFn: () => productService.getBySlug(slug),
-    enabled: Boolean(slug) && enabled,
-  })
-}
+      if (filters?.stock_status) {
+        filtered = filtered.filter((p) => p.stock_status === filters.stock_status)
+      }
 
-export function useRelatedProducts(slugs: string[], options: { enabled?: boolean } = {}) {
-  const { enabled = true } = options
-  const productService = getProductService()
+      if (filters?.inStockOnly) {
+        filtered = filtered.filter((p) => p.stock_status === 'in_stock')
+      }
 
-  return useQuery<Product[]>({
-    queryKey: ['products', 'related', slugs],
-    queryFn: async () => {
-      if (!slugs || slugs.length === 0) return []
-      const deduplicated = Array.from(new Set(slugs))
-      const results = await Promise.allSettled(
-        deduplicated.map((s) => productService.getBySlug(s)),
-      )
-      return results
-        .filter((r): r is PromiseFulfilledResult<Product | null> => r.status === 'fulfilled' && r.value !== null)
-        .map((r) => r.value as Product)
+      if (filters?.search) {
+        const query = filters.search.toLowerCase()
+        filtered = filtered.filter(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            (p.description && p.description.toLowerCase().includes(query)),
+        )
+      }
+
+      if (filters?.sort) {
+        if (filters.sort === 'price-asc') {
+          filtered.sort((a, b) => Number(a.effective_price) - Number(b.effective_price))
+        } else if (filters.sort === 'price-desc') {
+          filtered.sort((a, b) => Number(b.effective_price) - Number(a.effective_price))
+        }
+      }
+
+      return filtered
     },
-    enabled: Boolean(slugs && slugs.length > 0 && enabled),
   })
 }
 
+export function useProduct(id: string, options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options
+  const productService = getProductService()
+
+  return useQuery<ProductResponse | null>({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      try {
+        return await productService.getProductById(id)
+      } catch {
+        return null
+      }
+    },
+    enabled: Boolean(id) && enabled,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useRelatedProducts(category?: ProductCategory, currentId?: string) {
+  const productService = getProductService()
+
+  return useQuery<ProductResponse[]>({
+    queryKey: ['products', 'related', category, currentId],
+    queryFn: async () => {
+      const all = await productService.getProducts({ category })
+      return all.filter((p) => p.id !== currentId)
+    },
+    enabled: Boolean(category),
+    staleTime: 5 * 60 * 1000,
+  })
+}

@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PackageOpen } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
@@ -7,7 +6,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import type { ProductCategory } from '@workspace/domain/schemas/product'
 import { Breadcrumbs, type BreadcrumbItem } from '../components/breadcrumbs'
 import { useProducts } from '../features/products/hooks/use-products'
-import { useFilterCounts } from '../features/products/hooks/use-filter-counts'
+import { calculateFilterCounts } from '../features/products/hooks/use-filter-counts'
 import { useProductFilters } from '../features/products/hooks/use-product-filters'
 import { CategoryRow } from '../features/products/components/category-row'
 import { FilterSidebar } from '../features/products/components/filter-sidebar'
@@ -17,7 +16,7 @@ import { ProductCard } from '../features/products/components/product-card'
 import { ProductCardSkeleton } from '../features/products/components/product-card-skeleton'
 
 export function ProductsRoute() {
-  const { t, i18n } = useTranslation(['categories', 'breadcrumb', 'products', 'common', 'home'])
+  const { t, i18n } = useTranslation(['products', 'breadcrumb', 'common'])
   const isRtl = i18n.language === 'ar'
   const currentLang = isRtl ? 'ar' : 'en'
 
@@ -25,75 +24,40 @@ export function ProductsRoute() {
     state,
     queryFilter,
     activeFiltersCount,
-    togglePlatform,
-    toggleRegion,
-    setPriceRange,
-    setInStock,
-    setOnSale,
+    setCategory,
+    setVariant,
+    setStockStatus,
+    setInStockOnly,
     setSort,
-    setPage,
     clearAll,
-    removeFilter,
   } = useProductFilters()
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = React.useState(false)
 
   // Fetch products matching the current filter state
   const {
-    data: result,
+    data: products = [],
     isLoading,
     isError,
     refetch,
     isFetching,
-  } = useProducts({
-    filter: queryFilter,
-  })
+  } = useProducts(queryFilter)
 
-  // Fetch filter faceted counts from catalog
-  const { data: counts } = useFilterCounts()
+  // Calculate facet counts directly from catalog
+  const counts = React.useMemo(() => calculateFilterCounts(products), [products])
 
-  const products = result?.items ?? []
-  const total = result?.total ?? 0
-  const hasMore = Boolean(result?.hasMore)
+  const total = products.length
 
-  // Ref to track and shift focus when "Show more" is loaded
-  const [focusTargetIndex, setFocusTargetIndex] = React.useState<number | null>(null)
-  const nextItemFocusRef = React.useRef<HTMLDivElement | null>(null)
+  const selectedCategory = state.category
 
-  React.useEffect(() => {
-    if (focusTargetIndex !== null && nextItemFocusRef.current) {
-      nextItemFocusRef.current.focus()
-      setFocusTargetIndex(null)
-    }
-  }, [focusTargetIndex, products.length])
-
-  // Single-selected category
-  const selectedCategory: ProductCategory | undefined =
-    state.categories.length === 1 ? state.categories[0] : undefined
-
-  // Category labels map for dynamic title & breadcrumbs
   const categoryLabels: Record<ProductCategory, string> = React.useMemo(
     () => ({
-      games: t('games', { ns: 'categories', defaultValue: 'Games' }),
-      software: t('software', { ns: 'categories', defaultValue: 'Software' }),
-      subscriptions: t('subscriptions', { ns: 'categories', defaultValue: 'Subscriptions' }),
-      'gift-cards': t('giftCards', { ns: 'categories', defaultValue: 'Gift cards' }),
+      windows: t('categories.windows', { ns: 'products', defaultValue: 'Windows' }),
+      office: t('categories.office', { ns: 'products', defaultValue: 'Office' }),
     }),
     [t],
   )
 
-  // Category descriptors map for dynamic subline
-  const categorySublines: Record<ProductCategory, string> = React.useMemo(
-    () => ({
-      games: t('browse.gamesDesc', { ns: 'home', defaultValue: 'Steam keys, PC licenses, and console game passes' }),
-      software: t('browse.softwareDesc', { ns: 'home', defaultValue: 'Operating systems, office suites, and creative tools' }),
-      subscriptions: t('browse.subscriptionsDesc', { ns: 'home', defaultValue: 'Gaming passes, cloud storage, and AI assistants' }),
-      'gift-cards': t('browse.giftCardsDesc', { ns: 'home', defaultValue: 'Store credit, wallet top-ups, and game currency' }),
-    }),
-    [t],
-  )
-
-  // Breadcrumbs items: Home > Products > {Category}
   const breadcrumbItems: BreadcrumbItem[] = React.useMemo(() => {
     const items: BreadcrumbItem[] = [
       {
@@ -117,7 +81,6 @@ export function ProductsRoute() {
     return items
   }, [t, currentLang, selectedCategory, categoryLabels])
 
-  // Dynamic heading & subline computation
   const { heading, subline } = React.useMemo(() => {
     if (queryFilter.search) {
       return {
@@ -132,35 +95,21 @@ export function ProductsRoute() {
     if (selectedCategory) {
       return {
         heading: categoryLabels[selectedCategory] || selectedCategory,
-        subline: categorySublines[selectedCategory] || t('listing.subtitle', { ns: 'products' }),
+        subline: t('subtitle', { ns: 'products' }),
       }
     }
 
     return {
       heading: t('listing.title', { ns: 'products', defaultValue: 'All Products' }),
-      subline: t('listing.subtitle', {
+      subline: t('subtitle', {
         ns: 'products',
-        defaultValue: 'Browse our full catalog of digital keys, software, and subscriptions',
+        defaultValue: 'Instant digital delivery for genuine Microsoft Windows and Office licenses',
       }),
     }
-  }, [queryFilter.search, selectedCategory, total, categoryLabels, categorySublines, t])
-
-  const handleShowMore = () => {
-    setFocusTargetIndex(products.length)
-    setPage(state.page + 1)
-  }
-
-  // Quick categories for empty state
-  const quickCategories: { id: ProductCategory; label: string }[] = [
-    { id: 'software', label: categoryLabels.software },
-    { id: 'subscriptions', label: categoryLabels.subscriptions },
-    { id: 'gift-cards', label: categoryLabels['gift-cards'] },
-    { id: 'games', label: categoryLabels.games },
-  ]
+  }, [queryFilter.search, selectedCategory, total, categoryLabels, t])
 
   return (
     <div className="site-container py-6 lg:py-10">
-      {/* ── Breadcrumbs Trail (Reusable navigation component) ── */}
       <Breadcrumbs
         items={breadcrumbItems}
         label={t('label', { ns: 'breadcrumb', defaultValue: 'Breadcrumb' })}
@@ -168,12 +117,10 @@ export function ProductsRoute() {
         backLabel={t('back', { ns: 'breadcrumb', defaultValue: 'Back to products' })}
       />
 
-      {/* ── Page Header: Apple-store authoritative typography ── */}
       <header className="mb-6 lg:mb-8 text-start max-w-3xl">
         <h1
           className={cn(
             'text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight',
-            // AGENTS.md: No tracking-tight on Arabic
             !isRtl && 'tracking-tight',
           )}
         >
@@ -184,53 +131,52 @@ export function ProductsRoute() {
         </p>
       </header>
 
-      {/* ── Compact Category Row: Single-select category control ── */}
       <CategoryRow activeCategory={selectedCategory} />
 
-      {/* ── Mobile Toolbar (Non-sticky static flow) ── */}
+      {/* Mobile Toolbar */}
       <div className="lg:hidden mb-6">
         <ListingToolbar
           totalResults={total}
           state={state}
           activeFiltersCount={activeFiltersCount}
           onSortChange={setSort}
-          onRemoveFilter={removeFilter}
+          onRemoveVariant={() => setVariant(undefined)}
+          onRemoveStockStatus={() => setStockStatus(undefined)}
+          onRemoveInStockOnly={() => setInStockOnly(false)}
           onClearAll={clearAll}
           onOpenMobileFilters={() => setIsMobileFilterOpen(true)}
         />
       </div>
 
-      {/* ── Main Layout: Sidebar + Product Grid ── */}
       <div className="flex items-start gap-8">
-        {/* Desktop 256px Sidebar (Category facet removed) */}
+        {/* Desktop Sidebar */}
         <FilterSidebar
           state={state}
           counts={counts}
           activeFiltersCount={activeFiltersCount}
-          onTogglePlatform={togglePlatform}
-          onToggleRegion={toggleRegion}
-          onSetPriceRange={setPriceRange}
-          onSetInStock={setInStock}
-          onSetOnSale={setOnSale}
+          onSetCategory={setCategory}
+          onSetVariant={setVariant}
+          onSetStockStatus={setStockStatus}
+          onSetInStockOnly={setInStockOnly}
           onClearAll={clearAll}
-          className="hidden lg:flex"
+          className="hidden lg:flex w-64 shrink-0"
         />
 
         {/* Content Area */}
         <main className="flex-1 min-w-0 flex flex-col gap-6">
-          {/* Desktop Toolbar */}
           <ListingToolbar
             totalResults={total}
             state={state}
             activeFiltersCount={activeFiltersCount}
             onSortChange={setSort}
-            onRemoveFilter={removeFilter}
+            onRemoveVariant={() => setVariant(undefined)}
+            onRemoveStockStatus={() => setStockStatus(undefined)}
+            onRemoveInStockOnly={() => setInStockOnly(false)}
             onClearAll={clearAll}
             onOpenMobileFilters={() => setIsMobileFilterOpen(true)}
             className="hidden lg:flex"
           />
 
-          {/* 1 ── Loading State ── */}
           {isLoading && (
             <div
               className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-5"
@@ -244,118 +190,64 @@ export function ProductsRoute() {
             </div>
           )}
 
-          {/* 2 ── Error State with Retry ── */}
           {!isLoading && isError && (
             <div
               role="alert"
               className="flex min-h-[360px] flex-col items-center justify-center gap-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center"
             >
-              <p className="text-base font-medium text-destructive">
-                {t('listing.errorRetry', {
-                  ns: 'products',
-                  defaultValue: 'Something went wrong. Try again.',
-                })}
+              <p className="text-sm text-destructive">
+                {t('listing.errorRetry', { defaultValue: 'Something went wrong. Try again.' })}
               </p>
-              <Button variant="outline" onClick={() => refetch()} className="rounded-full px-6 active:scale-[0.98]">
-                {t('retry', { ns: 'common', defaultValue: 'Retry' })}
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="cursor-pointer">
+                {t('retry', { ns: 'common', defaultValue: 'Try again' })}
               </Button>
             </div>
           )}
 
-          {/* 3 ── No Results State ── */}
           {!isLoading && !isError && products.length === 0 && (
-            <div className="flex min-h-[380px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-secondary/20 p-8 sm:p-12 text-center">
-              <div className="size-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-muted-foreground mb-4">
-                <PackageOpen className="size-7" aria-hidden="true" />
+            <div
+              role="status"
+              className="flex min-h-[360px] flex-col items-center justify-center gap-4 rounded-2xl border border-border/40 bg-card p-8 text-center"
+            >
+              <PackageOpen className="size-12 text-muted-foreground/60" aria-hidden="true" />
+              <div className="space-y-1 max-w-sm">
+                <h3 className="font-semibold text-foreground text-base">
+                  {t('listing.noResults', { defaultValue: 'No products match your filters' })}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {t('listing.noResultsHint', {
+                    defaultValue: 'Try clearing some filters or browse by category',
+                  })}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">
-                {t('listing.noResults', {
-                  ns: 'products',
-                  defaultValue: 'No products match your filters',
-                })}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
-                {t('listing.noResultsHint', {
-                  ns: 'products',
-                  defaultValue: 'Try clearing some filters or browse by category',
-                })}
-              </p>
-
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                {activeFiltersCount > 0 && (
-                  <Button
-                    variant="default"
-                    onClick={clearAll}
-                    className="rounded-full px-6 text-sm active:scale-[0.98]"
-                  >
-                    {t('listing.clearAll', { ns: 'products', defaultValue: 'Clear all' })}
-                  </Button>
-                )}
-
-                {/* Quick Category Links */}
-                {quickCategories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    to={`/${currentLang}/products?category=${cat.id}`}
-                    className="inline-flex h-9 items-center rounded-full border border-border/60 bg-background px-4 text-xs font-medium text-foreground hover:bg-secondary hover:border-border transition-colors active:scale-95"
-                  >
-                    {cat.label}
-                  </Link>
-                ))}
-              </div>
+              {activeFiltersCount > 0 && (
+                <Button variant="outline" size="sm" onClick={clearAll} className="mt-2 cursor-pointer">
+                  {t('listing.clearAll', { defaultValue: 'Clear all' })}
+                </Button>
+              )}
             </div>
           )}
 
-          {/* 4 ── Product Grid ── */}
           {!isLoading && !isError && products.length > 0 && (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-5">
-                {products.map((product, idx) => {
-                  const isFocusTarget = focusTargetIndex !== null && idx === focusTargetIndex
-                  return (
-                    <div
-                      key={product.id}
-                      ref={isFocusTarget ? nextItemFocusRef : undefined}
-                      tabIndex={isFocusTarget ? -1 : undefined}
-                      className="outline-none"
-                    >
-                      <ProductCard product={product} priority={idx < 6} />
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* 5 ── Pagination & "Show more" ── */}
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 pt-6 border-t border-border/40">
-                <p className="text-xs text-muted-foreground tabular-nums">
-                  {t('listing.showing', {
-                    ns: 'products',
-                    count: products.length,
-                    total,
-                    defaultValue: `Showing ${products.length} of ${total}`,
-                  })}
-                </p>
-
-                {hasMore && (
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    disabled={isFetching}
-                    onClick={handleShowMore}
-                    className="rounded-full px-8 h-11 text-sm font-medium border-border/80 hover:bg-secondary active:scale-[0.98] transition-all"
-                  >
-                    {isFetching
-                      ? t('loading', { ns: 'common', defaultValue: 'Loading...' })
-                      : t('listing.showMore', { ns: 'products', defaultValue: 'Show more' })}
-                  </Button>
-                )}
-              </div>
-            </>
+            <div
+              className={cn(
+                'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-5 transition-opacity duration-200',
+                isFetching && 'opacity-60',
+              )}
+            >
+              {products.map((product, idx) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  priority={idx < 6}
+                />
+              ))}
+            </div>
           )}
         </main>
       </div>
 
-      {/* ── Mobile / Tablet Filter Sheet (Category facet removed) ── */}
+      {/* Mobile Filter Sheet */}
       <FilterSheet
         open={isMobileFilterOpen}
         onOpenChange={setIsMobileFilterOpen}
@@ -363,11 +255,10 @@ export function ProductsRoute() {
         counts={counts}
         totalResults={total}
         activeFiltersCount={activeFiltersCount}
-        onTogglePlatform={togglePlatform}
-        onToggleRegion={toggleRegion}
-        onSetPriceRange={setPriceRange}
-        onSetInStock={setInStock}
-        onSetOnSale={setOnSale}
+        onSetCategory={setCategory}
+        onSetVariant={setVariant}
+        onSetStockStatus={setStockStatus}
+        onSetInStockOnly={setInStockOnly}
         onClearAll={clearAll}
       />
     </div>

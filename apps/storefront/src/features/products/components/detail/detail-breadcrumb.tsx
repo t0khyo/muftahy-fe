@@ -15,18 +15,10 @@ export function DetailBreadcrumb({
 }: DetailBreadcrumbProps) {
   const { t } = useTranslation(['products', 'common'])
 
-  type CategoryKey = 'categoryGames' | 'categorySoftware' | 'categorySubscriptions' | 'categoryGiftCards'
-  const categoryKeyMap: Record<string, CategoryKey> = {
-    games: 'categoryGames',
-    software: 'categorySoftware',
-    subscriptions: 'categorySubscriptions',
-    'gift-cards': 'categoryGiftCards',
-  }
-
-  const catKey = categoryKeyMap[category]
-  const categoryLabel = catKey
-    ? t(catKey, { ns: 'products' })
-    : category
+  const categoryLabel =
+    category === 'windows'
+      ? t('categories.windows', { ns: 'products', defaultValue: 'Windows' })
+      : t('categories.office', { ns: 'products', defaultValue: 'Office' })
 
   return (
     <nav aria-label="Breadcrumb" className="w-full mb-6">

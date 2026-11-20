@@ -1,5 +1,3 @@
-import type { ProductCollection } from '@workspace/domain/schemas/product'
-
 export type HomeSectionType =
   | 'hero'
   | 'browse'
@@ -41,18 +39,18 @@ export interface HeroSectionConfig extends BaseSectionConfig {
 }
 
 export interface BrowseCategoryTile {
-  id: 'games' | 'software' | 'subscriptions' | 'gift-cards';
-  labelKey: string;
-  descKey: string;
-  href: string;
-  icon: 'gamepad' | 'app-window' | 'credit-card' | 'gift';
+  id: 'windows' | 'office'
+  labelKey: string
+  descKey: string
+  href: string
+  icon: 'monitor' | 'file-spreadsheet'
 }
 
 export interface BrowseSectionConfig extends BaseSectionConfig {
-  type: 'browse';
-  titleKey?: string;
-  subtitleKey?: string;
-  categories?: BrowseCategoryTile[];
+  type: 'browse'
+  titleKey?: string
+  subtitleKey?: string
+  categories?: BrowseCategoryTile[]
 }
 
 export interface CategoryTileItem {
@@ -80,7 +78,8 @@ export interface PlatformStripSectionConfig extends BaseSectionConfig {
 
 export interface ProductRailSectionConfig extends BaseSectionConfig {
   type: 'product-rail'
-  collection: ProductCollection
+  collection?: string
+  category?: 'windows' | 'office'
   titleKey: string
   viewAllHref: string
 }
@@ -165,9 +164,9 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       id: 'best-sellers',
       type: 'product-rail',
       enabled: true,
-      collection: 'best-sellers',
+      category: 'windows',
       titleKey: 'bestSellers',
-      viewAllHref: '/:lang/products?collection=best-sellers',
+      viewAllHref: '/:lang/products?category=windows',
     },
     {
       id: 'bundles',
@@ -219,4 +218,3 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
     },
   ],
 }
-

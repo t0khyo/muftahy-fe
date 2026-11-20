@@ -2,14 +2,14 @@ import * as React from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
-  Gamepad2,
   KeyRound,
   Minus,
   Plus,
   ShoppingBag,
   X,
 } from 'lucide-react'
-import { formatMoneyFromMinor } from '@workspace/domain/formatters/money'
+import { formatMoneyFromMinor, toPiasters } from '@workspace/domain/formatters/money'
+import { resolveProductImage } from '../../features/products/utils/asset-resolver'
 import { Button } from '@workspace/ui/components/button'
 import {
   Sheet,
@@ -313,13 +313,15 @@ export function CartButton({
             /* Populated Scrollable List (only this scrolls) */
             <div className="flex-1 overflow-y-auto px-5 lg:px-6 py-4 space-y-5">
               {items.map((item) => {
-                const productName = resolveLocalizedName(item.name, currentLang)
-                const planLabel = resolveLocalizedName(item.planName, currentLang)
+                const productName = resolveLocalizedName(item.name, currentLang) || item.product_name
                 const lineTotal = formatMoneyFromMinor(
-                  item.priceMinor * item.quantity,
-                  item.currency,
+                  toPiasters(item.unit_price_egp) * item.quantity,
+                  'EGP',
                   currentLang,
                 )
+                const coverImage =
+                  item.coverImage ||
+                  resolveProductImage(item.category ?? 'windows', item.variant ?? null)
 
                 return (
                   <div
@@ -328,16 +330,11 @@ export function CartButton({
                   >
                     {/* Thumbnail: 72px mobile / 80px desktop with coded cover fallback */}
                     <div className="size-[72px] lg:size-20 shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
-                      {item.coverImage ? (
+                      {coverImage ? (
                         <img
-                          src={item.coverImage}
+                          src={coverImage}
                           alt=""
                           className="size-full object-cover"
-                        />
-                      ) : item.platform === 'steam' || item.platform === 'playstation' || item.platform === 'xbox' ? (
-                        <Gamepad2
-                          className="size-7 lg:size-8 text-muted-foreground/80"
-                          aria-hidden="true"
                         />
                       ) : (
                         <KeyRound
@@ -351,22 +348,21 @@ export function CartButton({
                     <div className="flex-1 min-w-0 flex flex-col justify-between text-start">
                       <div className="space-y-0.5">
                         <Link
-                          to={`/${currentLang}/products/${item.slug}`}
+                          to={`/${currentLang}/products/${item.product_id}`}
                           onClick={handleClose}
                           className="text-[15px] font-semibold text-foreground line-clamp-2 leading-snug hover:text-primary transition-colors"
                         >
                           {productName}
                         </Link>
 
-                        {planLabel && (
-                          <div className="text-[13px] text-muted-foreground truncate">
-                            {planLabel}
+                        {item.variant && (
+                          <div className="text-[12px] text-muted-foreground uppercase font-medium">
+                            {item.variant}
                           </div>
                         )}
-
-                        {(item.platform || item.region) && (
-                          <div className="text-[13px] text-muted-foreground/80 uppercase tracking-wide truncate">
-                            {[item.platform, item.region].filter(Boolean).join(' • ')}
+                        {item.is_preorder && (
+                          <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                            {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
                           </div>
                         )}
                       </div>

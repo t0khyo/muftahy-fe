@@ -28,6 +28,9 @@
   "nav": {
     "home": "Home",
     "products": "Products",
+    "allProducts": "All Products",
+    "windows": "Windows",
+    "office": "Office",
     "cart": "Cart",
     "account": "Account",
     "games": "Games",
@@ -39,7 +42,7 @@
   "header": {
     "skipToContent": "Skip to main content",
     "search": "Search",
-    "searchPlaceholder": "Search keys, software, subscriptions...",
+    "searchPlaceholder": "Search Windows & Office keys...",
     "quickLinks": "Quick Links",
     "closeSearch": "Close search",
     "openMenu": "Open menu",
@@ -218,7 +221,27 @@
   },
   "products": {
     "title": "Digital Keys & Licenses",
-    "subtitle": "Instant delivery for top games, software, and subscriptions",
+    "subtitle": "Instant digital delivery for genuine Microsoft Windows and Office licenses",
+    "categories": {
+      "windows": "Windows",
+      "office": "Office"
+    },
+    "variants": {
+      "retail": "Retail",
+      "oem": "OEM"
+    },
+    "stock": {
+      "in_stock": "In Stock",
+      "preorder": "Preorder",
+      "out_of_stock": "Out of Stock"
+    },
+    "preorderBadge": "Preorder",
+    "preorderDisclaimer": "Preorder item: code will be fulfilled upon restock.",
+    "added": "Added",
+    "variantRetail": "Retail",
+    "variantOem": "OEM",
+    "categoryWindows": "Windows",
+    "categoryOffice": "Office",
     "addToCart": "Add to cart",
     "outOfStock": "Out of stock",
     "instantDelivery": "Instant delivery",
@@ -639,7 +662,7 @@
     "emptyState": {
       "products": {
         "title": "No products yet",
-        "description": "Create and manage your catalog of digital game codes, software licenses, and gift cards.",
+        "description": "Create and manage your catalog of Microsoft Windows and Office digital license keys.",
         "action": "Add Product"
       },
       "orders": {
