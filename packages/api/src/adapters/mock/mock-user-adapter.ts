@@ -2,6 +2,7 @@ import type {
   UpdateProfileRequest,
   UserProfile,
 } from '@workspace/domain/schemas/auth'
+import type { UserKey } from '@workspace/domain/schemas/key'
 import type { UserService } from '../../services/user-service'
 
 export class MockUserAdapter implements UserService {
@@ -41,5 +42,16 @@ export class MockUserAdapter implements UserService {
       this.profile.phone = payload.phone
     }
     return { ...this.profile }
+  }
+
+  async getUserKeys(): Promise<UserKey[]> {
+    return [
+      {
+        key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        product_name: 'Microsoft Office 2024 Home & Business',
+        serial: 'X229N-48FGX-YVC9B-4J6C9-AAAAA',
+        sold_at: '2026-11-20T04:00:00Z',
+      },
+    ]
   }
 }

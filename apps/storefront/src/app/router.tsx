@@ -2,7 +2,11 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { CatchAllRedirect } from './catch-all-redirect'
 import { AccountIndexRoute } from '../routes/account-index-route'
 import { AccountLayoutRoute } from '../routes/account-layout-route'
-import { AccountPlaceholderRoute } from '../routes/account-placeholder-route'
+import { OrdersRoute } from '../routes/orders-route'
+import { OrderDetailRoute } from '../routes/order-detail-route'
+import { KeysRoute } from '../routes/keys-route'
+import { SupportRoute } from '../routes/support-route'
+import { TicketThreadRoute } from '../routes/ticket-thread-route'
 import { CartRoute } from '../routes/cart-route'
 import { CheckoutRoute } from '../routes/checkout-route'
 import { DesignRoute } from '../routes/design-route'
@@ -79,15 +83,23 @@ export const router = createBrowserRouter([
           },
           {
             path: 'orders',
-            element: <AccountPlaceholderRoute type="orders" />,
+            element: <OrdersRoute />,
+          },
+          {
+            path: 'orders/:id',
+            element: <OrderDetailRoute />,
           },
           {
             path: 'keys',
-            element: <AccountPlaceholderRoute type="keys" />,
+            element: <KeysRoute />,
           },
           {
             path: 'support',
-            element: <AccountPlaceholderRoute type="support" />,
+            element: <SupportRoute />,
+          },
+          {
+            path: 'support/:id',
+            element: <TicketThreadRoute />,
           },
         ],
       },

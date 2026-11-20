@@ -1,6 +1,8 @@
 import type { ProductService } from './services/product-service'
 import type { AuthService } from './services/auth-service'
 import type { UserService } from './services/user-service'
+import type { OrderService } from './services/order-service'
+import type { TicketService } from './services/ticket-service'
 import { MockProductAdapter } from './adapters/mock/product-mock-adapter'
 import { MockAuthAdapter } from './adapters/mock/mock-auth-adapter'
 import { MockUserAdapter } from './adapters/mock/mock-user-adapter'
@@ -9,11 +11,15 @@ import { NativeFetchClient } from './adapters/http/fetch-client'
 import { HttpAuthAdapter } from './adapters/http/http-auth-adapter'
 import { HttpUserAdapter } from './adapters/http/http-user-adapter'
 import { HttpProductAdapter } from './adapters/http/http-product-adapter'
+import { HttpOrderAdapter } from './adapters/http/http-order-adapter'
+import { HttpTicketAdapter } from './adapters/http/http-ticket-adapter'
 
 export interface ApiServices {
   products: ProductService
   auth: AuthService
   user: UserService
+  orders: OrderService
+  tickets: TicketService
 }
 
 export type AppScope = 'storefront' | 'admin'
@@ -124,6 +130,8 @@ class ServiceRegistry {
   private readonly productServices = new Map<string, ProductService>()
   private readonly authServices = new Map<string, AuthService>()
   private readonly userServices = new Map<string, UserService>()
+  private readonly orderServices = new Map<string, OrderService>()
+  private readonly ticketServices = new Map<string, TicketService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
 
   getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService {
@@ -199,6 +207,36 @@ class ServiceRegistry {
 
     return service
   }
+
+  getOrderService(app: AppScope = 'storefront', options?: { baseURL?: string }): OrderService {
+    const key = `${app}_order`
+    let service = this.orderServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage(app)
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpOrderAdapter(client)
+      this.orderServices.set(key, service)
+    }
+    return service
+  }
+
+  getTicketService(app: AppScope = 'storefront', options?: { baseURL?: string }): TicketService {
+    const key = `${app}_ticket`
+    let service = this.ticketServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage(app)
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpTicketAdapter(client)
+      this.ticketServices.set(key, service)
+    }
+    return service
+  }
 }
 
 export const services = new ServiceRegistry()
@@ -208,4 +246,8 @@ export const getAuthService = (app: AppScope = 'storefront', options?: { useMock
   services.getAuthService(app, options)
 export const getUserService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): UserService =>
   services.getUserService(app, options)
+export const getOrderService = (app: AppScope = 'storefront', options?: { baseURL?: string }): OrderService =>
+  services.getOrderService(app, options)
+export const getTicketService = (app: AppScope = 'storefront', options?: { baseURL?: string }): TicketService =>
+  services.getTicketService(app, options)
 export const getTokenStorage = (app: AppScope = 'storefront'): TokenStorage => services.getTokenStorage(app)

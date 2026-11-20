@@ -34,7 +34,7 @@ describe('HttpUserAdapter', () => {
     expect(profile.id).toBe('18f9103c-829d-47be-a567-2794ebef4023')
     expect(profile.full_name).toBe('Ahmed Hassan')
     expect(profile.email).toBe('customer@example.com')
-    expect(profile.is_active).toBe(true) // defaults to true from userProfileSchema
+    expect(profile.is_active).toBe(true)
   })
 
   it('calls PATCH /users/me with payload and returns updated profile', async () => {
@@ -77,5 +77,38 @@ describe('HttpUserAdapter', () => {
     expect(result.full_name).toBe('Ahmed Updated')
     expect(result.phone).toBe('+201099998888')
   })
-})
 
+  it('calls GET /users/me/keys and returns parsed user keys', async () => {
+    const mockKeys = [
+      {
+        key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        product_name: 'Microsoft Office 2024 Home & Business',
+        serial: 'X229N-48FGX-YVC9B-4J6C9-AAAAA',
+        sold_at: '2026-11-20T04:00:00Z',
+      },
+    ]
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => mockKeys,
+    })
+
+    const client = new NativeFetchClient({
+      baseURL: 'http://localhost:8000/api/v1',
+      fetchFn: mockFetch as unknown as typeof fetch,
+    })
+    const adapter = new HttpUserAdapter(client)
+
+    const result = await adapter.getUserKeys()
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:8000/api/v1/users/me/keys',
+      expect.objectContaining({ method: 'GET' }),
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0].key_id).toBe('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')
+    expect(result[0].serial).toBe('X229N-48FGX-YVC9B-4J6C9-AAAAA')
+  })
+})
