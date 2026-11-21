@@ -641,8 +641,11 @@
         "pending_payment": "بانتظار التحويل",
         "payment_uploaded": "تم رفع الإيصال",
         "under_review": "قيد مراجعة التحويل",
+        "approved": "تم التسليم",
         "completed": "تم التسليم",
+        "auto_cancelled": "ملغي",
         "cancelled": "ملغي",
+        "rejected_refund": "مسترجع",
         "refunded": "مسترجع"
       },
       "detail": {

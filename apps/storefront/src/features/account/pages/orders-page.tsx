@@ -22,7 +22,7 @@ export function OrdersPage() {
       )
     }
     if (activeTab === 'completed') {
-      return orders.filter((o) => o.status === 'completed')
+      return orders.filter((o) => o.status === 'completed' || o.status === 'approved')
     }
     return orders
   }, [orders, activeTab])

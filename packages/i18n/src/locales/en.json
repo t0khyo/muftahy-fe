@@ -637,8 +637,11 @@
         "pending_payment": "Awaiting Payment",
         "payment_uploaded": "Receipt Uploaded",
         "under_review": "Under Verification",
+        "approved": "Delivered",
         "completed": "Delivered",
+        "auto_cancelled": "Cancelled",
         "cancelled": "Cancelled",
+        "rejected_refund": "Refunded",
         "refunded": "Refunded"
       },
       "detail": {

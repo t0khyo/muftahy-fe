@@ -4,8 +4,11 @@ export const orderStatusSchema = z.enum([
   'pending_payment',
   'payment_uploaded',
   'under_review',
+  'approved',
   'completed',
+  'auto_cancelled',
   'cancelled',
+  'rejected_refund',
   'refunded',
 ])
 

@@ -189,7 +189,7 @@ export function ReceiptReviewDialog({ order, open, onOpenChange }: ReceiptReview
                     <span className="font-mono">
                       {formatMoney(it.final_price_egp, { currency: 'EGP', locale: i18n.language })}
                     </span>
-                    {!it.is_refunded && order.status === 'completed' && (
+                    {!it.is_refunded && (order.status === 'completed' || order.status === 'approved') && (
                       <Button
                         type="button"
                         variant="ghost"

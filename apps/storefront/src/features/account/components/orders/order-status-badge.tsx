@@ -48,6 +48,7 @@ export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
           <span>{t('orders.status.under_review')}</span>
         </Badge>
       )
+    case 'approved':
     case 'completed':
       return (
         <Badge
@@ -55,9 +56,10 @@ export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
           className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 gap-1.5 font-medium"
         >
           <CheckCircle2 className="h-3 w-3 shrink-0" />
-          <span>{t('orders.status.completed')}</span>
+          <span>{t(`orders.status.${status}`, t('orders.status.completed'))}</span>
         </Badge>
       )
+    case 'auto_cancelled':
     case 'cancelled':
       return (
         <Badge
@@ -65,9 +67,10 @@ export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
           className="border-destructive/30 bg-destructive/10 text-destructive gap-1.5 font-medium"
         >
           <XCircle className="h-3 w-3 shrink-0" />
-          <span>{t('orders.status.cancelled')}</span>
+          <span>{t(`orders.status.${status}`, t('orders.status.cancelled'))}</span>
         </Badge>
       )
+    case 'rejected_refund':
     case 'refunded':
       return (
         <Badge
@@ -75,7 +78,7 @@ export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
           className="border-muted-foreground/30 bg-muted text-muted-foreground gap-1.5 font-medium"
         >
           <RotateCcw className="h-3 w-3 shrink-0" />
-          <span>{t('orders.status.refunded')}</span>
+          <span>{t(`orders.status.${status}`, t('orders.status.refunded'))}</span>
         </Badge>
       )
     default:

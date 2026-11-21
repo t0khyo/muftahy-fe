@@ -77,13 +77,16 @@ export function AdminOrdersRoute() {
   const getStatusBadgeVariant = (status: OrderStatus) => {
     switch (status) {
       case 'completed':
+      case 'approved':
         return 'default'
       case 'under_review':
       case 'payment_uploaded':
         return 'secondary'
       case 'refunded':
+      case 'rejected_refund':
         return 'outline'
       case 'cancelled':
+      case 'auto_cancelled':
       case 'pending_payment':
         return 'destructive'
       default:

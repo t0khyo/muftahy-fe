@@ -39,6 +39,21 @@ describe('order schemas', () => {
       expect(parsed.total_egp).toBe(350.5)
     })
 
+    it('accepts backend-native order statuses (auto_cancelled, approved, rejected_refund)', () => {
+      for (const status of ['auto_cancelled', 'approved', 'rejected_refund'] as const) {
+        const payload = {
+          id: '9f6b90d2-8b82-4e4b-97e3-0590a9e2d539',
+          reference_code: 'SM-20261120-001',
+          status,
+          total_egp: 299,
+          created_at: '2026-11-20T04:00:00Z',
+          item_count: 1,
+        }
+        const parsed = userOrderSummarySchema.parse(payload)
+        expect(parsed.status).toBe(status)
+      }
+    })
+
     it('rejects invalid status', () => {
       const payload = {
         id: '9f6b90d2-8b82-4e4b-97e3-0590a9e2d539',
