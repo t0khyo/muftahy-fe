@@ -79,9 +79,10 @@ describe('ProfilePage (Design Taste & API Integration)', () => {
     expect(screen.getByText('Security & Authentication')).toBeInTheDocument()
     expect(screen.getByText('Account Services')).toBeInTheDocument()
 
-    // Email & ID
+    // Email (User ID and technical session tokens are omitted)
     expect(screen.getAllByText('customer@example.com').length).toBeGreaterThan(0)
-    expect(screen.getByText('9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d')).toBeInTheDocument()
+    expect(screen.queryByText('9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d')).not.toBeInTheDocument()
+    expect(screen.queryByText('Active Token Session')).not.toBeInTheDocument()
 
     // Shortcuts Hub
     expect(screen.getByText('View Orders')).toBeInTheDocument()
@@ -142,27 +143,16 @@ describe('ProfilePage (Design Taste & API Integration)', () => {
     })
   })
 
-  it('copies user ID to clipboard when copy button is clicked', async () => {
-    const writeTextMock = vi.fn().mockResolvedValue(undefined)
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: writeTextMock,
-      },
-    })
-
+  it('does not display technical session token or user ID to customer', async () => {
     renderProfilePage('/en/account/profile')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Ahmed Mohamed' })).toBeInTheDocument()
     })
 
-    const copyBtn = screen.getByRole('button', { name: /copy id/i })
-    fireEvent.click(copyBtn)
-
-    expect(writeTextMock).toHaveBeenCalledWith('9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d')
-    await waitFor(() => {
-      expect(screen.getByText('Copied!')).toBeInTheDocument()
-    })
+    expect(screen.queryByText(/active token session/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/user id/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /copy id/i })).not.toBeInTheDocument()
   })
 
   it('opens Change Password Dialog on clicking Change Password', async () => {

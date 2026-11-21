@@ -254,7 +254,7 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Operator Profile' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument()
     expect(screen.getAllByText('Lead Admin').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('admin1@souqmuftah.com').length).toBeGreaterThanOrEqual(1)
   })

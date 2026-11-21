@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ShieldCheck, Mail, KeyRound, Lock, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { ShieldCheck, Mail, KeyRound, Lock, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
@@ -102,19 +102,6 @@ export function ProfileSecurityCard({ email }: ProfileSecurityCardProps) {
             >
               <span>{t('profile.changePassword')}</span>
             </Button>
-          </div>
-
-          {/* Session Token Rotation Box */}
-          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/50 bg-secondary/50 text-xs">
-            <RefreshCw className="size-4 text-primary shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <p className="font-semibold text-foreground text-xs">
-                {t('profile.sessionSecurity')}
-              </p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {t('profile.sessionSecurityDesc')}
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>

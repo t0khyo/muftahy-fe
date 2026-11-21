@@ -9,9 +9,6 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
-  Copy,
-  Check,
-  IdCard,
 } from 'lucide-react'
 import { updateProfileRequestSchema, type UpdateProfileRequest } from '@workspace/domain/schemas/auth'
 import { Button } from '@workspace/ui/components/button'
@@ -32,7 +29,6 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = React.useState(false)
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
   const [serverError, setServerError] = React.useState<string | null>(null)
-  const [copiedId, setCopiedId] = React.useState(false)
 
   const {
     register,
@@ -46,17 +42,6 @@ export function ProfilePage() {
       phone: profile?.phone || '',
     },
   })
-
-  const handleCopyId = async () => {
-    if (!profile?.id) return
-    try {
-      await navigator.clipboard.writeText(profile.id)
-      setCopiedId(true)
-      setTimeout(() => setCopiedId(false), 2000)
-    } catch {
-      // Fallback if clipboard API is restricted
-    }
-  }
 
   const onSave = async (data: UpdateProfileRequest) => {
     setServerError(null)
@@ -322,48 +307,6 @@ export function ProfilePage() {
                         </p>
                       </div>
                     </div>
-                  </div>
-
-                  {/* User ID (Copyable) */}
-                  <div className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-muted/20">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="p-2 rounded-lg bg-card text-muted-foreground shrink-0 border border-border/50">
-                        <IdCard className="size-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-muted-foreground">
-                          {t('profile.userId')}
-                        </p>
-                        <p className="text-xs font-mono text-muted-foreground truncate mt-0.5 max-w-[220px] sm:max-w-[320px]">
-                          {profile.id}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground shrink-0"
-                      onClick={handleCopyId}
-                      aria-label={t('profile.copyId')}
-                    >
-                      {copiedId ? (
-                        <>
-                          <Check className="size-3.5 text-success" />
-                          <span className="text-[11px] text-success font-medium">
-                            {t('profile.copied')}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="size-3.5" />
-                          <span className="text-[11px] hidden sm:inline">
-                            {t('profile.copyId')}
-                          </span>
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </div>
               )}

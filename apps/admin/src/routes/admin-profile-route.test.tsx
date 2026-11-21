@@ -18,7 +18,7 @@ vi.mock('react-router', async () => {
   }
 })
 
-describe('AdminProfileRoute Workstation', () => {
+describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
   let testQueryClient: QueryClient
   const mockLogout = vi.fn().mockResolvedValue(undefined)
   const mockRefreshProfile = vi.fn().mockResolvedValue(undefined)
@@ -67,7 +67,7 @@ describe('AdminProfileRoute Workstation', () => {
     i18n.changeLanguage('en')
   })
 
-  it('renders operator identity hero with Blobatar and copyable ID in English LTR (/en)', async () => {
+  it('renders minimal profile details and does not display AI slop (scopes, telemetry, copyable IDs)', async () => {
     render(
       <I18nProvider>
         <QueryClientProvider client={testQueryClient}>
@@ -80,43 +80,23 @@ describe('AdminProfileRoute Workstation', () => {
       </I18nProvider>
     )
 
-    // Heading and identity hero
-    expect(screen.getByRole('heading', { level: 1, name: /operator profile/i })).toBeInTheDocument()
+    // Minimal Heading and identity
+    expect(screen.getByRole('heading', { level: 1, name: /^profile$/i })).toBeInTheDocument()
     expect(screen.getByText('Lead Administrator')).toBeInTheDocument()
     expect(screen.getByText('operator@souqmuftah.com')).toBeInTheDocument()
     expect(screen.getByText('System Administrator')).toBeInTheDocument()
-    expect(screen.getByText('usr-admin-42')).toBeInTheDocument()
 
-    // Administrative scopes
-    expect(screen.getByText('Administrative Scopes')).toBeInTheDocument()
-    expect(screen.getByText('Product Catalog & SKU Registry')).toBeInTheDocument()
-    expect(screen.getByText('Key Pool Vault Management')).toBeInTheDocument()
-    expect(screen.getByText('Order Adjudication & Fulfillment')).toBeInTheDocument()
-    expect(screen.getByText('Security Trail & Audit Logging')).toBeInTheDocument()
-  })
+    // Form fields
+    expect(screen.getByLabelText(/full name/i)).toHaveValue('Lead Administrator')
+    expect(screen.getByLabelText(/email address/i)).toHaveValue('operator@souqmuftah.com')
 
-  it('allows copying operator system ID to clipboard', async () => {
-    const writeTextSpy = vi.fn().mockResolvedValue(undefined)
-    Object.assign(navigator, {
-      clipboard: { writeText: writeTextSpy },
-    })
-
-    render(
-      <I18nProvider>
-        <QueryClientProvider client={testQueryClient}>
-          <MemoryRouter initialEntries={['/en/profile']}>
-            <Routes>
-              <Route path="/:lang/profile" element={<AdminProfileRoute />} />
-            </Routes>
-          </MemoryRouter>
-        </QueryClientProvider>
-      </I18nProvider>
-    )
-
-    const copyBtn = screen.getByRole('button', { name: /copy operator id/i })
-    fireEvent.click(copyBtn)
-
-    expect(writeTextSpy).toHaveBeenCalledWith('usr-admin-42')
+    // Verify AI slop is completely gone
+    expect(screen.queryByText('usr-admin-42')).not.toBeInTheDocument()
+    expect(screen.queryByText('Administrative Scopes')).not.toBeInTheDocument()
+    expect(screen.queryByText('Product Catalog & SKU Registry')).not.toBeInTheDocument()
+    expect(screen.queryByText('Key Pool Vault Management')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bearer / Refresh Rotation')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument()
   })
 
   it('allows editing full name and phone number and submits form', async () => {
@@ -146,7 +126,7 @@ describe('AdminProfileRoute Workstation', () => {
         phone: '+201001112222',
       })
       expect(mockRefreshProfile).toHaveBeenCalled()
-      expect(screen.getByText(/operator profile updated successfully/i)).toBeInTheDocument()
+      expect(screen.getByText(/profile updated successfully/i)).toBeInTheDocument()
     })
   })
 
@@ -163,7 +143,7 @@ describe('AdminProfileRoute Workstation', () => {
       </I18nProvider>
     )
 
-    const logoutBtn = screen.getByRole('button', { name: /^logout$/i })
+    const logoutBtn = screen.getByRole('button', { name: /logout/i })
     fireEvent.click(logoutBtn)
 
     await waitFor(() => {
@@ -187,8 +167,7 @@ describe('AdminProfileRoute Workstation', () => {
       </I18nProvider>
     )
 
-    expect(screen.getByRole('heading', { level: 1, name: /الملف الشخصي للمشغل/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /الملف الشخصي/i })).toBeInTheDocument()
     expect(screen.getByText('Lead Administrator')).toBeInTheDocument()
-    expect(screen.getByText('usr-admin-42')).toBeInTheDocument()
   })
 })

@@ -78,11 +78,11 @@ describe('NavUser Component', () => {
 
     // Verify dropdown content mounts without zero-trust buzzwords
     await waitFor(() => {
-      expect(screen.getByText('Operator Profile')).toBeInTheDocument()
+      expect(screen.getByRole('menuitem', { name: /profile/i })).toBeInTheDocument()
     })
 
     expect(screen.queryByText('Zero-Trust Session Active')).not.toBeInTheDocument()
-    expect(screen.getByRole('menuitem', { name: /operator profile/i })).toHaveAttribute('href', '/en/profile')
+    expect(screen.getByRole('menuitem', { name: /profile/i })).toHaveAttribute('href', '/en/profile')
     expect(screen.getByText('Logout')).toBeInTheDocument()
   })
 

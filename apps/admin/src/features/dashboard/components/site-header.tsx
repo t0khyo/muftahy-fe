@@ -35,7 +35,7 @@ export function SiteHeader() {
     if (pathname.includes('/inventory')) return t('admin:nav.inventory', 'Key Pool Inventory')
     if (pathname.includes('/customers')) return t('admin:nav.customers', 'Customer Accounts')
     if (pathname.includes('/audit')) return t('admin:nav.audit', 'Security & Audit Log')
-    if (pathname.includes('/profile')) return t('admin:nav.profile', 'Operator Profile')
+    if (pathname.includes('/profile')) return t('admin:nav.profile', 'Profile')
     return t('admin:nav.dashboard', 'Dashboard')
   }
 
