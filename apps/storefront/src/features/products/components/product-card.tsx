@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
-import { useCartStore } from '../../cart/stores/cart-store'
+import { useAddToCart } from '../../cart/hooks/use-cart'
 import { resolveProductImage } from '../utils/asset-resolver'
 import { AddToCartButton } from './add-to-cart-button'
 
@@ -90,20 +90,20 @@ export function ProductCard({
 
   const coverImageUrl = resolveProductImage(product.category, product.variant)
 
+  const { mutate: addToCart } = useAddToCart()
+
   const handleAddToCart = () => {
     if (onAddToCart) {
       onAddToCart(product)
       return
     }
 
-    useCartStore.getState().addItem({
-      product_id: product.id,
-      product_name: product.name,
-      unit_price_egp: product.effective_price,
-      is_preorder: isPreorder,
-      category: product.category,
-      variant: product.variant,
-      coverImage: coverImageUrl,
+    addToCart({
+      productId: product.id,
+      productName: product.name,
+      unitPrice: Number(product.effective_price),
+      isPreorder,
+      quantity: 1,
     })
   }
 

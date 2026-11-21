@@ -1,711 +1,408 @@
 import * as React from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
-  Check,
   CheckCircle2,
-  Copy,
-  CreditCard,
-  Eye,
-  EyeOff,
   Headphones,
   KeyRound,
   Lock,
-  MessageCircle,
   ShieldCheck,
   ShoppingBag,
   Smartphone,
-  Sparkles,
   Zap,
 } from 'lucide-react'
-import { formatMoneyFromMinor, toPiasters } from '@workspace/domain/formatters/money'
+import { formatMoney } from '@workspace/domain/formatters/money'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
-import { RadioGroup, RadioGroupItem } from '@workspace/ui/components/radio-group'
-import { resolveLocalizedName, getCurrencySubtotals } from '../features/cart/lib/cart-selectors'
-import { useCartStore, type CartItem } from '../features/cart/stores/cart-store'
+import { useAuth } from '../features/auth/hooks/use-auth'
+import {
+  useApplyPromoCode,
+  useCart,
+  useCheckout,
+} from '../features/cart/hooks/use-cart'
 
 export function CheckoutRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation(['checkout', 'cart', 'common', 'header'])
   const isRtl = lang === 'ar' || i18n.dir() === 'rtl'
 
-  const items = useCartStore((s) => s.items)
-  const clearCart = useCartStore((s) => s.clear)
+  const { isAuthenticated, user, isInitializing } = useAuth()
+  const cart = useCart()
+  const { mutateAsync: checkoutMutation, isPending: isCheckingOut } = useCheckout()
+  const { mutateAsync: validatePromoMutation, isPending: isCheckingPromo } = useApplyPromoCode()
 
-  // Form State
-  const [email, setEmail] = React.useState('')
-  const [fullName, setFullName] = React.useState('')
-  const [phone, setPhone] = React.useState('')
-  const [paymentMethod, setPaymentMethod] = React.useState<'card' | 'apple-pay' | 'local'>('card')
+  const initialPromo = searchParams.get('promo') ?? ''
+  const [promoCode, setPromoCode] = React.useState(initialPromo)
+  const [promoDiscount, setPromoDiscount] = React.useState<number | null>(null)
+  const [finalTotal, setFinalTotal] = React.useState<number | null>(null)
+  const [promoError, setPromoError] = React.useState<string | null>(null)
+
   const [agreedToTerms, setAgreedToTerms] = React.useState(true)
-  const [cardNumber, setCardNumber] = React.useState('')
-  const [cardExpiry, setCardExpiry] = React.useState('')
-  const [cardCvc, setCardCvc] = React.useState('')
+  const [checkoutError, setCheckoutError] = React.useState<string | null>(null)
 
-  // Validation errors
-  const [errors, setErrors] = React.useState<Record<string, string>>({})
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-
-  // Order Placement & Post-Payment Reveal State
-  const [isOrderPlaced, setIsOrderPlaced] = React.useState(false)
-  const [placedOrderNumber, setPlacedOrderNumber] = React.useState('')
-  const [purchasedItems, setPurchasedItems] = React.useState<CartItem[]>([])
-  const [revealedKeys, setRevealedKeys] = React.useState<Record<string, boolean>>({})
-  const [copiedKeyId, setCopiedKeyId] = React.useState<string | null>(null)
-
-  const currencySubtotals = React.useMemo(() => {
-    return getCurrencySubtotals(isOrderPlaced ? purchasedItems : items, lang)
-  }, [isOrderPlaced, purchasedItems, items, lang])
-
-  // Explicit Reveal & Copy Safe Mock Key Pattern (AGENTS.md)
-  const SAFE_MOCK_KEY = 'XXXXX-XXXXX-XXXXX'
-
-  const toggleRevealKey = (itemId: string) => {
-    setRevealedKeys((prev) => ({
-      ...prev,
-      [itemId]: !prev[itemId],
-    }))
-  }
-
-  const handleCopyKey = (itemId: string) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(SAFE_MOCK_KEY)
-      setCopiedKeyId(itemId)
-      setTimeout(() => setCopiedKeyId(null), 2000)
+  // Validate initial promo code if passed from cart route
+  React.useEffect(() => {
+    if (initialPromo && isAuthenticated) {
+      validatePromoMutation(initialPromo)
+        .then((res) => {
+          if (res.valid) {
+            setPromoDiscount(res.total_discount)
+            setFinalTotal(res.final_total)
+          }
+        })
+        .catch(() => {
+          // ignore initial auto-validation error
+        })
     }
+  }, [initialPromo, isAuthenticated, validatePromoMutation])
+
+  if (isInitializing) {
+    return (
+      <main className="site-container py-12 flex justify-center items-center">
+        <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </main>
+    )
   }
 
-  const handleCheckoutSubmit = (e: React.FormEvent) => {
+  // Guard: unauthenticated customers must log in
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to={`/${lang}/login?returnTo=/${lang}/checkout`}
+        replace
+      />
+    )
+  }
+
+  const items = cart.items
+  const hasItems = items.length > 0
+
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newErrors: Record<string, string> = {}
+    if (!promoCode.trim()) return
 
-    if (!email.trim()) {
-      newErrors.email = t('requiredField', { defaultValue: 'This field is required' })
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = t('invalidEmail', { defaultValue: 'Please enter a valid email address' })
+    setPromoError(null)
+    try {
+      const res = await validatePromoMutation(promoCode.trim())
+      if (res.valid) {
+        setPromoDiscount(res.total_discount)
+        setFinalTotal(res.final_total)
+      } else {
+        setPromoError(res.error_message || (isRtl ? 'كود الخصم غير صالح' : 'Invalid promo code'))
+        setPromoDiscount(null)
+        setFinalTotal(null)
+      }
+    } catch {
+      setPromoError(isRtl ? 'تعذر التحقق من كود الخصم' : 'Failed to validate promo code')
     }
+  }
 
-    if (!fullName.trim()) {
-      newErrors.fullName = t('requiredField', { defaultValue: 'This field is required' })
-    }
+  const handleConfirmOrder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCheckoutError(null)
 
     if (!agreedToTerms) {
-      newErrors.terms = t('agreeToTerms', {
-        defaultValue: 'You must agree to the digital delivery terms to proceed',
-      })
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
+      setCheckoutError(
+        isRtl
+          ? 'يرجى الموافقة على شروط التسليم الرقمي للمتابعة'
+          : 'Please agree to the digital delivery terms to proceed',
+      )
       return
     }
 
-    setErrors({})
-    setIsSubmitting(true)
+    try {
+      const order = await checkoutMutation(
+        promoDiscount !== null && promoCode.trim()
+          ? { promo_code: promoCode.trim() }
+          : undefined,
+      )
 
-    // Simulate secure transaction latency
-    setTimeout(() => {
-      const orderNum = `MUF-${Math.floor(100000 + Math.random() * 900000)}`
-      setPlacedOrderNumber(orderNum)
-      setPurchasedItems([...items])
-      clearCart()
-      setIsSubmitting(false)
-      setIsOrderPlaced(true)
-      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
-    }, 600)
+      // Redirect immediately to order detail page
+      navigate(`/${lang}/account/orders/${order.id}?new=true`, { replace: true })
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : isRtl
+            ? 'حدث خطأ أثناء إنشاء الطلب. يُرجى المحاولة مرة أخرى.'
+            : 'An error occurred while creating your order. Please try again.'
+      setCheckoutError(msg)
+    }
   }
 
-  // ── Render Case A: Order Confirmation & Key Reveal Screen ──
-  if (isOrderPlaced) {
-    return (
-      <main id="main" className="site-container py-8 sm:py-14 text-start">
-        <div className="max-w-3xl mx-auto space-y-8">
-          {/* Success Hero Header */}
-          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 sm:p-8 text-center space-y-4">
-            <div className="mx-auto size-16 rounded-full bg-primary/20 text-primary flex items-center justify-center">
-              <CheckCircle2 className="size-9" aria-hidden="true" />
-            </div>
+  const formattedSubtotal = formatMoney(cart.subtotal_egp, { currency: 'EGP', locale: lang })
+  const formattedDiscount = promoDiscount
+    ? formatMoney(promoDiscount, { currency: 'EGP', locale: lang })
+    : null
+  const formattedTotal = formatMoney(finalTotal ?? cart.subtotal_egp, {
+    currency: 'EGP',
+    locale: lang,
+  })
 
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                {t('orderSuccess', { defaultValue: 'Order Placed Successfully!' })}
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                {t('orderNumber', { defaultValue: 'Order Number' })}: {placedOrderNumber}
-              </h1>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto pt-1 leading-relaxed">
-                {t('emailSentTo', {
-                  defaultValue: "We've sent your official receipt and activation details to",
-                })}{' '}
-                <strong className="text-foreground font-semibold">{email}</strong>
-              </p>
-            </div>
-          </div>
-
-          {/* Purchased Keys & Reveal Pattern */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <Sparkles className="size-5 text-primary" aria-hidden="true" />
-                <span>{t('yourPurchasedKeys', { defaultValue: 'Your Digital License Keys' })}</span>
-              </h2>
-              <Badge variant="outline" className="text-xs text-primary border-primary/30">
-                {purchasedItems.length} {purchasedItems.length === 1 ? 'Key' : 'Keys'}
-              </Badge>
-            </div>
-
-            <div className="space-y-4">
-              {purchasedItems.map((item) => {
-                const isRevealed = Boolean(revealedKeys[item.id])
-                const isCopied = copiedKeyId === item.id
-                const title = resolveLocalizedName(item.name, lang)
-                const plan = resolveLocalizedName(item.planName, lang)
-
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 shadow-sm space-y-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-foreground text-base sm:text-lg">
-                          {title}
-                        </h3>
-                        {plan && (
-                          <div className="text-xs text-muted-foreground font-medium">
-                            {plan}
-                          </div>
-                        )}
-                      </div>
-                      <Badge variant="secondary" className="text-xs shrink-0">
-                        {item.quantity}x
-                      </Badge>
-                    </div>
-
-                    {/* Sensitive Key Box with Reveal & Copy */}
-                    <div className="rounded-xl border border-border/80 bg-secondary/40 p-4 space-y-3">
-                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t('productKey', { defaultValue: 'Product License Key' })}
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <div className="font-mono text-base sm:text-lg font-bold tracking-widest text-foreground select-all bg-background/80 px-4 py-2 rounded-lg border border-border/60 tabular-nums">
-                          {isRevealed ? SAFE_MOCK_KEY : '•••••-•••••-•••••'}
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleRevealKey(item.id)}
-                            className="h-10 px-3.5 rounded-lg text-xs gap-1.5 cursor-pointer"
-                            aria-label={isRevealed ? t('hideCode') : t('revealCode')}
-                          >
-                            {isRevealed ? (
-                              <>
-                                <EyeOff className="size-3.5" aria-hidden="true" />
-                                <span>{t('hideCode', { defaultValue: 'Hide code' })}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Eye className="size-3.5" aria-hidden="true" />
-                                <span>{t('revealCode', { defaultValue: 'Reveal code' })}</span>
-                              </>
-                            )}
-                          </Button>
-
-                          <Button
-                            type="button"
-                            variant="default"
-                            size="sm"
-                            disabled={!isRevealed}
-                            onClick={() => handleCopyKey(item.id)}
-                            className="h-10 px-4 rounded-lg text-xs gap-1.5 cursor-pointer active:scale-95 transition-transform"
-                          >
-                            {isCopied ? (
-                              <>
-                                <Check className="size-3.5 text-primary-foreground" aria-hidden="true" />
-                                <span>{t('copied', { defaultValue: 'Copied!' })}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="size-3.5" aria-hidden="true" />
-                                <span>{t('copyCode', { defaultValue: 'Copy key' })}</span>
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground pt-1">
-                        {t('keyNotice', {
-                          defaultValue:
-                            'Treat this digital key as sensitive. Activate it following the guide below.',
-                        })}
-                      </p>
-                    </div>
-
-                    {/* Activation & Support row */}
-                    <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-                      <Link
-                        to={`/${lang}/products/${item.slug}`}
-                        className="text-primary hover:underline font-medium inline-flex items-center gap-1"
-                      >
-                        <span>{t('viewActivationGuide', { defaultValue: 'View Activation Guide' })}</span>
-                        {isRtl ? (
-                          <ArrowLeft className="size-3.5" aria-hidden="true" />
-                        ) : (
-                          <ArrowRight className="size-3.5" aria-hidden="true" />
-                        )}
-                      </Link>
-
-                      <a
-                        href="https://wa.me/201000000000"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
-                      >
-                        <MessageCircle className="size-3.5 text-emerald-500" aria-hidden="true" />
-                        <span>{t('supportWhatsApp', { defaultValue: 'Need help? WhatsApp Support' })}</span>
-                      </a>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Action CTAs */}
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              nativeButton={false}
-              render={<Link to={`/${lang}/products`} />}
-              variant="default"
-              className="w-full sm:w-auto h-12 px-8 rounded-full font-medium text-sm active:scale-[0.98] transition-transform"
-            >
-              {t('backToStore', { defaultValue: 'Continue Shopping' })}
-            </Button>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  // ── Render Case B: Empty Cart Prompt on Checkout ──
-  if (items.length === 0) {
-    return (
-      <main id="main" className="site-container py-16 sm:py-24 text-center">
-        <div className="max-w-md mx-auto space-y-6">
-          <div className="mx-auto size-20 rounded-2xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground">
-            <ShoppingBag className="size-10" aria-hidden="true" />
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {t('emptyTitle', { ns: 'cart', defaultValue: 'Your bag is empty' })}
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {t('emptyCheckoutPrompt', {
-                defaultValue: 'Your bag is empty. Please add items before checking out.',
-              })}
-            </p>
-          </div>
-
-          <Button
-            nativeButton={false}
-            render={<Link to={`/${lang}/products`} />}
-            variant="default"
-            className="h-12 px-8 rounded-full font-medium text-sm active:scale-[0.98] transition-transform"
-          >
-            {t('exploreProducts', { ns: 'cart', defaultValue: 'Explore products' })}
-          </Button>
-        </div>
-      </main>
-    )
-  }
-
-  // ── Render Case C: Active Checkout Surface ──
   return (
-    <main id="main" className="site-container py-8 sm:py-12 text-start">
-      <div className="space-y-8">
-        {/* Checkout Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-6">
+    <main id="main" className="site-container py-8 sm:py-12">
+      <div className="space-y-8 max-w-6xl mx-auto">
+        {/* Navigation Breadcrumb */}
+        <div className="text-start">
           <Link
             to={`/${lang}/cart`}
             className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
           >
             {isRtl ? (
-              <ArrowRight className="size-4 group-hover:-translate-x-1 transition-transform" aria-hidden="true" />
+              <ArrowRight className="size-4 group-hover:-translate-x-1 transition-transform" />
             ) : (
-              <ArrowLeft className="size-4 group-hover:-translate-x-1 transition-transform" aria-hidden="true" />
+              <ArrowLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
             )}
-            <span>{t('returnToCart', { defaultValue: 'Return to bag' })}</span>
+            <span>{t('backToCart', { ns: 'checkout', defaultValue: 'Back to bag' })}</span>
           </Link>
-
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground bg-secondary/40 border border-border/60 px-3.5 py-1.5 rounded-full">
-            <Lock className="size-3.5 text-primary" aria-hidden="true" />
-            <span>{t('encryptedCheckout', { defaultValue: '256-bit Encrypted Checkout' })}</span>
-          </div>
         </div>
 
-        {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* 1 ── Main Checkout Form (7-col) */}
-          <form onSubmit={handleCheckoutSubmit} className="lg:col-span-7 xl:col-span-7 space-y-8">
-            {/* Step 1: Customer Contact & Delivery Email */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="size-7 rounded-full bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center">
-                  1
-                </div>
-                <h2 className="text-lg font-bold text-foreground">
-                  {t('contactInfo', { defaultValue: 'Customer & Delivery Details' })}
-                </h2>
-              </div>
-
-              <div className="space-y-4 pt-1">
-                {/* Email Address */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="checkout-email" className="text-xs font-semibold text-foreground">
-                    {t('deliveryEmail', { defaultValue: 'Delivery Email Address' })} *
-                  </Label>
-                  <Input
-                    id="checkout-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t('deliveryEmailPlaceholder', { defaultValue: 'you@example.com' })}
-                    className={`h-11 rounded-xl text-sm ${errors.email ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
-                    aria-describedby="email-help"
-                  />
-                  <p id="email-help" className="text-xs text-muted-foreground">
-                    {t('deliveryEmailHelp', {
-                      defaultValue:
-                        'Your digital license keys and receipt will be delivered to this email.',
-                    })}
-                  </p>
-                  {errors.email && (
-                    <p className="text-xs font-medium text-destructive">{errors.email}</p>
-                  )}
-                </div>
-
-                {/* Full Name */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="checkout-name" className="text-xs font-semibold text-foreground">
-                    {t('fullName', { defaultValue: 'Full Name' })} *
-                  </Label>
-                  <Input
-                    id="checkout-name"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder={t('fullNamePlaceholder', { defaultValue: 'Alex Morgan' })}
-                    className={`h-11 rounded-xl text-sm ${errors.fullName ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
-                  />
-                  {errors.fullName && (
-                    <p className="text-xs font-medium text-destructive">{errors.fullName}</p>
-                  )}
-                </div>
-
-                {/* Phone Number */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="checkout-phone" className="text-xs font-semibold text-foreground">
-                    {t('phoneNumber', { defaultValue: 'Phone Number (optional)' })}
-                  </Label>
-                  <Input
-                    id="checkout-phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder={t('phoneNumberPlaceholder', { defaultValue: '+966 5X XXX XXXX' })}
-                    className="h-11 rounded-xl text-sm"
-                  />
-                </div>
-              </div>
+        {/* Empty State */}
+        {!hasItems ? (
+          <div className="flex flex-col items-center justify-center p-8 sm:p-16 text-center rounded-2xl border border-dashed border-border/70 bg-card/40 max-w-xl mx-auto space-y-4">
+            <div className="size-20 rounded-2xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground mb-2">
+              <ShoppingBag className="size-10" aria-hidden="true" />
             </div>
-
-            {/* Step 2: Payment Method */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="size-7 rounded-full bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center">
-                  2
-                </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+              {t('yourBagIsEmpty', { ns: 'cart', defaultValue: 'Your bag is empty' })}
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
+              {t('findNext', {
+                ns: 'cart',
+                defaultValue: 'Find your next game, license, or subscription.',
+              })}
+            </p>
+            <Button
+              nativeButton={false}
+              render={<Link to={`/${lang}/products`} />}
+              variant="default"
+              className="h-12 px-8 rounded-full font-medium text-sm"
+            >
+              {t('exploreProducts', { ns: 'cart', defaultValue: 'Explore products' })}
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            {/* Left Column: Customer details & Offline Payment Instructions */}
+            <div className="lg:col-span-7 xl:col-span-7 space-y-6 text-start">
+              {/* Customer Account Info */}
+              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-foreground">
-                  {t('paymentMethod', { defaultValue: 'Payment Method' })}
+                  {isRtl ? 'بيانات الحساب والتسليم' : 'Customer & Delivery Account'}
                 </h2>
-              </div>
-
-              <RadioGroup
-                value={paymentMethod}
-                onValueChange={(val) => setPaymentMethod(val as 'card' | 'apple-pay' | 'local')}
-                className="gap-3 pt-1"
-              >
-                {/* Option 1: Card (Mada, Visa, MC, KNET) */}
-                <label
-                  htmlFor="payment-card"
-                  className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'card'
-                      ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20'
-                      : 'border-border/60 hover:bg-secondary/40'
-                  }`}
-                >
-                  <RadioGroupItem value="card" id="payment-card" className="mt-1" />
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-foreground">
-                        {t('creditCard', { defaultValue: 'Credit / Debit Card' })}
-                      </span>
-                      <CreditCard className="size-4 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('creditCardDesc', { defaultValue: 'Visa, Mastercard, Mada, KNET' })}
-                    </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">{isRtl ? 'الاسم' : 'Full Name'}</Label>
+                    <p className="font-semibold text-foreground mt-0.5">{user?.full_name || 'Customer'}</p>
                   </div>
-                </label>
-
-                {/* Option 2: Apple Pay / Google Pay */}
-                <label
-                  htmlFor="payment-apple"
-                  className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'apple-pay'
-                      ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20'
-                      : 'border-border/60 hover:bg-secondary/40'
-                  }`}
-                >
-                  <RadioGroupItem value="apple-pay" id="payment-apple" className="mt-1" />
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-foreground">
-                        {t('applePay', { defaultValue: 'Apple Pay / Google Pay' })}
-                      </span>
-                      <Smartphone className="size-4 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('applePayDesc', { defaultValue: 'Fast and secure one-click checkout' })}
-                    </p>
-                  </div>
-                </label>
-
-                {/* Option 3: Regional Instant Payment */}
-                <label
-                  htmlFor="payment-local"
-                  className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'local'
-                      ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20'
-                      : 'border-border/60 hover:bg-secondary/40'
-                  }`}
-                >
-                  <RadioGroupItem value="local" id="payment-local" className="mt-1" />
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-foreground">
-                        {t('localPayment', { defaultValue: 'Regional Instant Payment' })}
-                      </span>
-                      <Zap className="size-4 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('localPaymentDesc', { defaultValue: 'KNET, Mada, Fawry, InstaPay' })}
-                    </p>
-                  </div>
-                </label>
-              </RadioGroup>
-
-              {/* Conditional Card Fields when Card is selected */}
-              {paymentMethod === 'card' && (
-                <div className="pt-3 border-t border-border/40 space-y-3.5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="checkout-card-num" className="text-xs font-semibold text-foreground">
-                      {t('cardNumber', { defaultValue: 'Card Number' })}
-                    </Label>
-                    <Input
-                      id="checkout-card-num"
-                      type="text"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder={t('cardNumberPlaceholder', { defaultValue: '•••• •••• •••• ••••' })}
-                      className="h-11 rounded-xl text-sm font-mono tabular-nums"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3.5">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="checkout-expiry" className="text-xs font-semibold text-foreground">
-                        {t('expires', { defaultValue: 'Expires' })}
-                      </Label>
-                      <Input
-                        id="checkout-expiry"
-                        type="text"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder={t('expiresPlaceholder', { defaultValue: 'MM/YY' })}
-                        className="h-11 rounded-xl text-sm font-mono tabular-nums"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="checkout-cvc" className="text-xs font-semibold text-foreground">
-                        {t('cvc', { defaultValue: 'CVC' })}
-                      </Label>
-                      <Input
-                        id="checkout-cvc"
-                        type="password"
-                        maxLength={4}
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value)}
-                        placeholder={t('cvcPlaceholder', { defaultValue: '123' })}
-                        className="h-11 rounded-xl text-sm font-mono tabular-nums"
-                      />
-                    </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">{isRtl ? 'البريد الإلكتروني' : 'Email Address'}</Label>
+                    <p className="font-semibold text-foreground mt-0.5">{user?.email}</p>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Step 3: Digital Delivery Agreement & CTA */}
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 text-start">
-                <Checkbox
-                  id="checkout-terms"
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(Boolean(checked))}
-                  className="mt-1"
-                />
-                <Label
-                  htmlFor="checkout-terms"
-                  className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none"
-                >
-                  {t('digitalTerms', {
-                    defaultValue:
-                      'I understand that digital codes are revealed immediately and agree to the digital goods delivery terms.',
-                  })}
-                </Label>
-              </div>
-              {errors.terms && (
-                <p className="text-xs font-medium text-destructive">{errors.terms}</p>
-              )}
-
-              {/* Submit CTA */}
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full h-12 rounded-full font-medium text-sm active:scale-[0.98] transition-transform shadow-md"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <span className="size-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                    <span>{t('processingOrder', { defaultValue: 'Processing your secure order...' })}</span>
+                <div className="flex items-center gap-2 pt-2 text-xs text-primary font-medium">
+                  <Zap className="size-4 shrink-0 fill-primary/20" />
+                  <span>
+                    {isRtl
+                      ? 'سيتم إرسال المفاتيح الرقمية إلى بريدك الإلكتروني فور تأكيد الدفع'
+                      : 'Digital keys are delivered to your email upon payment confirmation'}
                   </span>
-                ) : (
-                  <span>{t('completeOrder', { defaultValue: 'Complete Order & Receive Keys' })}</span>
+                </div>
+              </div>
+
+              {/* Payment Method Notice: Offline Receipt */}
+              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Smartphone className="size-5 text-primary" />
+                  <span>{isRtl ? 'طريقة الدفع: تحويل محلي (مصر)' : 'Payment Method: Local Transfer (Egypt)'}</span>
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {isRtl
+                    ? 'يتم الدفع عبر المحافظ الإلكترونية (فودافون كاش، أورنج كاش، اتصالات كاش) أو تطبيق إنستاباي (InstaPay). بعد تأكيد الطلب، ستظهر لك أرقام التحويل المباشرة ورمز المعاملة المرجعي، مع إمكانية رفع صورة إيصال التحويل مباشرة.'
+                    : 'Payment is completed via electronic mobile wallets (Vodafone Cash, Orange, Etisalat) or InstaPay. Upon order confirmation, direct transfer details and reference code will be displayed to upload your transfer receipt.'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center gap-3">
+                    <Smartphone className="size-5 text-primary shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">{isRtl ? 'فودافون كاش' : 'Vodafone Cash'}</div>
+                      <div className="text-[11px] text-muted-foreground">{isRtl ? 'محافظ الهاتف المحمول' : 'Mobile Wallets'}</div>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center gap-3">
+                    <Smartphone className="size-5 text-primary shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">{isRtl ? 'إنستاباي' : 'InstaPay'}</div>
+                      <div className="text-[11px] text-muted-foreground">{isRtl ? 'تحويل بنكي لحظي' : 'Instant Bank Transfer'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms Checkbox & Error Banner */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 rounded-xl border border-border/50 bg-secondary/20">
+                  <Checkbox
+                    id="terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(checked) => setAgreedToTerms(Boolean(checked))}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="terms" className="text-xs text-muted-foreground cursor-pointer leading-relaxed">
+                    {isRtl
+                      ? 'أوافق على شروط الخدمة وسياسة الاسترجاع الخاصة بالمفاتيح والمنتجات الرقمية. يتم قفل المفتاح للطلب بعد مراجعة إيصال التحويل.'
+                      : 'I agree to the terms of service and digital key delivery policy. Inventory is allocated upon payment receipt verification.'}
+                  </Label>
+                </div>
+
+                {checkoutError && (
+                  <div className="flex items-center gap-2.5 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs">
+                    <AlertCircle className="size-4 shrink-0" />
+                    <span>{checkoutError}</span>
+                  </div>
                 )}
-              </Button>
+              </div>
             </div>
-          </form>
 
-          {/* 2 ── Order Review Sidebar (5-col) */}
-          <aside className="lg:col-span-5 xl:col-span-5 sticky top-24 space-y-4">
-            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-6 text-start">
-              <h2 className="text-xl font-bold text-foreground">
-                {t('orderReview', { defaultValue: 'Order Review' })}
-              </h2>
+            {/* Right Column: Order Review & Checkout Confirmation */}
+            <div className="lg:col-span-5 xl:col-span-5 sticky top-24 space-y-4 text-start">
+              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-6">
+                <h2 className="text-xl font-bold text-foreground">
+                  {isRtl ? 'مراجعة الطلب' : 'Order Review'}
+                </h2>
 
-              {/* Item Previews */}
-              <div className="space-y-3 max-h-72 overflow-y-auto divide-y divide-border/20 pe-1">
-                {items.map((item) => {
-                  const title = resolveLocalizedName(item.name, lang) || item.product_name
-                  const lineTotalMinor = item.unit_price_egp
-                    ? toPiasters(item.unit_price_egp) * item.quantity
-                    : (item.priceMinor ?? 0) * item.quantity
-                  const lineTotal = formatMoneyFromMinor(
-                    lineTotalMinor,
-                    'EGP',
-                    lang,
-                  )
-
-                  return (
-                    <div key={item.id} className="pt-3 first:pt-0 flex items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-11 shrink-0 rounded-lg overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
-                          {item.coverImage ? (
-                            <img src={item.coverImage} alt="" className="size-full object-cover" />
-                          ) : (
-                            <KeyRound className="size-5 text-muted-foreground" aria-hidden="true" />
+                {/* Line Items List */}
+                <ul className="divide-y divide-border/40 max-h-64 overflow-y-auto space-y-3">
+                  {items.map((item) => (
+                    <li key={item.id} className="pt-3 first:pt-0 flex items-start justify-between gap-3 text-sm">
+                      <div className="min-w-0 flex-1">
+                        <span className="font-semibold text-foreground line-clamp-1">
+                          {item.product_name}
+                        </span>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                          <span>{isRtl ? `الكمية: ${item.quantity}` : `Qty: ${item.quantity}`}</span>
+                          {item.is_preorder && (
+                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-500/40 text-amber-600">
+                              {isRtl ? 'طلب مسبق' : 'Preorder'}
+                            </Badge>
                           )}
-                        </div>
-                        <div className="min-w-0">
-                          <span className="font-semibold text-foreground block truncate">
-                            {title}
-                          </span>
-                          <span className="text-muted-foreground">Qty: {item.quantity}</span>
                         </div>
                       </div>
                       <span className="font-semibold text-foreground tabular-nums shrink-0">
-                        {lineTotal}
+                        {formatMoney(item.unit_price * item.quantity, { currency: 'EGP', locale: lang })}
                       </span>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Totals Breakdown */}
-              <div className="border-t border-border/40 pt-4 space-y-2 text-sm">
-                {/* Instant Delivery */}
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Zap className="size-3.5 text-primary fill-primary/20" aria-hidden="true" />
-                    {t('freeInstantDelivery', {
-                      ns: 'cart',
-                      defaultValue: 'Free Instant Delivery',
-                    })}
-                  </span>
-                  <span className="text-primary font-semibold">
-                    {isRtl ? 'مجاني' : 'FREE'}
-                  </span>
-                </div>
-
-                {/* Subtotal / Grand Total */}
-                <div className="pt-2 border-t border-border/40 space-y-1">
-                  {currencySubtotals.map((sub) => (
-                    <div key={sub.currency} className="flex items-baseline justify-between">
-                      <span className="text-base font-semibold text-foreground">
-                        {t('total', { ns: 'cart', defaultValue: 'Total' })}
-                        {currencySubtotals.length > 1 ? ` (${sub.currency})` : ''}
-                      </span>
-                      <span className="text-2xl font-bold text-foreground tabular-nums">
-                        {sub.formatted}
-                      </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
 
-              {/* Guarantee Stamps */}
-              <div className="pt-3 border-t border-border/30 space-y-2.5 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-primary shrink-0" aria-hidden="true" />
-                  <span>{isRtl ? 'ضمان استرداد فوري في حال وجود أي مشكلة' : 'Instant warranty replacement guarantee'}</span>
+                {/* Promo Code Input */}
+                <form onSubmit={handleApplyPromo} className="pt-2 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value)
+                        if (promoError) setPromoError(null)
+                      }}
+                      placeholder={t('promoCodePlaceholder', {
+                        ns: 'cart',
+                        defaultValue: 'Enter promo code',
+                      })}
+                      className="h-10 text-xs rounded-xl"
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      size="sm"
+                      disabled={!promoCode.trim() || isCheckingPromo}
+                      className="h-10 px-4 rounded-xl text-xs shrink-0"
+                    >
+                      {isCheckingPromo
+                        ? (isRtl ? 'جار التحقق...' : 'Checking...')
+                        : promoDiscount !== null
+                          ? (isRtl ? 'تم التطبيق' : 'Applied')
+                          : t('applyPromo', { ns: 'cart', defaultValue: 'Apply' })}
+                    </Button>
+                  </div>
+                  {promoError && (
+                    <p className="text-xs text-destructive">{promoError}</p>
+                  )}
+                </form>
+
+                {/* Totals */}
+                <div className="border-t border-border/40 pt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>{t('subtotal', { ns: 'cart', defaultValue: 'Subtotal' })}</span>
+                    <span className="font-medium text-foreground tabular-nums">{formattedSubtotal}</span>
+                  </div>
+
+                  {formattedDiscount && (
+                    <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                      <span>{t('discount', { ns: 'cart', defaultValue: 'Discount' })}</span>
+                      <span className="tabular-nums">- {formattedDiscount}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Zap className="size-3.5 text-primary fill-primary/20" />
+                      <span>{t('freeInstantDelivery', { ns: 'cart', defaultValue: 'Free Instant Delivery' })}</span>
+                    </span>
+                    <span className="text-primary font-semibold">{isRtl ? 'مجاني' : 'FREE'}</span>
+                  </div>
+
+                  <div className="border-t border-border/40 pt-3 flex items-baseline justify-between">
+                    <span className="text-base font-semibold text-foreground">
+                      {t('total', { ns: 'cart', defaultValue: 'Total' })}
+                    </span>
+                    <span className="text-2xl font-bold text-foreground tabular-nums">
+                      {formattedTotal}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="size-4 text-primary shrink-0" aria-hidden="true" />
-                  <span>{isRtl ? 'ظهور المفاتيح فوراً على الشاشة' : 'Keys revealed on-screen immediately'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Headphones className="size-4 text-primary shrink-0" aria-hidden="true" />
-                  <span>{isRtl ? 'فريق دعم متواجد عبر واتساب' : 'Live WhatsApp assistance available'}</span>
+
+                {/* Confirm Order CTA */}
+                <Button
+                  type="button"
+                  onClick={handleConfirmOrder}
+                  disabled={isCheckingOut || !agreedToTerms}
+                  className="w-full h-12 rounded-full font-medium text-sm active:scale-[0.98] transition-transform shadow-sm"
+                >
+                  {isCheckingOut ? (
+                    <div className="flex items-center gap-2">
+                      <div className="size-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
+                      <span>{isRtl ? 'جارٍ تأكيد الطلب...' : 'Confirming Order...'}</span>
+                    </div>
+                  ) : (
+                    <span>{isRtl ? 'تأكيد الطلب والانتقال للدفع' : 'Confirm Order & Proceed to Payment'}</span>
+                  )}
+                </Button>
+
+                {/* Trust Seals */}
+                <div className="pt-3 border-t border-border/30 space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="size-4 text-primary shrink-0" />
+                    <span>{isRtl ? 'مفاتيح رسمية أصلية 100%' : '100% Genuine Official License Keys'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Lock className="size-4 text-primary shrink-0" />
+                    <span>{isRtl ? 'حجز فوري للمفاتيح لمدة 24 ساعة' : 'Instant 24-hour inventory hold upon checkout'}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </aside>
-        </div>
+          </div>
+        )}
       </div>
     </main>
   )

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { i18n } from '@workspace/i18n/config'
 import { ThemeProvider } from '../../app/theme-provider'
 import { ThemeToggle } from '../../components/theme-toggle'
@@ -12,14 +13,22 @@ function renderDesignPage(lang: 'en' | 'ar' = 'en') {
   document.documentElement.lang = lang
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
 
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  })
+
   return render(
-    <ThemeProvider defaultTheme="system">
-      <I18nextProvider i18n={i18n}>
-        <MemoryRouter>
-          <DesignPage />
-        </MemoryRouter>
-      </I18nextProvider>
-    </ThemeProvider>,
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system">
+        <I18nextProvider i18n={i18n}>
+          <MemoryRouter>
+            <DesignPage />
+          </MemoryRouter>
+        </I18nextProvider>
+      </ThemeProvider>
+    </QueryClientProvider>,
   )
 }
 

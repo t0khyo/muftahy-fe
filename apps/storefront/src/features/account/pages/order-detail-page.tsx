@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import {
   ArrowLeft,
   Copy,
@@ -28,11 +28,19 @@ import { OpenTicketDialog } from '../components/support/open-ticket-dialog'
 export function OrderDetailPage() {
   const { t } = useTranslation('account')
   const { lang = 'ar', id = '' } = useParams<{ lang: string; id: string }>()
+  const [searchParams] = useSearchParams()
+  const isNewOrder = searchParams.get('new') === 'true'
   const { order, isLoading, isError, refetch } = useOrderDetail(id)
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (isNewOrder && order && order.status === 'pending_payment') {
+      setUploadDialogOpen(true)
+    }
+  }, [isNewOrder, order])
   const [selectedItemForTicket, setSelectedItemForTicket] = useState<{
     itemId: string
     keySerial?: string
@@ -148,6 +156,17 @@ export function OrderDetailPage() {
           <span>{t('orders.detail.backToOrders')}</span>
         </Link>
       </div>
+
+      {/* New Order Banner */}
+      {isNewOrder && isPendingPayment && (
+        <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4 text-start">
+          <Check className="h-5 w-5 text-primary shrink-0" />
+          <div className="text-xs sm:text-sm text-foreground">
+            <span className="font-semibold block">{lang === 'ar' ? 'تم إنشاء طلبك بنجاح!' : 'Order created successfully!'}</span>
+            <span className="text-muted-foreground">{lang === 'ar' ? 'يُرجى إتمام التحويل عبر فودافون كاش أو إنستاباي، ثم رفع صورة إيصال الدفع.' : 'Please complete transfer via Vodafone Cash or InstaPay, then upload your receipt below.'}</span>
+          </div>
+        </div>
+      )}
 
       {/* Order Header Card */}
       <Card className="p-4 sm:p-6">

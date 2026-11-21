@@ -3,9 +3,7 @@ import type { AuthService } from './services/auth-service'
 import type { UserService } from './services/user-service'
 import type { OrderService } from './services/order-service'
 import type { TicketService } from './services/ticket-service'
-import { MockProductAdapter } from './adapters/mock/product-mock-adapter'
-import { MockAuthAdapter } from './adapters/mock/mock-auth-adapter'
-import { MockUserAdapter } from './adapters/mock/mock-user-adapter'
+import type { CartService } from './services/cart-service'
 import { TokenStorage } from './adapters/http/token-storage'
 import { NativeFetchClient } from './adapters/http/fetch-client'
 import { HttpAuthAdapter } from './adapters/http/http-auth-adapter'
@@ -13,6 +11,7 @@ import { HttpUserAdapter } from './adapters/http/http-user-adapter'
 import { HttpProductAdapter } from './adapters/http/http-product-adapter'
 import { HttpOrderAdapter } from './adapters/http/http-order-adapter'
 import { HttpTicketAdapter } from './adapters/http/http-ticket-adapter'
+import { HttpCartAdapter } from './adapters/http/http-cart-adapter'
 
 export interface ApiServices {
   products: ProductService
@@ -20,23 +19,10 @@ export interface ApiServices {
   user: UserService
   orders: OrderService
   tickets: TicketService
+  cart: CartService
 }
 
 export type AppScope = 'storefront' | 'admin'
-
-function getEnvMockFlag(): string | undefined {
-  try {
-    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_USE_MOCK_API !== undefined) {
-      return import.meta.env.VITE_USE_MOCK_API
-    }
-  } catch {
-    // ignore
-  }
-  if (typeof process !== 'undefined') {
-    return process.env?.VITE_USE_MOCK_API
-  }
-  return undefined
-}
 
 function getEnvApiUrl(): string | undefined {
   try {
@@ -53,68 +39,18 @@ function getEnvApiUrl(): string | undefined {
   return undefined
 }
 
-function getEnvMode(): string | undefined {
-  try {
-    if (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== undefined) {
-      return import.meta.env.MODE
-    }
-  } catch {
-    // ignore
-  }
-  if (typeof process !== 'undefined') {
-    return process.env?.NODE_ENV
-  }
-  return undefined
-}
-
-function getEnvLiveApiTest(): string | undefined {
-  try {
-    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TEST_WITH_LIVE_API !== undefined) {
-      return import.meta.env.VITE_TEST_WITH_LIVE_API
-    }
-  } catch {
-    // ignore
-  }
-  if (typeof process !== 'undefined') {
-    return process.env?.VITE_TEST_WITH_LIVE_API
-  }
-  return undefined
-}
-
 function normalizeApiUrl(rawUrl: string): string {
   const trimmed = rawUrl.trim().replace(/\/+$/, '')
   if (trimmed.endsWith('/api/v1')) {
+    return trimmed
+  }
+  if (trimmed.endsWith('/v1')) {
     return trimmed
   }
   if (trimmed.endsWith('/api')) {
     return `${trimmed}/v1`
   }
   return `${trimmed}/api/v1`
-}
-
-function isMockApiPreferred(): boolean {
-  const isVitest = typeof process !== 'undefined' && Boolean(process.env?.VITEST)
-  const mode = getEnvMode()
-  const isTestEnvironment = isVitest || mode === 'test'
-
-  if (isTestEnvironment && getEnvLiveApiTest() !== 'true') {
-    return true
-  }
-
-  const mockFlag = getEnvMockFlag()
-  if (mockFlag === 'false') {
-    return false
-  }
-  if (mockFlag === 'true') {
-    return true
-  }
-
-  const liveUrl = getEnvApiUrl()
-  if (liveUrl) {
-    return false
-  }
-
-  return true
 }
 
 function getApiBaseUrl(): string {
@@ -132,21 +68,17 @@ class ServiceRegistry {
   private readonly userServices = new Map<string, UserService>()
   private readonly orderServices = new Map<string, OrderService>()
   private readonly ticketServices = new Map<string, TicketService>()
+  private readonly cartServices = new Map<string, CartService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
 
   getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService {
-    const useMock = options?.useMock ?? isMockApiPreferred()
-    const key = useMock ? 'mock' : 'http'
+    const key = options?.baseURL ?? 'default'
     let service = this.productServices.get(key)
     if (!service) {
-      if (useMock) {
-        service = new MockProductAdapter()
-      } else {
-        const client = new NativeFetchClient({
-          baseURL: options?.baseURL ?? getApiBaseUrl(),
-        })
-        service = new HttpProductAdapter(client)
-      }
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+      })
+      service = new HttpProductAdapter(client)
       this.productServices.set(key, service)
     }
     return service
@@ -165,21 +97,15 @@ class ServiceRegistry {
   }
 
   getAuthService(app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): AuthService {
-    const useMock = options?.useMock ?? isMockApiPreferred()
-    const key = `${app}_${useMock ? 'mock' : 'http'}`
-
+    const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.authServices.get(key)
     if (!service) {
-      if (useMock) {
-        service = new MockAuthAdapter()
-      } else {
-        const tokenStorage = this.getTokenStorage(app)
-        const client = new NativeFetchClient({
-          baseURL: options?.baseURL ?? getApiBaseUrl(),
-          tokenStorage,
-        })
-        service = new HttpAuthAdapter(client)
-      }
+      const tokenStorage = this.getTokenStorage(app)
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpAuthAdapter(client)
       this.authServices.set(key, service)
     }
 
@@ -187,21 +113,15 @@ class ServiceRegistry {
   }
 
   getUserService(app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): UserService {
-    const useMock = options?.useMock ?? isMockApiPreferred()
-    const key = `${app}_${useMock ? 'mock' : 'http'}`
-
+    const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.userServices.get(key)
     if (!service) {
-      if (useMock) {
-        service = new MockUserAdapter(app === 'admin' ? 'admin' : 'customer')
-      } else {
-        const tokenStorage = this.getTokenStorage(app)
-        const client = new NativeFetchClient({
-          baseURL: options?.baseURL ?? getApiBaseUrl(),
-          tokenStorage,
-        })
-        service = new HttpUserAdapter(client)
-      }
+      const tokenStorage = this.getTokenStorage(app)
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpUserAdapter(client)
       this.userServices.set(key, service)
     }
 
@@ -209,7 +129,7 @@ class ServiceRegistry {
   }
 
   getOrderService(app: AppScope = 'storefront', options?: { baseURL?: string }): OrderService {
-    const key = `${app}_order`
+    const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.orderServices.get(key)
     if (!service) {
       const tokenStorage = this.getTokenStorage(app)
@@ -224,7 +144,7 @@ class ServiceRegistry {
   }
 
   getTicketService(app: AppScope = 'storefront', options?: { baseURL?: string }): TicketService {
-    const key = `${app}_ticket`
+    const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.ticketServices.get(key)
     if (!service) {
       const tokenStorage = this.getTokenStorage(app)
@@ -234,6 +154,21 @@ class ServiceRegistry {
       })
       service = new HttpTicketAdapter(client)
       this.ticketServices.set(key, service)
+    }
+    return service
+  }
+
+  getCartService(app: AppScope = 'storefront', options?: { baseURL?: string }): CartService {
+    const key = `${app}_${options?.baseURL ?? 'default'}`
+    let service = this.cartServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage(app)
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpCartAdapter(client)
+      this.cartServices.set(key, service)
     }
     return service
   }
@@ -250,4 +185,6 @@ export const getOrderService = (app: AppScope = 'storefront', options?: { baseUR
   services.getOrderService(app, options)
 export const getTicketService = (app: AppScope = 'storefront', options?: { baseURL?: string }): TicketService =>
   services.getTicketService(app, options)
+export const getCartService = (app: AppScope = 'storefront', options?: { baseURL?: string }): CartService =>
+  services.getCartService(app, options)
 export const getTokenStorage = (app: AppScope = 'storefront'): TokenStorage => services.getTokenStorage(app)

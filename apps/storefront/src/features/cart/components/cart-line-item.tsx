@@ -1,10 +1,9 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { KeyRound, Minus, Plus, Trash2 } from 'lucide-react'
-import { formatMoneyFromMinor, toPiasters } from '@workspace/domain/formatters/money'
+import { KeyRound, Trash2 } from 'lucide-react'
+import { formatMoney } from '@workspace/domain/formatters/money'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
-import { CART_CONFIG } from '../cart.config'
 import type { CartItem } from '../stores/cart-store'
 import { resolveLocalizedName } from '../lib/cart-selectors'
 import { resolveProductImage } from '../../products/utils/asset-resolver'
@@ -13,7 +12,7 @@ import { useProduct } from '../../products/hooks/use-products'
 export interface CartLineItemProps {
   item: CartItem
   lang: string
-  onUpdateQuantity: (id: string, qty: number, maxStock?: number) => void
+  onUpdateQuantity?: (id: string, qty: number, maxStock?: number) => void
   onRemove: (id: string) => void
   removeButtonRef?: (el: HTMLButtonElement | null) => void
 }
@@ -21,41 +20,27 @@ export interface CartLineItemProps {
 export function CartLineItem({
   item,
   lang,
-  onUpdateQuantity,
   onRemove,
   removeButtonRef,
 }: CartLineItemProps) {
   const { t } = useTranslation(['cart', 'products', 'common'])
   const { data: product } = useProduct(item.product_id || item.slug || '')
 
-  const maxAllowed = Math.min(
-    product?.available_count && product.available_count > 0
-      ? product.available_count
-      : CART_CONFIG.maxQuantityPerLine,
-    CART_CONFIG.maxQuantityPerLine,
-  )
-
   const isOutOfStock = product ? product.stock_status === 'out_of_stock' : false
   const isLowStock =
     product && product.stock_status === 'in_stock' && product.available_count <= 3
 
   const productName = resolveLocalizedName(item.name, lang) || item.product_name
-  const unitPiasters = toPiasters(item.unit_price_egp)
-  const formattedUnitPrice = formatMoneyFromMinor(unitPiasters, 'EGP', lang)
-  const formattedLineTotal = formatMoneyFromMinor(
-    unitPiasters * item.quantity,
-    'EGP',
-    lang,
-  )
+  const unitPrice =
+    typeof item.unit_price === 'number'
+      ? item.unit_price
+      : item.unit_price_egp
+        ? Number(item.unit_price_egp)
+        : 0
 
-  const increaseLabel = t('increaseQuantityFor', {
-    product: productName,
-    plan: productName,
-  })
-  const decreaseLabel = t('decreaseQuantityFor', {
-    product: productName,
-    plan: productName,
-  })
+  const formattedUnitPrice = formatMoney(unitPrice, { currency: 'EGP', locale: lang })
+  const formattedLineTotal = formatMoney(unitPrice * item.quantity, { currency: 'EGP', locale: lang })
+
   const removeLabel = t('removeItemFor', {
     product: productName,
     plan: productName,
@@ -70,7 +55,7 @@ export function CartLineItem({
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 sm:py-5">
       {/* 1 ── Start Side: Artwork Thumbnail + Info */}
       <div className="flex items-start gap-4 min-w-0 flex-1 text-start">
-        {/* Artwork Thumbnail (72px mobile / 80px desktop) */}
+        {/* Artwork Thumbnail */}
         <div className="size-[72px] lg:size-20 shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
           {coverImage ? (
             <img
@@ -140,41 +125,18 @@ export function CartLineItem({
         </div>
       </div>
 
-      {/* 2 ── End Side: Quantity Stepper, Line Price, Remove Action */}
+      {/* 2 ── End Side: Static Quantity Badge, Line Price, Remove Action */}
       <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/20 sm:border-t-0 shrink-0">
-        {/* Quantity Stepper (44px mobile / 36px desktop) */}
-        <div className="inline-flex items-center rounded-lg border border-border/60 bg-secondary/30 h-11 lg:h-9">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-11 w-9 lg:h-9 lg:w-8 rounded-none rounded-s-lg text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-transform"
-            disabled={item.quantity <= 1 || (isOutOfStock && !item.is_preorder)}
-            onClick={() => onUpdateQuantity(item.id, item.quantity - 1, maxAllowed)}
-            aria-label={decreaseLabel}
-          >
-            <Minus className="size-3.5" aria-hidden="true" />
-          </Button>
-
+        <div className="inline-flex items-center px-3 py-1.5 rounded-lg border border-border/60 bg-secondary/30 text-sm">
+          <span className="text-xs text-muted-foreground me-1.5">
+            {t('quantity', { defaultValue: 'Qty' })}:
+          </span>
           <span
-            className="w-8 text-center text-sm font-semibold tabular-nums text-foreground select-none"
-            aria-live="polite"
+            className="font-semibold tabular-nums text-foreground select-none"
             aria-label={`${t('quantity', { defaultValue: 'Quantity' })}: ${item.quantity}`}
           >
             {item.quantity}
           </span>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-11 w-9 lg:h-9 lg:w-8 rounded-none rounded-e-lg text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-transform"
-            disabled={item.quantity >= maxAllowed || (isOutOfStock && !item.is_preorder)}
-            onClick={() => onUpdateQuantity(item.id, item.quantity + 1, maxAllowed)}
-            aria-label={increaseLabel}
-          >
-            <Plus className="size-3.5" aria-hidden="true" />
-          </Button>
         </div>
 
         {/* Line Total */}

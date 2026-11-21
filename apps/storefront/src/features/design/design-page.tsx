@@ -31,9 +31,69 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { ProductCard } from '../products/components/product-card'
 import { ProductCardSkeleton } from '../products/components/product-card-skeleton'
-import { MOCK_PRODUCTS } from '@workspace/api/adapters/mock/product-mock-adapter'
+
+const SAMPLE_PRODUCTS: ProductResponse[] = [
+  {
+    id: '00000000-0000-4000-8000-000000000001',
+    name: 'Windows 11 Professional Retail',
+    description: 'Lifetime activation for 1 PC.',
+    category: 'windows',
+    variant: 'retail',
+    base_price: '349.00',
+    sale_price: '299.99',
+    effective_price: '299.99',
+    currency: 'EGP',
+    stock_status: 'in_stock',
+    available_count: 15,
+    allow_preorders: false,
+    preorder_enabled: false,
+    is_active: true,
+    total_sales_count: 120,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000002',
+    name: 'Office 2021 Professional Plus',
+    description: 'Word, Excel, PowerPoint, Outlook, Access, Publisher.',
+    category: 'office',
+    variant: 'retail',
+    base_price: '599.00',
+    sale_price: '499.99',
+    effective_price: '499.99',
+    currency: 'EGP',
+    stock_status: 'in_stock',
+    available_count: 8,
+    allow_preorders: false,
+    preorder_enabled: false,
+    is_active: true,
+    total_sales_count: 85,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000003',
+    name: 'Windows 10 Home OEM',
+    description: 'OEM License for new PC installation.',
+    category: 'windows',
+    variant: 'oem',
+    base_price: '249.00',
+    sale_price: null,
+    effective_price: '249.00',
+    currency: 'EGP',
+    stock_status: 'in_stock',
+    available_count: 5,
+    allow_preorders: false,
+    preorder_enabled: false,
+    is_active: true,
+    total_sales_count: 42,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  },
+]
 
 export function DesignPage() {
   const { t, i18n } = useTranslation(['design', 'common', 'products'])
@@ -403,7 +463,7 @@ export function DesignPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {MOCK_PRODUCTS.slice(0, 3).map((product) => (
+          {SAMPLE_PRODUCTS.map((product) => (
             <ProductCard key={product.id} product={product} onAddToCart={() => {}} />
           ))}
           <div className="flex flex-col gap-2">

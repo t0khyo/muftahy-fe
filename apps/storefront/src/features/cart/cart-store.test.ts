@@ -1,70 +1,61 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { useCartStore, type CartItem, type CartInputItem } from './stores/cart-store'
-import { getCurrencySubtotals, resolveLocalizedName } from './lib/cart-selectors'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { CartService } from '@workspace/api/services/cart-service'
+import { useCartStore, type CartItem } from './stores/cart-store'
+import { getCartTotalEgp, getCurrencySubtotals, resolveLocalizedName } from './lib/cart-selectors'
 
 describe('Cart Store & Selectors', () => {
   beforeEach(() => {
     useCartStore.getState().clear()
   })
 
-  it('adds items with compound id and computes count', () => {
+  it('adds items and computes count', () => {
     useCartStore.getState().addItem({
       productId: 'prod-001',
-      planId: 'plan-1pc',
-      slug: 'windows-11-pro',
-      name: { en: 'Windows 11', ar: 'ويندوز 11' },
-      planName: { en: '1 PC', ar: 'جهاز 1' },
-      priceMinor: 65000,
-      currency: 'EGP',
-    }, 1)
+      product_name: 'Windows 11 Pro',
+      unit_price: 299.99,
+      quantity: 1,
+    })
 
     expect(useCartStore.getState().items.length).toBe(1)
     expect(useCartStore.getState().count).toBe(1)
-    expect(useCartStore.getState().items[0].id).toBe('prod-001:plan-1pc')
+    expect(useCartStore.getState().items[0].product_id).toBe('prod-001')
+    expect(useCartStore.getState().items[0].unit_price).toBe(299.99)
   })
 
-  it('is idempotent: adding an existing item does not increment quantity', () => {
-    const item: CartInputItem = {
-      productId: 'prod-001',
-      planId: 'plan-1pc',
-      slug: 'windows-11-pro',
-      name: 'Windows 11',
-      priceMinor: 65000,
-      currency: 'EGP',
-    }
-
-    useCartStore.getState().addItem(item, 1)
-    useCartStore.getState().addItem(item, 1)
+  it('increments quantity when existing item is added', () => {
+    useCartStore.getState().addItem({
+      product_id: 'prod-001',
+      product_name: 'Windows 11 Pro',
+      unit_price: 299.99,
+    }, 1)
+    useCartStore.getState().addItem({
+      product_id: 'prod-001',
+      product_name: 'Windows 11 Pro',
+      unit_price: 299.99,
+    }, 2)
 
     expect(useCartStore.getState().items.length).toBe(1)
-    expect(useCartStore.getState().items[0].quantity).toBe(1)
-    expect(useCartStore.getState().count).toBe(1)
+    expect(useCartStore.getState().items[0].quantity).toBe(3)
+    expect(useCartStore.getState().count).toBe(3)
   })
 
   it('updates quantity bounded by maxStock and minimum 1', () => {
     useCartStore.getState().addItem({
       id: 'item-1',
-      productId: 'prod-001',
-      planId: 'plan-1',
-      slug: 'test',
-      name: 'Test',
-      priceMinor: 1000,
-      currency: 'USD',
+      product_id: 'prod-001',
+      product_name: 'Test Product',
+      unit_price: 100,
     }, 1)
 
     // Increase with maxStock 5
     useCartStore.getState().updateQuantity('item-1', 4, 5)
     expect(useCartStore.getState().items[0].quantity).toBe(4)
 
-    // Attempt to exceed maxStock 5
+    // Exceed maxStock 5
     useCartStore.getState().updateQuantity('item-1', 10, 5)
     expect(useCartStore.getState().items[0].quantity).toBe(5)
 
-    // Decrease towards 1
-    useCartStore.getState().updateQuantity('item-1', 1, 5)
-    expect(useCartStore.getState().items[0].quantity).toBe(1)
-
-    // Attempt to drop below 1 clamps to 1
+    // Drop below 1 clamps to 1
     useCartStore.getState().updateQuantity('item-1', 0, 5)
     expect(useCartStore.getState().items[0].quantity).toBe(1)
   })
@@ -72,22 +63,16 @@ describe('Cart Store & Selectors', () => {
   it('removes item and recalculates total count', () => {
     useCartStore.getState().addItem({
       id: 'i1',
-      productId: 'p1',
-      planId: 'pl1',
-      slug: 's1',
-      name: 'Item 1',
-      priceMinor: 500,
-      currency: 'EGP',
+      product_id: 'p1',
+      product_name: 'Item 1',
+      unit_price: 50,
     }, 3)
 
     useCartStore.getState().addItem({
       id: 'i2',
-      productId: 'p2',
-      planId: 'pl2',
-      slug: 's2',
-      name: 'Item 2',
-      priceMinor: 1000,
-      currency: 'EGP',
+      product_id: 'p2',
+      product_name: 'Item 2',
+      unit_price: 100,
     }, 2)
 
     expect(useCartStore.getState().count).toBe(5)
@@ -104,7 +89,7 @@ describe('Cart Store & Selectors', () => {
         product_name: 'Product 1',
         quantity: 2,
         is_preorder: false,
-        unit_price_egp: '500.00',
+        unit_price: 500,
       },
       {
         id: '2',
@@ -112,36 +97,17 @@ describe('Cart Store & Selectors', () => {
         product_name: 'Product 2',
         quantity: 1,
         is_preorder: true,
-        unit_price_egp: '250.50',
+        unit_price: 250.5,
       },
     ]
 
+    const total = getCartTotalEgp(items)
+    expect(total).toBe(1250.5)
+
     const subtotals = getCurrencySubtotals(items, 'en')
     expect(subtotals.length).toBe(1)
-
-    const egp = subtotals[0]
-    expect(egp.currency).toBe('EGP')
-    // (500.00 * 2) + 250.50 = 1250.50 EGP = 125050 piasters
-    expect(egp.amountMinor).toBe(125050)
-  })
-
-  it('preserves metadata fields (platform, region, coverImage) on added items', () => {
-    useCartStore.getState().addItem({
-      id: 'p-meta',
-      productId: 'p-meta',
-      slug: 'meta-slug',
-      name: 'Game with Meta',
-      priceMinor: 1999,
-      currency: 'USD',
-      platform: 'steam',
-      region: 'global',
-      coverImage: 'https://images.unsplash.com/photo-1234',
-    })
-
-    const item = useCartStore.getState().items.find((i) => i.id === 'p-meta')
-    expect(item?.platform).toBe('steam')
-    expect(item?.region).toBe('global')
-    expect(item?.coverImage).toBe('https://images.unsplash.com/photo-1234')
+    expect(subtotals[0].currency).toBe('EGP')
+    expect(subtotals[0].amountMinor).toBe(125050)
   })
 
   it('resolves localized names correctly according to language', () => {
@@ -152,5 +118,75 @@ describe('Cart Store & Selectors', () => {
     const stringOnly = 'Static String'
     expect(resolveLocalizedName(stringOnly, 'en')).toBe('Static String')
     expect(resolveLocalizedName(stringOnly, 'ar')).toBe('Static String')
+  })
+
+  it('syncGuestCart replays items to cartService and clears synced entries', async () => {
+    useCartStore.getState().addItem({
+      product_id: 'prod-001',
+      product_name: 'Windows 11',
+      unit_price: 300,
+    }, 2)
+    useCartStore.getState().addItem({
+      product_id: 'prod-002',
+      product_name: 'Office 2021',
+      unit_price: 500,
+    }, 1)
+
+    const mockCartService: CartService = {
+      getCart: vi.fn(),
+      addItem: vi.fn().mockResolvedValue({
+        id: 'server-cart-id',
+        items: [],
+        subtotal_egp: 1100,
+        item_count: 3,
+      }),
+      removeItem: vi.fn(),
+      validatePromo: vi.fn(),
+      checkout: vi.fn(),
+    }
+
+    const result = await useCartStore.getState().syncGuestCart(mockCartService)
+
+    expect(result.synced).toBe(2)
+    expect(result.failed).toBe(0)
+    expect(mockCartService.addItem).toHaveBeenCalledTimes(2)
+    expect(mockCartService.addItem).toHaveBeenCalledWith('prod-001', 2)
+    expect(mockCartService.addItem).toHaveBeenCalledWith('prod-002', 1)
+    expect(useCartStore.getState().items).toHaveLength(0)
+    expect(useCartStore.getState().count).toBe(0)
+  })
+
+  it('syncGuestCart is protected by concurrency latch', async () => {
+    useCartStore.getState().addItem({
+      product_id: 'prod-001',
+      product_name: 'Windows 11',
+      unit_price: 300,
+    }, 1)
+
+    const mockCartService: CartService = {
+      getCart: vi.fn(),
+      addItem: vi.fn().mockImplementation(async () => {
+        await new Promise((r) => setTimeout(r, 20))
+        return {
+          id: 'server-cart-id',
+          items: [],
+          subtotal_egp: 300,
+          item_count: 1,
+        }
+      }),
+      removeItem: vi.fn(),
+      validatePromo: vi.fn(),
+      checkout: vi.fn(),
+    }
+
+    // Launch two syncs concurrently
+    const p1 = useCartStore.getState().syncGuestCart(mockCartService)
+    const p2 = useCartStore.getState().syncGuestCart(mockCartService)
+
+    const [r1, r2] = await Promise.all([p1, p2])
+
+    expect(r1.synced).toBe(1)
+    expect(r2.synced).toBe(0) // Second invocation exited early due to isSyncing latch
+    expect(mockCartService.addItem).toHaveBeenCalledTimes(1)
   })
 })

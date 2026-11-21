@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useCartStore } from '../../cart/stores/cart-store'
+import { useCart, useAddToCart } from '../../cart/hooks/use-cart'
 import { useProduct } from '../hooks/use-products'
 import { resolveProductImage } from '../utils/asset-resolver'
 import { DetailBreadcrumb } from '../components/detail/detail-breadcrumb'
@@ -19,8 +19,8 @@ export function ProductDetailPage() {
   const { t } = useTranslation(['detail', 'common'])
 
   const { data: product, isLoading, isError, refetch } = useProduct(id)
-  const cartItems = useCartStore((s) => s.items)
-  const addItem = useCartStore((s) => s.addItem)
+  const cart = useCart()
+  const { mutate: addToCart } = useAddToCart()
 
   const [isJustAdded, setIsJustAdded] = React.useState(false)
   const [liveAnnouncement, setLiveAnnouncement] = React.useState('')
@@ -31,8 +31,8 @@ export function ProductDetailPage() {
 
   const isInCart = React.useMemo(() => {
     if (!product) return false
-    return cartItems.some((i) => i.product_id === product.id || i.id === product.id)
-  }, [product, cartItems])
+    return cart.items.some((i) => i.product_id === product.id || i.id === product.id)
+  }, [product, cart.items])
 
   const coverImageUrl = product
     ? resolveProductImage(product.category, product.variant)
@@ -43,18 +43,13 @@ export function ProductDetailPage() {
 
     const isPreorder = product.stock_status === 'preorder'
 
-    addItem(
-      {
-        product_id: product.id,
-        product_name: product.name,
-        unit_price_egp: product.effective_price,
-        is_preorder: isPreorder,
-        category: product.category,
-        variant: product.variant,
-        coverImage: coverImageUrl,
-      },
-      1,
-    )
+    addToCart({
+      productId: product.id,
+      productName: product.name,
+      unitPrice: Number(product.effective_price),
+      isPreorder,
+      quantity: 1,
+    })
 
     setIsJustAdded(true)
     setLiveAnnouncement(
@@ -70,7 +65,7 @@ export function ProductDetailPage() {
     feedbackTimerRef.current = setTimeout(() => {
       setIsJustAdded(false)
     }, 2000)
-  }, [product, addItem, coverImageUrl, t])
+  }, [product, addToCart, t])
 
   React.useEffect(() => {
     return () => {

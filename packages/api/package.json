@@ -18,7 +18,6 @@
     "./services/*": "./src/services/*.ts",
     "./adapters/*": "./src/adapters/*.ts",
     "./adapters/http/*": "./src/adapters/http/*.ts",
-    "./adapters/mock/*": "./src/adapters/mock/*.ts",
     "./factory": "./src/factory.ts"
   }
 }

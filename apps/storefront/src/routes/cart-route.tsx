@@ -11,11 +11,16 @@ import {
   Trash2,
   Zap,
 } from 'lucide-react'
+import { formatMoney } from '@workspace/domain/formatters/money'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { CART_CONFIG } from '../features/cart/cart.config'
 import { CartLineItem } from '../features/cart/components/cart-line-item'
-import { getCurrencySubtotals } from '../features/cart/lib/cart-selectors'
+import {
+  useApplyPromoCode,
+  useCart,
+  useRemoveCartItem,
+} from '../features/cart/hooks/use-cart'
 import { useCartStore } from '../features/cart/stores/cart-store'
 
 export function CartRoute() {
@@ -23,23 +28,40 @@ export function CartRoute() {
   const { t, i18n } = useTranslation(['cart', 'header', 'common'])
   const isRtl = lang === 'ar' || i18n.dir() === 'rtl'
 
-  const items = useCartStore((s) => s.items)
-  const count = useCartStore((s) => s.count)
-  const updateQuantity = useCartStore((s) => s.updateQuantity)
-  const removeItem = useCartStore((s) => s.removeItem)
-  const clear = useCartStore((s) => s.clear)
+  const cart = useCart()
+  const { mutate: removeItemMutation } = useRemoveCartItem()
+  const { mutateAsync: validatePromoMutation, isPending: isCheckingPromo } = useApplyPromoCode()
+  const clearLocalCart = useCartStore((s) => s.clear)
+
+  const items = cart.items
+  const count = cart.item_count
 
   const emptyBrowseRef = React.useRef<HTMLAnchorElement | null>(null)
   const removeRefs = React.useRef<Map<string, HTMLButtonElement | null>>(new Map())
   const itemIds = React.useMemo(() => items.map((i) => i.id), [items])
 
   const [promoCode, setPromoCode] = React.useState('')
-  const [promoApplied, setPromoApplied] = React.useState(false)
+  const [promoError, setPromoError] = React.useState<string | null>(null)
+  const [promoDiscount, setPromoDiscount] = React.useState<number | null>(null)
+  const [finalTotal, setFinalTotal] = React.useState<number | null>(null)
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (promoCode.trim()) {
-      setPromoApplied(true)
+    if (!promoCode.trim()) return
+
+    setPromoError(null)
+    try {
+      const res = await validatePromoMutation(promoCode.trim())
+      if (res.valid) {
+        setPromoDiscount(res.total_discount)
+        setFinalTotal(res.final_total)
+      } else {
+        setPromoError(res.error_message || (isRtl ? 'كود الخصم غير صالح' : 'Invalid promo code'))
+        setPromoDiscount(null)
+        setFinalTotal(null)
+      }
+    } catch {
+      setPromoError(isRtl ? 'تعذر التحقق من كود الخصم' : 'Failed to validate promo code')
     }
   }
 
@@ -49,9 +71,8 @@ export function CartRoute() {
       const nextId = itemIds[index + 1]
       const prevId = itemIds[index - 1]
 
-      removeItem(id)
+      removeItemMutation(id)
 
-      // Focus handoff
       requestAnimationFrame(() => {
         if (nextId && removeRefs.current.get(nextId)) {
           removeRefs.current.get(nextId)?.focus()
@@ -62,12 +83,17 @@ export function CartRoute() {
         }
       })
     },
-    [itemIds, removeItem],
+    [itemIds, removeItemMutation],
   )
 
-  const currencySubtotals = React.useMemo(() => {
-    return getCurrencySubtotals(items, lang)
-  }, [items, lang])
+  const formattedSubtotal = formatMoney(cart.subtotal_egp, { currency: 'EGP', locale: lang })
+  const formattedDiscount = promoDiscount
+    ? formatMoney(promoDiscount, { currency: 'EGP', locale: lang })
+    : null
+  const formattedFinalTotal = formatMoney(finalTotal ?? cart.subtotal_egp, {
+    currency: 'EGP',
+    locale: lang,
+  })
 
   const itemsCountText = t('items', {
     ns: 'header',
@@ -97,7 +123,7 @@ export function CartRoute() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={clear}
+                onClick={clearLocalCart}
                 className="text-xs text-muted-foreground hover:text-destructive gap-1.5 cursor-pointer"
               >
                 <Trash2 className="size-3.5" aria-hidden="true" />
@@ -119,7 +145,7 @@ export function CartRoute() {
         </div>
 
         {items.length === 0 ? (
-          /* ── Empty State ── */
+          /* Empty State */
           <div className="flex flex-col items-center justify-center p-8 sm:p-16 text-center rounded-2xl border border-dashed border-border/70 bg-card/40 max-w-xl mx-auto space-y-4">
             <div className="size-20 rounded-2xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground mb-2">
               <ShoppingBag className="size-10" aria-hidden="true" />
@@ -182,18 +208,17 @@ export function CartRoute() {
             </div>
           </div>
         ) : (
-          /* ── 2-Column Responsive Layout (Desktop 12-col grid) ── */
+          /* 2-Column Responsive Layout */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-            {/* 1 ── Items Column (8-col) */}
+            {/* Items Column */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
               <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-xs p-4 sm:p-6 shadow-xs">
                 <ul className="divide-y divide-border/40" aria-label={t('title', { ns: 'cart' })}>
                   {items.map((item) => (
                     <CartLineItem
                       key={item.id}
-                      item={item}
+                      item={item as any}
                       lang={lang}
-                      onUpdateQuantity={updateQuantity}
                       onRemove={handleRemove}
                       removeButtonRef={(el) => {
                         if (el) {
@@ -223,7 +248,7 @@ export function CartRoute() {
               </div>
             </div>
 
-            {/* 2 ── Sticky Order Summary Sidebar (4-col) */}
+            {/* Sticky Order Summary Sidebar */}
             <div className="lg:col-span-5 xl:col-span-4 sticky top-24 space-y-4">
               <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-6 text-start">
                 <h2 className="text-xl font-bold text-foreground">
@@ -232,31 +257,26 @@ export function CartRoute() {
 
                 <div className="space-y-3 text-sm">
                   {/* Subtotal */}
-                  <div className="space-y-1">
-                    {currencySubtotals.map((sub) => (
-                      <div
-                        key={sub.currency}
-                        className="flex items-center justify-between text-muted-foreground"
-                      >
-                        <span>
-                          {t('subtotal', { ns: 'cart', defaultValue: 'Subtotal' })}
-                          {currencySubtotals.length > 1 ? ` (${sub.currency})` : ''}
-                        </span>
-                        <span className="font-medium text-foreground tabular-nums">
-                          {sub.formatted}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>{t('subtotal', { ns: 'cart', defaultValue: 'Subtotal' })}</span>
+                    <span className="font-medium text-foreground tabular-nums">
+                      {formattedSubtotal}
+                    </span>
                   </div>
+
+                  {/* Promo Discount Row (if applied) */}
+                  {formattedDiscount && (
+                    <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                      <span>{t('discount', { ns: 'cart', defaultValue: 'Discount' })} ({promoCode.trim()})</span>
+                      <span className="tabular-nums">- {formattedDiscount}</span>
+                    </div>
+                  )}
 
                   {/* Delivery */}
                   <div className="flex items-center justify-between text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Zap className="size-3.5 text-primary fill-primary/20" aria-hidden="true" />
-                      {t('freeInstantDelivery', {
-                        ns: 'cart',
-                        defaultValue: 'Free Instant Delivery',
-                      })}
+                      <span>{t('freeInstantDelivery', { ns: 'cart', defaultValue: 'Free Instant Delivery' })}</span>
                     </span>
                     <span className="text-primary font-semibold">
                       {isRtl ? 'مجاني' : 'FREE'}
@@ -264,12 +284,15 @@ export function CartRoute() {
                   </div>
 
                   {/* Promo Code Input */}
-                  <form onSubmit={handleApplyPromo} className="pt-2">
+                  <form onSubmit={handleApplyPromo} className="pt-2 space-y-1.5">
                     <div className="flex items-center gap-2">
                       <Input
                         type="text"
                         value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
+                        onChange={(e) => {
+                          setPromoCode(e.target.value)
+                          if (promoError) setPromoError(null)
+                        }}
                         placeholder={t('promoCodePlaceholder', {
                           ns: 'cart',
                           defaultValue: 'Enter promo code',
@@ -280,42 +303,47 @@ export function CartRoute() {
                         type="submit"
                         variant="outline"
                         size="sm"
-                        disabled={!promoCode.trim() || promoApplied}
+                        disabled={!promoCode.trim() || isCheckingPromo}
                         className="h-10 px-4 rounded-xl text-xs shrink-0"
                       >
-                        {promoApplied
-                          ? (isRtl ? 'تم التطبيق' : 'Applied')
-                          : t('applyPromo', { ns: 'cart', defaultValue: 'Apply' })}
+                        {isCheckingPromo
+                          ? (isRtl ? 'جار التحقق...' : 'Checking...')
+                          : promoDiscount !== null
+                            ? (isRtl ? 'تم التطبيق' : 'Applied')
+                            : t('applyPromo', { ns: 'cart', defaultValue: 'Apply' })}
                       </Button>
                     </div>
+                    {promoError && (
+                      <p className="text-xs text-destructive">{promoError}</p>
+                    )}
                   </form>
 
                   {/* Separator */}
                   <div className="border-t border-border/40 pt-3" />
 
                   {/* Grand Total */}
-                  <div className="space-y-1">
-                    {currencySubtotals.map((sub) => (
-                      <div
-                        key={sub.currency}
-                        className="flex items-baseline justify-between"
-                      >
-                        <span className="text-base font-semibold text-foreground">
-                          {t('total', { ns: 'cart', defaultValue: 'Total' })}
-                          {currencySubtotals.length > 1 ? ` (${sub.currency})` : ''}
-                        </span>
-                        <span className="text-2xl font-bold text-foreground tabular-nums">
-                          {sub.formatted}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-base font-semibold text-foreground">
+                      {t('total', { ns: 'cart', defaultValue: 'Total' })}
+                    </span>
+                    <span className="text-2xl font-bold text-foreground tabular-nums">
+                      {formattedFinalTotal}
+                    </span>
                   </div>
                 </div>
 
-                {/* Primary Proceed to Checkout CTA (48px pill) */}
+                {/* Primary Proceed to Checkout CTA */}
                 <Button
                   nativeButton={false}
-                  render={<Link to={`/${lang}/checkout`} />}
+                  render={
+                    <Link
+                      to={
+                        promoDiscount !== null
+                          ? `/${lang}/checkout?promo=${encodeURIComponent(promoCode.trim())}`
+                          : `/${lang}/checkout`
+                      }
+                    />
+                  }
                   variant="default"
                   className="w-full h-12 rounded-full font-medium text-sm active:scale-[0.98] transition-transform shadow-sm"
                 >

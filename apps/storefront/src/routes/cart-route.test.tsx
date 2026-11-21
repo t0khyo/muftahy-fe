@@ -70,7 +70,7 @@ describe("CartRoute (Shopping Cart Page)", () => {
       useCartStore.getState().addItem({
         product_id: "00000000-0000-4000-8000-000000000001",
         product_name: "Windows 11 Professional",
-        unit_price_egp: "349.00",
+        unit_price: 349.00,
         is_preorder: false,
         category: "windows",
         variant: "retail",
@@ -93,12 +93,8 @@ describe("CartRoute (Shopping Cart Page)", () => {
       screen.getByRole("button", { name: /proceed to checkout/i })
     ).toBeInTheDocument()
 
-    // Test quantity stepper increment
-    const plusButton = screen.getByRole("button", {
-      name: /increase quantity for/i,
-    })
-    fireEvent.click(plusButton)
-    expect(screen.getByLabelText(/quantity: 2/i)).toBeInTheDocument()
+    // Verify quantity badge
+    expect(screen.getByLabelText(/quantity: 1/i)).toBeInTheDocument()
 
     // Test item removal
     const removeButton = screen.getByRole("button", {
@@ -115,7 +111,7 @@ describe("CartRoute (Shopping Cart Page)", () => {
       useCartStore.getState().addItem({
         product_id: "00000000-0000-4000-8000-000000000001",
         product_name: "Windows 11 Professional",
-        unit_price_egp: "349.00",
+        unit_price: 349.00,
         is_preorder: false,
         category: "windows",
         variant: "retail",

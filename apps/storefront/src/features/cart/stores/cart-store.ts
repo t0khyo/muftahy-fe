@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { toPiasters } from '@workspace/domain/formatters/money'
+import { persist } from 'zustand/middleware'
+import type { CartService } from '@workspace/api/services/cart-service'
 import type { ProductCategory, ProductVariant } from '@workspace/domain/schemas/product'
 
 export interface CartItem {
@@ -8,19 +9,13 @@ export interface CartItem {
   product_name: string
   quantity: number
   is_preorder: boolean
-  unit_price_egp: string
+  unit_price: number
+  unit_price_egp?: string
   category?: ProductCategory
   variant?: ProductVariant
   coverImage?: string
-  // Compatibility fields
   slug?: string
   name?: string | { en: string; ar: string }
-  planId?: string
-  planName?: string | { en: string; ar: string }
-  priceMinor?: number
-  currency?: string
-  platform?: string
-  region?: string
 }
 
 export interface CartInputItem {
@@ -31,9 +26,9 @@ export interface CartInputItem {
   name?: string | { en: string; ar: string }
   quantity?: number
   is_preorder?: boolean
-  unit_price_egp?: string
+  unit_price?: number
+  unit_price_egp?: string | number
   priceMinor?: number
-  currency?: string
   category?: ProductCategory
   variant?: ProductVariant
   coverImage?: string
@@ -47,86 +42,139 @@ export interface CartInputItem {
 export interface CartState {
   items: CartItem[]
   count: number
+  isSyncing: boolean
   addItem: (item: CartInputItem, quantity?: number) => void
   updateQuantity: (id: string, quantity: number, maxStock?: number) => void
   removeItem: (id: string) => void
   clear: () => void
+  syncGuestCart: (cartService: CartService) => Promise<{ synced: number; failed: number }>
 }
 
-export const useCartStore = create<CartState>((set) => ({
-  items: [],
-  count: 0,
-  addItem: (item, quantity = 1) =>
-    set((state) => {
-      const productId = item.product_id ?? item.productId ?? item.id ?? 'unknown'
-      const itemId =
-        item.id ??
-        (item.planId && (item.productId ?? item.product_id)
-          ? `${item.productId ?? item.product_id}:${item.planId}`
-          : productId)
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      count: 0,
+      isSyncing: false,
+      addItem: (item, quantity) =>
+        set((state) => {
+          const productId = item.product_id ?? item.productId ?? item.id ?? 'unknown'
+          const itemId = item.id ?? productId
 
-      const existing = state.items.find((i) => i.id === itemId)
-      if (existing) {
-        return state
-      }
+          const existingIndex = state.items.findIndex(
+            (i) => i.id === itemId || i.product_id === productId,
+          )
+          const qty = Math.max(1, quantity ?? item.quantity ?? 1)
 
-      const unitPrice =
-        item.unit_price_egp ??
-        (item.priceMinor !== undefined ? (item.priceMinor / 100).toFixed(2) : '0.00')
+          let unitPrice = 0
+          if (typeof item.unit_price === 'number') {
+            unitPrice = item.unit_price
+          } else if (item.unit_price_egp !== undefined) {
+            unitPrice = Number(item.unit_price_egp) || 0
+          } else if (item.priceMinor !== undefined) {
+            unitPrice = item.priceMinor / 100
+          }
 
-      const nameStr =
-        item.product_name ??
-        (typeof item.name === 'string'
-          ? item.name
-          : (item.name?.en ?? 'Product'))
+          const nameStr =
+            item.product_name ??
+            (typeof item.name === 'string'
+              ? item.name
+              : (item.name?.en ?? 'Product'))
 
-      const newItem: CartItem = {
-        id: itemId,
-        product_id: productId,
-        product_name: nameStr,
-        quantity: Math.max(1, quantity),
-        is_preorder: Boolean(item.is_preorder),
-        unit_price_egp: unitPrice,
-        category: item.category,
-        variant: item.variant,
-        coverImage: item.coverImage,
-        slug: item.slug ?? productId,
-        name: item.name ?? nameStr,
-        planId: item.planId,
-        planName: item.planName,
-        priceMinor: toPiasters(unitPrice),
-        currency: 'EGP',
-        platform: item.platform,
-        region: item.region,
-      }
+          if (existingIndex >= 0) {
+            const nextItems = state.items.map((it, idx) =>
+              idx === existingIndex ? { ...it, quantity: it.quantity + qty } : it,
+            )
+            return {
+              items: nextItems,
+              count: nextItems.reduce((acc, i) => acc + i.quantity, 0),
+            }
+          }
 
-      const nextItems = [...state.items, newItem]
-      const nextCount = nextItems.reduce((acc, i) => acc + i.quantity, 0)
-      return { items: nextItems, count: nextCount }
-    }),
-  updateQuantity: (id, quantity, maxStock) =>
-    set((state) => {
-      const existing = state.items.find((i) => i.id === id)
-      if (!existing) return state
+          const newItem: CartItem = {
+            id: itemId,
+            product_id: productId,
+            product_name: nameStr,
+            quantity: qty,
+            is_preorder: Boolean(item.is_preorder),
+            unit_price: unitPrice,
+            unit_price_egp: unitPrice.toFixed(2),
+            category: item.category,
+            variant: item.variant,
+            coverImage: item.coverImage,
+            slug: item.slug ?? productId,
+            name: item.name ?? nameStr,
+          }
 
-      let newQty = Math.max(1, quantity)
-      if (maxStock !== undefined && maxStock > 0) {
-        if (newQty > existing.quantity && newQty > maxStock) {
-          newQty = Math.max(existing.quantity, maxStock)
+          const nextItems = [...state.items, newItem]
+          return {
+            items: nextItems,
+            count: nextItems.reduce((acc, i) => acc + i.quantity, 0),
+          }
+        }),
+      updateQuantity: (id, quantity, maxStock) =>
+        set((state) => {
+          const existing = state.items.find((i) => i.id === id)
+          if (!existing) return state
+
+          let newQty = Math.max(1, quantity)
+          if (maxStock !== undefined && maxStock > 0) {
+            if (newQty > existing.quantity && newQty > maxStock) {
+              newQty = Math.max(existing.quantity, maxStock)
+            }
+          }
+
+          const nextItems = state.items.map((i) =>
+            i.id === id ? { ...i, quantity: newQty } : i,
+          )
+          return {
+            items: nextItems,
+            count: nextItems.reduce((acc, i) => acc + i.quantity, 0),
+          }
+        }),
+      removeItem: (id) =>
+        set((state) => {
+          const nextItems = state.items.filter((i) => i.id !== id && i.product_id !== id)
+          return {
+            items: nextItems,
+            count: nextItems.reduce((acc, i) => acc + i.quantity, 0),
+          }
+        }),
+      clear: () => set({ items: [], count: 0 }),
+      syncGuestCart: async (cartService: CartService) => {
+        const state = get()
+        if (state.isSyncing || state.items.length === 0) {
+          return { synced: 0, failed: 0 }
         }
-      }
+        set({ isSyncing: true })
+        let synced = 0
+        let failed = 0
+        const remaining: CartItem[] = []
 
-      const nextItems = state.items.map((i) =>
-        i.id === id ? { ...i, quantity: newQty } : i,
-      )
-      const nextCount = nextItems.reduce((acc, i) => acc + i.quantity, 0)
-      return { items: nextItems, count: nextCount }
+        try {
+          for (const item of state.items) {
+            try {
+              await cartService.addItem(item.product_id, item.quantity)
+              synced++
+            } catch {
+              failed++
+              remaining.push(item)
+            }
+          }
+          set({
+            items: remaining,
+            count: remaining.reduce((acc, i) => acc + i.quantity, 0),
+          })
+        } finally {
+          set({ isSyncing: false })
+        }
+
+        return { synced, failed }
+      },
     }),
-  removeItem: (id) =>
-    set((state) => {
-      const nextItems = state.items.filter((i) => i.id !== id)
-      const nextCount = nextItems.reduce((acc, i) => acc + i.quantity, 0)
-      return { items: nextItems, count: nextCount }
-    }),
-  clear: () => set({ items: [], count: 0 }),
-}))
+    {
+      name: 'muftahy_guest_cart',
+      partialize: (state) => ({ items: state.items, count: state.count }),
+    },
+  ),
+)

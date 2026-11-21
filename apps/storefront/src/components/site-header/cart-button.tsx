@@ -8,7 +8,7 @@ import {
   ShoppingBag,
   X,
 } from 'lucide-react'
-import { formatMoneyFromMinor, toPiasters } from '@workspace/domain/formatters/money'
+import { formatMoney } from '@workspace/domain/formatters/money'
 import { resolveProductImage } from '../../features/products/utils/asset-resolver'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -19,11 +19,8 @@ import {
   SheetTitle,
 } from '@workspace/ui/components/sheet'
 import { CART_CONFIG } from '../../features/cart/cart.config'
-import {
-  getCurrencySubtotals,
-  resolveLocalizedName,
-} from '../../features/cart/lib/cart-selectors'
-import { useCartStore } from '../../features/cart/stores/cart-store'
+import { resolveLocalizedName } from '../../features/cart/lib/cart-selectors'
+import { useCart, useRemoveCartItem } from '../../features/cart/hooks/use-cart'
 
 export interface CartButtonProps {
   className?: string
@@ -65,11 +62,11 @@ export function CartButton({
     }
   }, [isControlled, controlledOnClose])
 
-  // Cart store subscriptions
-  const items = useCartStore((s) => s.items)
-  const count = useCartStore((s) => s.count)
-  const updateQuantity = useCartStore((s) => s.updateQuantity)
-  const removeItem = useCartStore((s) => s.removeItem)
+  // Unified Cart hooks
+  const cart = useCart()
+  const { mutate: removeItemMutation } = useRemoveCartItem()
+  const items = cart.items
+  const count = cart.item_count
 
   // Pulse animation on count increase
   const [isPulsing, setIsPulsing] = React.useState(false)
@@ -90,10 +87,9 @@ export function CartButton({
   // Trigger ref for focus return
   const triggerRef = React.useRef<HTMLButtonElement | null>(null)
 
-  // Subtotals grouped by currency
-  const currencySubtotals = React.useMemo(() => {
-    return getCurrencySubtotals(items, currentLang)
-  }, [items, currentLang])
+  const formattedSubtotal = React.useMemo(() => {
+    return formatMoney(cart.subtotal_egp, { currency: 'EGP', locale: currentLang })
+  }, [cart.subtotal_egp, currentLang])
 
   // Close panel on route change
   const prevLocationRef = React.useRef(location.pathname + location.search)
@@ -121,25 +117,8 @@ export function CartButton({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, handleClose])
 
-  // Stepper handlers
-  const handleDecreaseQuantity = (id: string, currentQty: number) => {
-    if (currentQty <= 1) return
-    updateQuantity(id, currentQty - 1, CART_CONFIG.maxQuantityPerLine)
-    setLiveAnnouncement(
-      t('quantityUpdated', { ns: 'header', defaultValue: 'Quantity updated' }),
-    )
-  }
-
-  const handleIncreaseQuantity = (id: string, currentQty: number) => {
-    if (currentQty >= CART_CONFIG.maxQuantityPerLine) return
-    updateQuantity(id, currentQty + 1, CART_CONFIG.maxQuantityPerLine)
-    setLiveAnnouncement(
-      t('quantityUpdated', { ns: 'header', defaultValue: 'Quantity updated' }),
-    )
-  }
-
   const handleRemove = (id: string) => {
-    removeItem(id)
+    removeItemMutation(id)
     setLiveAnnouncement(
       t('itemRemoved', { ns: 'header', defaultValue: 'Item removed' }),
     )
@@ -314,10 +293,9 @@ export function CartButton({
             <div className="flex-1 overflow-y-auto px-5 lg:px-6 py-4 space-y-5">
               {items.map((item) => {
                 const productName = resolveLocalizedName(item.name, currentLang) || item.product_name
-                const lineTotal = formatMoneyFromMinor(
-                  toPiasters(item.unit_price_egp) * item.quantity,
-                  'EGP',
-                  currentLang,
+                const lineTotal = formatMoney(
+                  item.unit_price * item.quantity,
+                  { currency: 'EGP', locale: currentLang },
                 )
                 const coverImage =
                   item.coverImage ||
@@ -367,42 +345,18 @@ export function CartButton({
                         )}
                       </div>
 
-                      {/* Stepper + Remove row */}
+                      {/* Static Quantity Badge + Remove Link */}
                       <div className="pt-2 flex items-center justify-between gap-3">
-                        {/* Stepper (44px tall mobile, 36px desktop) */}
-                        <div className="inline-flex items-center rounded-lg border border-border/60 bg-secondary/30 h-11 lg:h-9">
-                          <button
-                            type="button"
-                            onClick={() => handleDecreaseQuantity(item.id, item.quantity)}
-                            disabled={item.quantity <= 1}
-                            aria-label={t('decreaseQuantity', {
-                              ns: 'header',
-                              defaultValue: 'Decrease quantity',
-                            })}
-                            className="cursor-pointer h-11 w-9 lg:h-9 lg:w-8 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-transform"
-                          >
-                            <Minus className="size-3.5" aria-hidden="true" />
-                          </button>
-
+                        <div className="inline-flex items-center px-2.5 py-1 rounded-lg border border-border/60 bg-secondary/30 text-xs">
+                          <span className="text-muted-foreground me-1">
+                            {t('quantity', { ns: 'header', defaultValue: 'Qty' })}:
+                          </span>
                           <span
                             aria-label={`${t('quantity', { ns: 'header', defaultValue: 'Quantity' })}: ${item.quantity}`}
-                            className="w-7 text-center text-sm font-semibold text-foreground tabular-nums select-none"
+                            className="font-semibold text-foreground tabular-nums select-none"
                           >
                             {item.quantity}
                           </span>
-
-                          <button
-                            type="button"
-                            onClick={() => handleIncreaseQuantity(item.id, item.quantity)}
-                            disabled={item.quantity >= CART_CONFIG.maxQuantityPerLine}
-                            aria-label={t('increaseQuantity', {
-                              ns: 'header',
-                              defaultValue: 'Increase quantity',
-                            })}
-                            className="cursor-pointer h-11 w-9 lg:h-9 lg:w-8 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-transform"
-                          >
-                            <Plus className="size-3.5" aria-hidden="true" />
-                          </button>
                         </div>
 
                         {/* Separate Remove Link */}
@@ -432,21 +386,13 @@ export function CartButton({
           {items.length > 0 && (
             <div className="border-t border-border/40 bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] lg:p-6 shrink-0 space-y-4">
               {/* Total Row */}
-              <div className="space-y-1">
-                {currencySubtotals.map((sub) => (
-                  <div
-                    key={sub.currency}
-                    className="flex items-center justify-between text-start"
-                  >
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {t('total', { ns: 'header', defaultValue: 'Total' })}
-                      {currencySubtotals.length > 1 ? ` (${sub.currency})` : ''}
-                    </span>
-                    <span className="text-lg font-semibold text-foreground tabular-nums">
-                      {sub.formatted}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between text-start">
+                <span className="text-sm font-normal text-muted-foreground">
+                  {t('total', { ns: 'header', defaultValue: 'Total' })}
+                </span>
+                <span className="text-lg font-semibold text-foreground tabular-nums">
+                  {formattedSubtotal}
+                </span>
               </div>
 
               {/* Actions */}
