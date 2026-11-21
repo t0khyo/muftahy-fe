@@ -29,6 +29,7 @@ import {
   TableRow,
 } from '@workspace/ui/components/table'
 import { EmptyState } from '../features/dashboard/components/empty-state'
+import { AdminPageHeader } from '../components/admin-page-header'
 
 const ENTRY_TYPE_FILTERS = [
   { label: 'All Transactions', value: 'all' },
@@ -60,20 +61,10 @@ export function AdminLedgerRoute() {
   return (
     <div className="space-y-6 text-start w-full">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-border/40">
-        <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-mono font-medium mb-2">
-            <span className="size-1.5 rounded-full bg-primary" />
-            <span>Accounting & Escrow</span>
-          </div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
-            {t('admin:ledger.title', 'Financial Ledger & Escrow')}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('admin:ledger.subtitle', 'Immutable double-entry accounting journal, deferred revenue reserves, and net balance')}
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t('admin:ledger.title', 'Financial Ledger & Escrow')}
+        description={t('admin:ledger.subtitle', 'Immutable double-entry accounting journal, deferred revenue reserves, and net balance')}
+      />
 
       {/* Financial Health & Balances Ribbon */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

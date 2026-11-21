@@ -2,7 +2,6 @@ import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Globe, Moon, Sun } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
-import { Badge } from '@workspace/ui/components/badge'
 import { Separator } from '@workspace/ui/components/separator'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
 import {
@@ -74,18 +73,6 @@ export function SiteHeader() {
         </Breadcrumb>
 
         <div className="ms-auto flex items-center gap-2">
-          {/* Status Badge with Live Pulse */}
-          <Badge
-            variant="outline"
-            className="hidden sm:inline-flex items-center gap-2 border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] px-2.5 py-0.5"
-          >
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-            </span>
-            <span>Gateway Online</span>
-          </Badge>
-
           {/* Theme Toggle */}
           <Button
             variant="ghost"

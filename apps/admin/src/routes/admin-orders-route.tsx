@@ -30,6 +30,7 @@ import {
 } from '@workspace/ui/components/table'
 import { ReceiptReviewDialog } from '../features/orders/components/receipt-review-dialog'
 import { EmptyState } from '../features/dashboard/components/empty-state'
+import { AdminPageHeader } from '../components/admin-page-header'
 
 const STATUS_FILTERS: { label: string; value: OrderStatus | 'all' }[] = [
   { label: 'All Orders', value: 'all' },
@@ -97,20 +98,10 @@ export function AdminOrdersRoute() {
   return (
     <div className="space-y-6 text-start w-full">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-border/40">
-        <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-mono font-medium mb-2">
-            <span className="size-1.5 rounded-full bg-primary" />
-            <span>Fulfillment & Review</span>
-          </div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
-            {t('admin:orders.title', 'Orders & Fulfillment')}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('admin:orders.subtitle', 'Adjudicate Instapay/Vodafone Cash receipts, inspect keys, and issue refunds')}
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t('admin:orders.title', 'Orders & Fulfillment')}
+        description={t('admin:orders.subtitle', 'Adjudicate Instapay/Vodafone Cash receipts, inspect keys, and issue refunds')}
+      />
 
       {/* Streamlined Toolbar */}
       <div className="space-y-4">

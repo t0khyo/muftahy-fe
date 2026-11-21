@@ -23,6 +23,7 @@ import { Upload, Copy, Check, AlertCircle, FileText } from 'lucide-react'
 import { useKeyBatchImport } from '../hooks/use-inventory'
 import { useAdminProducts } from '../../products/hooks/use-admin-products'
 import type { KeyImportErrorItem } from '@workspace/domain/schemas/inventory'
+import { parseKeyBatchInput } from '../lib/key-batch-parser'
 
 interface KeyBatchImportSheetProps {
   open: boolean
@@ -73,12 +74,13 @@ function KeyBatchImportForm({
 
   const activeProductId = selectedProductId || (products && products.length > 0 ? products[0].id : '')
 
-  const parsedSerials = React.useMemo(() => {
-    return serialsText
-      .split('\n')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
+  const batchAnalysis = React.useMemo(() => {
+    return parseKeyBatchInput(serialsText)
   }, [serialsText])
+
+  const handleDeduplicate = () => {
+    setSerialsText(batchAnalysis.uniqueKeys.join('\n'))
+  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -104,14 +106,14 @@ function KeyBatchImportForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!activeProductId || parsedSerials.length === 0) return
+    if (!activeProductId || batchAnalysis.effectiveKeys.length === 0) return
 
     setFailures([])
     try {
       const result = await importMutation.mutateAsync({
         product_id: activeProductId,
         total_cost_usd: Number(totalCostUsd) || 1,
-        serials: parsedSerials,
+        serials: batchAnalysis.effectiveKeys,
         replacement_only: replacementOnly,
       })
 
@@ -191,9 +193,9 @@ function KeyBatchImportForm({
         {/* Serials Textarea */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="serials-input">{t('admin:inventory.activationCodes', 'Activation Codes (One per line)')}</Label>
-            <span className="font-mono text-xs text-muted-foreground">
-              {parsedSerials.length} {t('admin:inventory.keysDetected', 'keys detected')}
+            <Label htmlFor="serials-input">{t('admin:inventory.activationCodes', 'Activation Codes')}</Label>
+            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+              {batchAnalysis.effectiveKeys.length} / 500 {t('admin:inventory.keysDetected', 'keys')}
             </span>
           </div>
           <textarea
@@ -205,6 +207,35 @@ function KeyBatchImportForm({
             className="w-full rounded-md border border-border bg-background p-3 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             required
           />
+
+          {batchAnalysis.duplicatesCount > 0 && (
+            <div className="flex items-center justify-between rounded-md border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-400">
+              <div className="flex items-center gap-1.5">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>
+                  {batchAnalysis.duplicatesCount} duplicate {batchAnalysis.duplicatesCount === 1 ? 'key' : 'keys'} detected in batch.
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={handleDeduplicate}
+                className="h-7 text-xs border-amber-500/30 hover:bg-amber-500/20"
+              >
+                Deduplicate
+              </Button>
+            </div>
+          )}
+
+          {batchAnalysis.isTruncated && (
+            <div className="flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning-foreground">
+              <AlertCircle className="size-4 shrink-0 text-warning" />
+              <span>
+                Batch exceeds 500 keys limit. Only the first 500 unique keys will be ingested.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* File Upload Helper */}
@@ -272,13 +303,13 @@ function KeyBatchImportForm({
           <Button
             type="submit"
             className="w-full gap-2 cursor-pointer"
-            disabled={importMutation.isPending || parsedSerials.length === 0}
+            disabled={importMutation.isPending || batchAnalysis.effectiveKeys.length === 0}
           >
             <Upload className="size-4" />
             <span>
               {importMutation.isPending
                 ? t('admin:common.loading', 'Ingesting into vault...')
-                : `${t('admin:inventory.confirmIngestion', 'Confirm Ingestion of')} ${parsedSerials.length} ${t('admin:inventory.keys', 'Keys')}`}
+                : `${t('admin:inventory.confirmIngestion', 'Confirm Ingestion of')} ${batchAnalysis.effectiveKeys.length} ${t('admin:inventory.keys', 'Keys')}`}
             </span>
           </Button>
         </div>

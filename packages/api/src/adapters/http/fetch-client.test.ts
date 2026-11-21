@@ -201,4 +201,31 @@ describe('NativeFetchClient', () => {
     expect(onAuthRequired).toHaveBeenCalledTimes(1)
     expect(tokenStorage.getRefreshToken()).toBeNull()
   })
+
+  it('supports streaming binary data via requestBlob with authentication', async () => {
+    tokenStorage.setTokens({
+      access_token: 'binary-access-token',
+      refresh_token: 'refresh-token',
+    })
+
+    const dummyBlob = new Blob(['sample-image-data'], { type: 'image/png' })
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'image/png' }),
+      blob: async () => dummyBlob,
+    })
+
+    const client = new NativeFetchClient({
+      baseURL: 'http://localhost:8000/api/v1',
+      tokenStorage,
+      fetchFn: mockFetch as unknown as typeof fetch,
+    })
+
+    const blob = await client.requestBlob('/orders/123/receipts/456/image')
+    expect(blob).toBe(dummyBlob)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    const callHeaders = mockFetch.mock.calls[0][1].headers as Headers
+    expect(callHeaders.get('Authorization')).toBe('Bearer binary-access-token')
+  })
 })

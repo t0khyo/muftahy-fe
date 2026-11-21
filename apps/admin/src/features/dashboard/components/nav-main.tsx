@@ -41,7 +41,7 @@ export function NavMain({ sections }: { sections: NavSection[] }) {
                   <item.icon className="size-4 shrink-0" />
                   <span>{item.title}</span>
                   {item.badge && (
-                    <span className="ms-auto rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                    <span className="ms-auto rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono tabular-nums font-semibold text-primary">
                       {item.badge}
                     </span>
                   )}

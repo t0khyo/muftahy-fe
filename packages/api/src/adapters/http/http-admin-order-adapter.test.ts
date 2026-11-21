@@ -82,5 +82,23 @@ describe('HttpAdminOrderAdapter', () => {
     )
     expect(result.status).toBe('refunded')
   })
+
+  it('fetches binary receipt image blob', async () => {
+    const dummyBlob = new Blob(['test-receipt-binary'], { type: 'image/jpeg' })
+    const client = {
+      requestBlob: vi.fn().mockResolvedValue(dummyBlob),
+    } as unknown as NativeFetchClient
+    const adapter = new HttpAdminOrderAdapter(client)
+
+    const result = await adapter.getReceiptImageBlob(
+      'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+    )
+    expect(client.requestBlob).toHaveBeenCalledWith(
+      '/orders/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/receipts/c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33/image',
+      { method: 'GET' },
+    )
+    expect(result).toBe(dummyBlob)
+  })
 })
 

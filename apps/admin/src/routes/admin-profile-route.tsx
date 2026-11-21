@@ -30,6 +30,7 @@ import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { useAdminAuth } from '../features/auth/hooks/use-admin-auth'
 import { useAdminProfile } from '../features/profile/hooks/use-admin-profile'
+import { AdminPageHeader } from '../components/admin-page-header'
 
 export function AdminProfileRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
@@ -106,14 +107,10 @@ export function AdminProfileRoute() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Page Title */}
-      <div className="text-start">
-        <h1 className="text-2xl font-bold tracking-tight font-heading">
-          {t('admin:profile.title', 'Profile')}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t('admin:profile.subtitle', 'Manage your administrative account information')}
-        </p>
-      </div>
+      <AdminPageHeader
+        title={t('admin:profile.title', 'Profile')}
+        description={t('admin:profile.subtitle', 'Manage your administrative account information')}
+      />
 
       {/* Account Settings Card */}
       <Card className="border-border shadow-xs">

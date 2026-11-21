@@ -13,6 +13,7 @@ import { AdminAuditRoute } from '../routes/admin-audit-route'
 import { AdminProfileRoute } from '../routes/admin-profile-route'
 import { AdminGuard } from '../features/auth/components/admin-guard'
 import { AdminLayout } from '../features/dashboard/components/admin-layout'
+import { AdminRouteError } from '../components/admin-route-error'
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
   {
     path: '/:lang',
     element: <RootLayout />,
+    errorElement: <AdminRouteError />,
     children: [
       {
         path: 'login',
@@ -33,6 +35,7 @@ export const router = createBrowserRouter([
             <AdminLayout />
           </AdminGuard>
         ),
+        errorElement: <AdminRouteError />,
         children: [
           {
             index: true,

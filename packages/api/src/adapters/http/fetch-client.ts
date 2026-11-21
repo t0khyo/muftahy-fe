@@ -28,6 +28,7 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
   isRetry?: boolean
   skipAuth?: boolean
+  responseType?: 'json' | 'text' | 'blob'
 }
 
 export class NativeFetchClient {
@@ -204,11 +205,23 @@ export class NativeFetchClient {
       return undefined as unknown as T
     }
 
+    if (options.responseType === 'blob') {
+      return (await response.blob()) as unknown as T
+    }
+
+    if (options.responseType === 'text') {
+      return (await response.text()) as unknown as T
+    }
+
     const contentType = response.headers.get('content-type')
     if (contentType && contentType.includes('application/json')) {
       return (await response.json()) as T
     }
 
     return (await response.text()) as unknown as T
+  }
+
+  async requestBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+    return this.request<Blob>(path, { ...options, responseType: 'blob' })
   }
 }

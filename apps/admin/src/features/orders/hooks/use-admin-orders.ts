@@ -13,6 +13,8 @@ export const adminOrderKeys = {
   pending: () => [...adminOrderKeys.all, 'pending'] as const,
   detail: (id: string) => [...adminOrderKeys.all, 'detail', id] as const,
   receipts: (id: string) => [...adminOrderKeys.all, 'receipts', id] as const,
+  receiptImage: (orderId: string, receiptId: string) =>
+    [...adminOrderKeys.all, 'receipt-image', orderId, receiptId] as const,
 }
 
 export function usePendingOrders() {
@@ -48,6 +50,28 @@ export function useAdminOrderReceipts(orderId: string) {
     queryKey: adminOrderKeys.receipts(orderId),
     queryFn: () => service.getReceipts(orderId),
     enabled: Boolean(orderId),
+  })
+}
+
+export function useAdminReceiptImage(
+  orderId?: string,
+  receiptId?: string,
+  options?: { enabled?: boolean },
+) {
+  const service = getAdminOrderService()
+  return useQuery({
+    queryKey:
+      orderId && receiptId
+        ? adminOrderKeys.receiptImage(orderId, receiptId)
+        : (['admin', 'orders', 'receipt-image', 'none'] as const),
+    queryFn: () => {
+      if (!orderId || !receiptId) throw new Error('Order ID and Receipt ID are required')
+      return service.getReceiptImageBlob(orderId, receiptId)
+    },
+    enabled: Boolean(orderId && receiptId && (options?.enabled ?? true)),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 }
 

@@ -55,6 +55,12 @@ export class HttpAdminOrderAdapter implements AdminOrderService {
     return paymentAttemptListSchema.parse(raw)
   }
 
+  async getReceiptImageBlob(orderId: string, receiptId: string): Promise<Blob> {
+    return this.client.requestBlob(`/orders/${orderId}/receipts/${receiptId}/image`, {
+      method: 'GET',
+    })
+  }
+
   async refundItem(
     orderId: string,
     itemId: string,

@@ -37,6 +37,7 @@ import {
 } from '@workspace/ui/components/table'
 import { ProductFormDialog } from '../features/products/components/product-form-dialog'
 import { EmptyState } from '../features/dashboard/components/empty-state'
+import { AdminPageHeader } from '../components/admin-page-header'
 
 export function AdminProductsRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
@@ -82,24 +83,15 @@ export function AdminProductsRoute() {
   return (
     <div className="space-y-6 text-start w-full">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-border/40">
-        <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-mono font-medium mb-2">
-            <span className="size-1.5 rounded-full bg-primary" />
-            <span>Catalog & SKUs</span>
-          </div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
-            {t('admin:products.title', 'Products & SKUs')}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('admin:products.subtitle', 'Configure software licenses, base pricing, release dates, and visibility')}
-          </p>
-        </div>
+      <AdminPageHeader
+        title={t('admin:products.title', 'Products & SKUs')}
+        description={t('admin:products.subtitle', 'Configure software licenses, base pricing, release dates, and visibility')}
+      >
         <Button onClick={handleOpenCreate} className="gap-2 shrink-0 cursor-pointer shadow-xs active:translate-y-px transition-all font-medium">
           <Plus className="size-4" />
           <span>{t('admin:products.addProduct', 'Add Product')}</span>
         </Button>
-      </div>
+      </AdminPageHeader>
 
       {/* Integrated Control Strip & Catalog Table */}
       <div className="space-y-4">

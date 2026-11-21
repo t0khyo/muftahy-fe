@@ -11,10 +11,25 @@ import { Badge } from '@workspace/ui/components/badge'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import { useTranslation } from 'react-i18next'
-import { useReviewOrder, useRefundOrderItem } from '../hooks/use-admin-orders'
+import {
+  useReviewOrder,
+  useRefundOrderItem,
+  useAdminReceiptImage,
+} from '../hooks/use-admin-orders'
 import type { OrderResponse } from '@workspace/domain/schemas/order'
 import { formatMoney } from '@workspace/domain/formatters/money'
-import { CheckCircle2, XCircle, AlertTriangle, ExternalLink, RefreshCw } from 'lucide-react'
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  ExternalLink,
+  RefreshCw,
+  RotateCw,
+  ZoomIn,
+  ZoomOut,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react'
 
 interface ReceiptReviewDialogProps {
   order: OrderResponse | null
@@ -23,7 +38,29 @@ interface ReceiptReviewDialogProps {
 }
 
 export function ReceiptReviewDialog({ order, open, onOpenChange }: ReceiptReviewDialogProps) {
-  const { t, i18n } = useTranslation()
+  if (!order) return null
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && (
+        <ReceiptReviewDialogContent
+          key={`${order.id}-${order.payment_attempts[order.payment_attempts.length - 1]?.id ?? 'latest'}`}
+          order={order}
+          onOpenChange={onOpenChange}
+        />
+      )}
+    </Dialog>
+  )
+}
+
+function ReceiptReviewDialogContent({
+  order,
+  onOpenChange,
+}: {
+  order: OrderResponse
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t, i18n } = useTranslation(['admin'])
   const reviewMutation = useReviewOrder()
   const refundMutation = useRefundOrderItem()
 
@@ -33,9 +70,32 @@ export function ReceiptReviewDialog({ order, open, onOpenChange }: ReceiptReview
   const [gatewayFee, setGatewayFee] = React.useState('0')
   const [preorderWarning, setPreorderWarning] = React.useState(false)
 
-  if (!order) return null
+  const [rotation, setRotation] = React.useState(0)
+  const [isZoomed, setIsZoomed] = React.useState(false)
 
   const latestAttempt = order.payment_attempts[order.payment_attempts.length - 1]
+
+  const {
+    data: imageBlob,
+    isLoading: imageLoading,
+    isError: imageError,
+    refetch: refetchImage,
+  } = useAdminReceiptImage(order.id, latestAttempt?.id, {
+    enabled: Boolean(order.id && latestAttempt?.id),
+  })
+
+  const imageUrl = React.useMemo(() => {
+    if (!imageBlob) return null
+    return URL.createObjectURL(imageBlob)
+  }, [imageBlob])
+
+  React.useEffect(() => {
+    return () => {
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl)
+      }
+    }
+  }, [imageUrl])
 
   const handleApprove = async () => {
     try {
@@ -78,8 +138,7 @@ export function ReceiptReviewDialog({ order, open, onOpenChange }: ReceiptReview
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+    <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="font-mono text-base">
@@ -118,33 +177,90 @@ export function ReceiptReviewDialog({ order, open, onOpenChange }: ReceiptReview
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           {/* Receipt Preview */}
-          <div className="rounded-md border border-border bg-muted/20 p-3 flex flex-col items-center justify-center min-h-[220px]">
-            {latestAttempt?.receipt_image_path ? (
-              <div className="space-y-2 w-full text-center">
-                <img
-                  src={`http://localhost:8000/${latestAttempt.receipt_image_path.replace(/^\/+/, '')}`}
-                  alt="Customer bank receipt"
-                  className="max-h-60 mx-auto rounded object-contain border border-border"
-                  onError={(e) => {
-                    // Fallback visual placeholder when backend image storage isn't mounted locally
-                    (e.target as HTMLElement).style.display = 'none'
-                  }}
-                />
-                <a
-                  href={`http://localhost:8000/${latestAttempt.receipt_image_path.replace(/^\/+/, '')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
+          <div className="flex flex-col rounded-md border border-border bg-muted/10 p-3 min-h-[260px]">
+            {/* Image Toolbar */}
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/60">
+              <span className="text-xs font-medium text-muted-foreground font-mono">
+                {latestAttempt?.payment_method?.toUpperCase() || 'RECEIPT'}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setRotation((r) => (r + 90) % 360)}
+                  disabled={!imageUrl}
+                  aria-label="Rotate image 90 degrees"
+                  className="h-7 px-2 text-xs"
                 >
-                  <ExternalLink className="size-3" />
-                  {latestAttempt.receipt_image_path}
-                </a>
+                  <RotateCw className="size-3.5 me-1" />
+                  <span>90°</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setIsZoomed((z) => !z)}
+                  disabled={!imageUrl}
+                  aria-label={isZoomed ? 'Zoom out' : 'Zoom in'}
+                  className="h-7 px-2 text-xs"
+                >
+                  {isZoomed ? <ZoomOut className="size-3.5" /> : <ZoomIn className="size-3.5" />}
+                </Button>
+                {imageUrl && (
+                  <a
+                    href={imageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/80 transition-colors"
+                    aria-label="Open full image in new tab"
+                  >
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                )}
               </div>
-            ) : (
-              <div className="text-center text-xs text-muted-foreground">
-                <p>No receipt image file path available</p>
-              </div>
-            )}
+            </div>
+
+            {/* Image Canvas / State */}
+            <div className="flex-1 flex items-center justify-center overflow-hidden rounded bg-background/50 border border-border/40 min-h-[200px] p-2">
+              {imageLoading ? (
+                <div className="flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin text-primary" />
+                  <span>Loading receipt image...</span>
+                </div>
+              ) : imageError ? (
+                <div className="flex flex-col items-center justify-center gap-2 text-xs text-destructive text-center p-4">
+                  <AlertCircle className="size-5 text-destructive" />
+                  <span>Failed to load transfer receipt</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={() => refetchImage()}
+                    className="mt-1 gap-1 text-xs"
+                  >
+                    <RefreshCw className="size-3" />
+                    Retry
+                  </Button>
+                </div>
+              ) : imageUrl ? (
+                <div className="w-full flex items-center justify-center overflow-auto max-h-[300px]">
+                  <img
+                    src={imageUrl}
+                    alt="Customer bank receipt"
+                    className={`transition-transform duration-200 object-contain rounded select-none ${
+                      isZoomed ? 'max-h-none w-full cursor-zoom-out' : 'max-h-56 w-auto cursor-zoom-in'
+                    }`}
+                    style={{ transform: `rotate(${rotation}deg)` }}
+                    onClick={() => setIsZoomed((z) => !z)}
+                  />
+                </div>
+              ) : (
+                <div className="text-center text-xs text-muted-foreground">
+                  <p>No receipt image file available</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Verification Details */}
@@ -315,7 +431,6 @@ export function ReceiptReviewDialog({ order, open, onOpenChange }: ReceiptReview
           </div>
         </div>
       </DialogContent>
-    </Dialog>
   )
 }
 

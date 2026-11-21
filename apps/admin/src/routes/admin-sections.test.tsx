@@ -71,6 +71,7 @@ describe('Admin Section Workstation Pages', () => {
     vi.spyOn(apiFactory, 'getAdminOrderService').mockReturnValue({
       getOrders: vi.fn().mockResolvedValue({ items: [], total: 0 }),
       getPendingOrders: vi.fn().mockResolvedValue([]),
+      getReceiptImageBlob: vi.fn().mockResolvedValue(new Blob([])),
     } as unknown as AdminOrderService)
 
     vi.spyOn(apiFactory, 'getInventoryService').mockReturnValue({

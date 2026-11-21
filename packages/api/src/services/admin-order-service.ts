@@ -16,6 +16,7 @@ export interface AdminOrderService {
   startReview(orderId: string): Promise<OrderResponse>
   reviewOrder(orderId: string, payload: OrderReviewRequest): Promise<OrderResponse>
   getReceipts(orderId: string): Promise<PaymentAttempt[]>
+  getReceiptImageBlob(orderId: string, receiptId: string): Promise<Blob>
   refundItem(orderId: string, itemId: string, payload: OrderItemRefundRequest): Promise<RefundItemResponse>
 }
 
