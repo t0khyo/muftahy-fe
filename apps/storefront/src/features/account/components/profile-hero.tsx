@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 import { CheckCircle2, Pencil, Calendar, ShieldCheck, X } from 'lucide-react'
 import { formatDate } from '@workspace/domain/formatters/date'
 import type { UserProfile } from '@workspace/domain/schemas/auth'
-import { Avatar, AvatarFallback } from '@workspace/ui/components/avatar'
+import { Blobatar } from '@workspace/ui/components/blobatar'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 
@@ -13,20 +13,10 @@ export interface ProfileHeroProps {
   onToggleEdit: () => void
 }
 
-function getInitials(name?: string | null): string {
-  if (!name) return 'U'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
-
 export function ProfileHero({ profile, isEditing, onToggleEdit }: ProfileHeroProps) {
   const { t } = useTranslation(['account', 'common'])
   const { lang = 'ar' } = useParams<{ lang: string }>()
 
-  const initials = getInitials(profile.full_name)
   const formattedJoinedDate = formatDate(profile.created_at, {
     locale: lang,
     dateStyle: 'medium',
@@ -38,11 +28,13 @@ export function ProfileHero({ profile, isEditing, onToggleEdit }: ProfileHeroPro
         {/* User Identity Info */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="relative shrink-0">
-            <Avatar className="size-16 sm:size-20 border-2 border-border shadow-xs">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg sm:text-xl">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <Blobatar
+              name={profile.full_name || profile.email || 'Customer'}
+              className="size-16 sm:size-20 border-2 border-border shadow-xs"
+              blobatar={{
+                animate: 'hover',
+              }}
+            />
             {profile.is_active && (
               <span
                 className="absolute end-0.5 bottom-0.5 size-4 rounded-full bg-success ring-2 ring-card"

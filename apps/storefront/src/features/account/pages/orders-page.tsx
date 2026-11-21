@@ -40,14 +40,14 @@ export function OrdersPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-border pb-2">
+      <div className="flex items-center gap-1.5 rounded-xl bg-muted/60 p-1 border border-border/50 w-fit">
         <button
           type="button"
           onClick={() => setActiveTab('all')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
             activeTab === 'all'
-              ? 'bg-primary text-primary-foreground font-semibold'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('orders.all')} ({orders.length})
@@ -55,10 +55,10 @@ export function OrdersPage() {
         <button
           type="button"
           onClick={() => setActiveTab('pending')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
             activeTab === 'pending'
-              ? 'bg-primary text-primary-foreground font-semibold'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('orders.pending')}
@@ -66,10 +66,10 @@ export function OrdersPage() {
         <button
           type="button"
           onClick={() => setActiveTab('completed')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
             activeTab === 'completed'
-              ? 'bg-primary text-primary-foreground font-semibold'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('orders.completed')}

@@ -6,7 +6,7 @@ import {
   User,
   Loader2,
 } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@workspace/ui/components/avatar'
+import { Blobatar } from '@workspace/ui/components/blobatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,13 +41,6 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
 
   const name = user?.full_name || 'System Operator'
   const email = user?.email || 'admin1@souqmuftah.com'
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .filter(Boolean)
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'SA'
 
   return (
     <SidebarMenu>
@@ -61,11 +54,13 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
               />
             }
           >
-            <Avatar className="size-8 rounded-lg">
-              <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold text-xs">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <Blobatar
+              name={name}
+              className="size-8 rounded-lg"
+              blobatar={{
+                animate: 'hover',
+              }}
+            />
             <div className="grid flex-1 text-start text-xs leading-tight">
               <span className="truncate font-semibold">{name}</span>
               <span className="truncate text-[10px] text-muted-foreground font-mono">
@@ -82,11 +77,13 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-start text-xs">
-                <Avatar className="size-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold text-xs">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <Blobatar
+                  name={name}
+                  className="size-8 rounded-lg"
+                  blobatar={{
+                    animate: 'hover',
+                  }}
+                />
                 <div className="grid flex-1 text-start text-xs leading-tight">
                   <span className="truncate font-semibold">{name}</span>
                   <span className="truncate text-[10px] text-muted-foreground font-mono">

@@ -28,12 +28,12 @@ export function OrderCard({ order }: OrderCardProps) {
   })
 
   return (
-    <Card className="p-4 sm:p-5 transition-all hover:border-primary/40 hover:shadow-xs">
+    <Card className="group p-4 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left / Info */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm sm:text-base font-semibold text-foreground">
+            <span className="font-mono text-sm sm:text-base font-semibold text-foreground px-2 py-0.5 rounded-md bg-muted/60 border border-border/50">
               {order.reference_code}
             </span>
             <OrderStatusBadge status={order.status} />
@@ -60,10 +60,10 @@ export function OrderCard({ order }: OrderCardProps) {
 
           <Link
             to={`/${lang}/account/orders/${order.id}`}
-            className="inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-2 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-2 text-xs sm:text-sm font-medium text-foreground transition-all duration-150 hover:bg-primary hover:text-primary-foreground active:scale-[0.98] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span>{t('orders.viewDetails')}</span>
-            <ChevronRight className="h-4 w-4 shrink-0 rtl:rotate-180" />
+            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
           </Link>
         </div>
       </div>

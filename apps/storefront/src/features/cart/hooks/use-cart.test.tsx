@@ -26,6 +26,7 @@ function createAuthContextValue(isAuthenticated: boolean): AuthContextValue {
           email: 'customer@example.com',
           full_name: 'Ahmed Hassan',
           phone: null,
+          is_active: true,
           created_at: '2026-11-20T00:00:00Z',
         }
       : null,

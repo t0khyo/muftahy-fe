@@ -29,6 +29,7 @@ export interface CartInputItem {
   unit_price?: number
   unit_price_egp?: string | number
   priceMinor?: number
+  currency?: string
   category?: ProductCategory
   variant?: ProductVariant
   coverImage?: string

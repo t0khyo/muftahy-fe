@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   Calendar,
+  KeyRound,
 } from 'lucide-react'
 import { Card } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
@@ -48,32 +49,37 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
     : null
 
   return (
-    <Card className="p-4 sm:p-5 transition-all hover:border-primary/40 hover:shadow-xs">
+    <Card className="p-4 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm">
       <div className="flex flex-col gap-4">
         {/* Top: Product Title & Badges */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="space-y-1">
-            <h3 className="font-heading text-base font-semibold text-foreground">
-              {userKey.product_name}
-            </h3>
-            {formattedDate && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3 shrink-0" />
-                <span>{t('keys.deliveredDate', { date: formattedDate })}</span>
-              </div>
-            )}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <KeyRound className="size-4" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <h3 className="font-heading text-base font-semibold text-foreground truncate">
+                {userKey.product_name}
+              </h3>
+              {formattedDate && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Calendar className="size-3 shrink-0" />
+                  <span>{t('keys.deliveredDate', { date: formattedDate })}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 self-start sm:self-auto">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="h-3 w-3 shrink-0" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <ShieldCheck className="size-3 shrink-0" />
               <span>{t('orders.detail.keyReady')}</span>
             </span>
           </div>
         </div>
 
         {/* Middle: Masked / Revealed Key Box */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 sm:px-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-xl border border-primary/20 bg-muted/50 p-3 sm:px-4">
           <div className="flex items-center gap-2 overflow-x-auto py-1">
             <span
               className={`font-mono text-sm sm:text-base font-semibold tracking-wider select-all transition-colors ${
@@ -91,17 +97,17 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
               variant="outline"
               size="sm"
               onClick={() => setIsRevealed(!isRevealed)}
-              className="gap-1.5 text-xs"
+              className="gap-1.5 text-xs active:scale-[0.98] transition-all"
               aria-label={isRevealed ? t('keys.hide') : t('keys.reveal')}
             >
               {isRevealed ? (
                 <>
-                  <EyeOff className="h-3.5 w-3.5" />
+                  <EyeOff className="size-3.5" />
                   <span>{t('keys.hide')}</span>
                 </>
               ) : (
                 <>
-                  <Eye className="h-3.5 w-3.5" />
+                  <Eye className="size-3.5" />
                   <span>{t('keys.reveal')}</span>
                 </>
               )}
@@ -113,7 +119,7 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
               variant={isCopied ? 'outline' : 'default'}
               size="sm"
               onClick={handleCopy}
-              className={`gap-1.5 text-xs transition-colors ${
+              className={`gap-1.5 text-xs transition-all active:scale-[0.98] ${
                 isCopied
                   ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                   : ''
@@ -122,12 +128,12 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
             >
               {isCopied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>{t('keys.copied')}</span>
                 </>
               ) : (
                 <>
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy className="size-3.5" />
                   <span>{t('keys.copy')}</span>
                 </>
               )}
@@ -143,9 +149,9 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
               variant="ghost"
               size="sm"
               onClick={() => onReportIssue(userKey)}
-              className="text-xs text-muted-foreground hover:text-destructive gap-1.5"
+              className="text-xs text-muted-foreground hover:text-destructive gap-1.5 active:scale-[0.98] transition-all"
             >
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <AlertTriangle className="size-3.5 shrink-0" />
               <span>{t('keys.reportIssue')}</span>
             </Button>
           </div>

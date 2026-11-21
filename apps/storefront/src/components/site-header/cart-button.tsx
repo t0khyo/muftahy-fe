@@ -290,7 +290,9 @@ export function CartButton({
             /* Populated Scrollable List (only this scrolls) */
             <div className="flex-1 overflow-y-auto px-5 lg:px-6 py-4 space-y-5">
               {items.map((item) => {
-                const productName = resolveLocalizedName(item.name, currentLang) || item.product_name
+                const productName = item.name
+                  ? (resolveLocalizedName(item.name, currentLang) || item.product_name)
+                  : item.product_name
                 const lineTotal = formatMoney(
                   item.unit_price * item.quantity,
                   { currency: 'EGP', locale: currentLang },

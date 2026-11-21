@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
@@ -24,6 +23,7 @@ function createAuthContextValue(isAuthenticated: boolean): AuthContextValue {
           email: 'customer@example.com',
           full_name: 'Alex Morgan',
           phone: null,
+          is_active: true,
           created_at: '2026-11-20T00:00:00Z',
         }
       : null,

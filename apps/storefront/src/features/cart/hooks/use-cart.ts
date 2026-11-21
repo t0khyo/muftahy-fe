@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCartService } from '@workspace/api/factory'
 import type { CartCheckoutRequest } from '@workspace/domain/schemas/cart'
+import type { ProductCategory, ProductVariant } from '@workspace/domain/schemas/product'
 import { useAuth } from '../../auth/hooks/use-auth'
 import { useCartStore } from '../stores/cart-store'
 
@@ -14,6 +15,10 @@ export interface UnifiedCartItem {
   quantity: number
   is_preorder: boolean
   unit_price: number
+  category?: ProductCategory
+  variant?: ProductVariant | null
+  coverImage?: string
+  name?: string | { en: string; ar: string }
 }
 
 export interface UnifiedCart {
@@ -69,6 +74,10 @@ export function useCart(): UnifiedCart {
       quantity: i.quantity,
       is_preorder: i.is_preorder,
       unit_price: i.unit_price,
+      category: i.category,
+      variant: i.variant,
+      coverImage: i.coverImage,
+      name: i.name,
     })),
     subtotal_egp: subtotal,
     item_count: count,

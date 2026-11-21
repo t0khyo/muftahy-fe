@@ -232,12 +232,25 @@ export function OrderDetailPage() {
 
         {/* Rejection / Warning Notice */}
         {order.rejection_reason && (
-          <div className="mt-4 flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-xs text-destructive">
-            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-semibold">{t('orders.detail.rejectionReason')}</span>
-              <p>{order.rejection_reason}</p>
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-destructive" />
+              <div className="space-y-0.5">
+                <span className="font-semibold text-foreground">{t('orders.detail.rejectionReason')}</span>
+                <p className="text-muted-foreground">{order.rejection_reason}</p>
+              </div>
             </div>
+            {isPendingPayment && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setUploadDialogOpen(true)}
+                className="gap-1.5 text-xs shrink-0 active:scale-[0.98]"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span>{t('orders.detail.uploadReceipt')}</span>
+              </Button>
+            )}
           </div>
         )}
       </Card>

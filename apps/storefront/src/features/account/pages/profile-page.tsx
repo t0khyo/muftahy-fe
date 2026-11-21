@@ -214,7 +214,9 @@ export function ProfilePage() {
                     </Label>
                     <Input
                       id="edit-phone"
+                      dir="ltr"
                       placeholder={t('auth:phonePlaceholder')}
+                      className="text-start [direction:ltr]"
                       {...register('phone')}
                       disabled={isUpdating}
                       aria-invalid={Boolean(errors.phone)}

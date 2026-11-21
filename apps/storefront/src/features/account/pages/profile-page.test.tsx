@@ -44,10 +44,22 @@ describe('ProfilePage (Design Taste & API Integration)', () => {
       document.elementFromPoint = vi.fn().mockReturnValue(null)
     }
     const userService = getUserService('storefront')
-    await userService.updateProfile({
+    vi.spyOn(userService, 'getProfile').mockResolvedValue({
+      id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+      email: 'customer@example.com',
       full_name: 'Ahmed Mohamed',
       phone: '01012345678',
+      is_active: true,
+      created_at: '2026-11-01T10:00:00Z',
     })
+    vi.spyOn(userService, 'updateProfile').mockImplementation(async (data) => ({
+      id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+      email: 'customer@example.com',
+      full_name: data.full_name ?? 'Ahmed Mohamed',
+      phone: data.phone ?? null,
+      is_active: true,
+      created_at: '2026-11-01T10:00:00Z',
+    }))
   })
 
   it('renders profile hero, personal details, security card, and shortcuts hub in English', async () => {
@@ -57,9 +69,6 @@ describe('ProfilePage (Design Taste & API Integration)', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Ahmed Mohamed' })).toBeInTheDocument()
     })
-
-    // Initials fallback
-    expect(screen.getByText('AM')).toBeInTheDocument()
 
     // Verified badge & status
     expect(screen.getByText('Verified Account')).toBeInTheDocument()
