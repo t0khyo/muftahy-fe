@@ -5,6 +5,7 @@ import { ShieldCheck, Lock, Terminal, Globe, Moon, Sun } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import { useTheme } from '../../../app/theme-context'
 import { cn } from '@workspace/ui/lib/utils'
+import { BrandLogoMark } from '../../../components/brand-logo'
 
 export interface AdminAuthLayoutProps {
   children: React.ReactNode
@@ -36,8 +37,8 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
         {/* Console wordmark */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-background text-foreground font-bold text-base shadow-sm">
-              M
+            <div className="flex size-10 items-center justify-center rounded-lg bg-background p-1.5 shadow-sm">
+              <BrandLogoMark className="size-7 shrink-0" idPrefix="admin-auth-brand-logo" />
             </div>
             <div className="flex flex-col">
               <span className="font-heading font-bold text-lg tracking-tight text-background">
@@ -94,7 +95,8 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
       <div className="flex flex-col justify-between px-6 py-8 md:px-12 lg:px-16">
         {/* Top utility bar */}
         <header className="flex w-full items-center justify-between pb-6">
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2.5">
+            <BrandLogoMark className="h-7 w-auto shrink-0" idPrefix="admin-auth-mobile-logo" />
             <span className="font-heading font-bold text-lg tracking-tight">Muftahy</span>
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary uppercase">
               Admin

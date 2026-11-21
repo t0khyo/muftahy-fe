@@ -24,6 +24,7 @@ import {
 import { NavMain, type NavSection } from './nav-main'
 import { NavUser } from './nav-user'
 import { useDashboardOverview } from '../hooks/use-admin-dashboard'
+import { BrandLogoMark } from '../../../components/brand-logo'
 
 export function AppSidebar({
   side,
@@ -115,8 +116,8 @@ export function AppSidebar({
               render={<Link to={`/${lang}`} />}
               className="gap-3 hover:bg-sidebar-accent/50 cursor-pointer"
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow-xs">
-                M
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 p-1 shadow-xs">
+                <BrandLogoMark className="size-6 shrink-0" idPrefix="admin-sidebar-logo" />
               </div>
               <div className="grid flex-1 text-start leading-tight">
                 <span className="font-heading font-bold text-sm tracking-tight text-sidebar-foreground">

@@ -28,6 +28,7 @@ import { useAuth } from '../hooks/use-auth'
 import { useGoogleAuth } from '../hooks/use-google-auth'
 import { getSanitizedReturnUrl } from '../lib/sanitize-return-to'
 import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
+import { BrandLogoMark } from '../../../components/brand-logo'
 
 export type LoginFormProps = React.ComponentProps<'div'>
 
@@ -112,6 +113,9 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="border-border/80 shadow-sm">
         <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex items-center justify-center">
+            <BrandLogoMark className="h-10 w-auto" idPrefix="login-card-logo" />
+          </div>
           <CardTitle className="text-xl font-bold tracking-tight">{t('welcomeBack')}</CardTitle>
           <CardDescription>{t('loginWithSocial')}</CardDescription>
         </CardHeader>

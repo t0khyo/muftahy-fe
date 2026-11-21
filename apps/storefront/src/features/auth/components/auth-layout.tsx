@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, ShieldCheck, Zap } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
+import { BrandLogoMark } from '../../../components/brand-logo'
 
 export interface AuthLayoutProps {
   children: React.ReactNode
@@ -35,8 +36,8 @@ export function AuthLayout({
 
         {/* Brand header */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-foreground text-primary font-bold text-base shadow-sm">
-            M
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary-foreground p-1.5 shadow-sm">
+            <BrandLogoMark className="size-7 shrink-0" idPrefix="auth-layout-brand-logo" />
           </div>
           <span className="font-heading font-bold text-xl tracking-tight text-primary-foreground">
             Muftahy
@@ -81,10 +82,8 @@ export function AuthLayout({
       <div className="flex flex-col items-center justify-center px-4 py-8 sm:px-6 md:px-10 lg:py-16">
         {/* Mobile brand mark */}
         <div className="mb-6 flex lg:hidden items-center justify-center">
-          <Link to={`/${lang}`} className="flex items-center gap-2 font-medium">
-            <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">
-              M
-            </div>
+          <Link to={`/${lang}`} className="flex items-center gap-2.5 font-medium">
+            <BrandLogoMark className="h-8 w-auto shrink-0" idPrefix="auth-layout-mobile-logo" />
             <span className="font-heading font-bold text-lg tracking-tight">Muftahy</span>
           </Link>
         </div>

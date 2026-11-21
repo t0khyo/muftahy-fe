@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { Eye, EyeOff, Loader2, AlertCircle, ShieldAlert } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { loginRequestSchema, type LoginRequest } from '@workspace/domain/schemas/auth'
 import { Button } from '@workspace/ui/components/button'
@@ -19,6 +19,7 @@ import {
 import { useAdminAuth } from '../hooks/use-admin-auth'
 import { getSanitizedReturnUrl } from '../lib/sanitize-return-to'
 import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
+import { BrandLogoMark } from '../../../components/brand-logo'
 
 export type AdminLoginFormProps = React.ComponentProps<'div'>
 
@@ -90,8 +91,8 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="border-border shadow-md">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <ShieldAlert className="h-6 w-6" />
+          <div className="mx-auto mb-1 flex items-center justify-center">
+            <BrandLogoMark className="h-10 w-auto" idPrefix="admin-login-logo" />
           </div>
           <CardTitle className="text-xl font-bold tracking-tight">
             {t('admin:signInTitle', 'Administrator Access')}
