@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   LifeBuoy,
   Search,
-  Filter,
   Clock,
   ShieldCheck,
 } from 'lucide-react'
@@ -84,155 +83,168 @@ export function AdminTicketsRoute() {
   }
 
   return (
-    <div className="space-y-6 text-start max-w-7xl mx-auto">
+    <div className="space-y-6 text-start w-full">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-border/40">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-mono font-medium mb-2">
+            <span className="size-1.5 rounded-full bg-primary" />
+            <span>Disputes & Claims</span>
+          </div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
             {t('admin:tickets.title', 'Customer Dispute Tickets')}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-1">
             {t('admin:tickets.subtitle', 'Adjudicate defective key claims, replacement dispatches, and refund concessions')}
           </p>
         </div>
       </div>
 
-      {/* Filter and Search */}
-      <Card className="border-border">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder={t('admin:tickets.searchPlaceholder', 'Search ticket ID, serial, or item ID...')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-9 h-9 text-sm"
-              />
-            </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <Filter className="size-3.5 text-muted-foreground me-1 shrink-0" />
-              {STATUS_FILTERS.map((tab) => (
-                <Button
+      {/* Streamlined Toolbar */}
+      <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder={t('admin:tickets.searchPlaceholder', 'Search ticket ID, serial, or item ID...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="ps-9 h-9 text-xs sm:text-sm bg-muted/30 border-border/70 focus-visible:bg-background transition-colors"
+            />
+          </div>
+
+          {/* Segmented Status Rail */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            {STATUS_FILTERS.map((tab) => {
+              const isSelected = selectedStatus === tab.value
+              return (
+                <button
                   key={tab.value}
-                  variant={selectedStatus === tab.value ? 'default' : 'outline'}
-                  size="sm"
+                  type="button"
                   onClick={() => setSelectedStatus(tab.value)}
-                  className="h-8 text-xs cursor-pointer shrink-0"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
                 >
                   {tab.label}
-                </Button>
-              ))}
-            </div>
+                </button>
+              )
+            })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Tickets Table */}
-      <Card className="border-border">
-        <CardHeader className="p-4 pb-2 text-start">
-          <CardTitle className="text-base font-semibold">
-            {t('admin:tickets.queueTitle', 'Dispute Queue')}
-            <span className="ms-2 font-mono text-xs font-normal text-muted-foreground">
-              ({filteredTickets.length} {t('admin:common.records', 'records')})
-            </span>
-          </CardTitle>
-          <CardDescription>
-            {t('admin:tickets.queueDesc', 'Strict SLA adjudication. Every replacement issues a new key from inventory.')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">
-              {t('admin:common.loading', 'Loading tickets...')}
+        {/* Tickets Table */}
+        <Card className="border-border/80 shadow-none overflow-hidden">
+          <CardHeader className="p-4 pb-3 text-start border-b border-border/40 bg-muted/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-bold tracking-tight">
+                  {t('admin:tickets.queueTitle', 'Dispute Queue')}
+                  <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
+                    ({filteredTickets.length} {t('admin:common.records', 'records')})
+                  </span>
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  {t('admin:tickets.queueDesc', 'Strict SLA adjudication. Every replacement issues a new key from inventory.')}
+                </CardDescription>
+              </div>
             </div>
-          ) : filteredTickets.length === 0 ? (
-            <div className="p-8">
-              <EmptyState
-                icon={LifeBuoy}
-                title={t('admin:tickets.emptyTitle', 'No tickets found')}
-                description={t(
-                  'admin:tickets.emptyDesc',
-                  'There are currently no customer dispute tickets matching your criteria.'
-                )}
-              />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-start">{t('admin:tickets.ticketId', 'Ticket ID')}</TableHead>
-                  <TableHead className="text-start">{t('admin:tickets.orderItem', 'Item ID')}</TableHead>
-                  <TableHead className="text-start">{t('admin:tickets.serial', 'Defective Serial')}</TableHead>
-                  <TableHead className="text-start">{t('admin:tickets.status', 'Status')}</TableHead>
-                  <TableHead className="text-start">{t('admin:tickets.comments', 'Comments')}</TableHead>
-                  <TableHead className="text-start">{t('admin:tickets.created', 'Created At')}</TableHead>
-                  <TableHead className="text-end">{t('admin:common.actions', 'Actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTickets.map((ticket) => {
-                  const isClosed = ticket.status === 'closed' || ticket.status === 'resolved'
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="py-20 text-center text-sm font-mono text-muted-foreground">
+                {t('admin:common.loading', 'Loading tickets...')}
+              </div>
+            ) : filteredTickets.length === 0 ? (
+              <div className="p-8">
+                <EmptyState
+                  icon={LifeBuoy}
+                  title={t('admin:tickets.emptyTitle', 'No tickets found')}
+                  description={t(
+                    'admin:tickets.emptyDesc',
+                    'There are currently no customer dispute tickets matching your criteria.'
+                  )}
+                />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="border-border/60 hover:bg-transparent">
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.ticketId', 'Ticket ID')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.orderItem', 'Item ID')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.serial', 'Defective Serial')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.status', 'Status')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.comments', 'Comments')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.created', 'Created At')}</TableHead>
+                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:common.actions', 'Actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTickets.map((ticket) => {
+                    const isClosed = ticket.status === 'closed' || ticket.status === 'resolved'
 
-                  return (
-                    <TableRow key={ticket.id} className="hover:bg-muted/40 transition-colors">
-                      <TableCell className="font-mono text-xs font-semibold text-start">
-                        #{ticket.id.slice(0, 8)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-start text-muted-foreground">
-                        #{ticket.order_item_id.slice(0, 8)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-start">
-                        <span className="font-medium text-foreground">{ticket.key_serial}</span>
-                      </TableCell>
-                      <TableCell className="text-start">
-                        <Badge
-                          variant={getStatusBadgeVariant(ticket.status)}
-                          className="capitalize text-[10px]"
-                        >
-                          {ticket.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-start text-xs font-mono text-muted-foreground">
-                        {ticket.comments.length}
-                      </TableCell>
-                      <TableCell className="text-xs text-start text-muted-foreground">
-                        {new Date(ticket.created_at).toLocaleString(
-                          lang === 'ar' ? 'ar-EG' : 'en-US',
-                          {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          }
-                        )}
-                      </TableCell>
-                      <TableCell className="text-end">
-                        <Button
-                          variant={isClosed ? 'ghost' : 'default'}
-                          size="sm"
-                          onClick={() => handleOpenResolve(ticket.id)}
-                          className="h-7 gap-1.5 text-xs cursor-pointer"
-                        >
-                          {isClosed ? (
-                            <>
-                              <ShieldCheck className="size-3" />
-                              <span>{t('admin:tickets.viewResolution', 'View Outcome')}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Clock className="size-3" />
-                              <span>{t('admin:tickets.resolveTicket', 'Resolve')}</span>
-                            </>
+                    return (
+                      <TableRow key={ticket.id} className="border-border/40 hover:bg-muted/20 transition-colors">
+                        <TableCell className="font-mono text-xs font-bold text-start text-foreground py-3.5">
+                          #{ticket.id.slice(0, 8)}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-start text-muted-foreground py-3.5">
+                          #{ticket.order_item_id.slice(0, 8)}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-start py-3.5">
+                          <span className="font-semibold text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/40">{ticket.key_serial}</span>
+                        </TableCell>
+                        <TableCell className="text-start py-3.5">
+                          <Badge
+                            variant={getStatusBadgeVariant(ticket.status)}
+                            className="capitalize text-[10px] font-mono tracking-tight"
+                          >
+                            {ticket.status.replace('_', ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-start text-xs font-mono text-muted-foreground py-3.5">
+                          {ticket.comments.length}
+                        </TableCell>
+                        <TableCell className="text-xs text-start text-muted-foreground font-mono py-3.5">
+                          {new Date(ticket.created_at).toLocaleString(
+                            lang === 'ar' ? 'ar-EG' : 'en-US',
+                            {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            }
                           )}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        </TableCell>
+                        <TableCell className="text-end py-3.5">
+                          <Button
+                            variant={isClosed ? 'ghost' : 'default'}
+                            size="sm"
+                            onClick={() => handleOpenResolve(ticket.id)}
+                            className="h-7 gap-1.5 text-xs font-medium cursor-pointer"
+                          >
+                            {isClosed ? (
+                              <>
+                                <ShieldCheck className="size-3" />
+                                <span>{t('admin:tickets.viewResolution', 'View Outcome')}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="size-3" />
+                                <span>{t('admin:tickets.resolveTicket', 'Resolve')}</span>
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Ticket Resolve Dialog */}
       <TicketResolveDialog

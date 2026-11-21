@@ -77,14 +77,18 @@ export function AdminAuditRoute() {
   }
 
   return (
-    <div className="space-y-6 text-start max-w-7xl mx-auto">
+    <div className="space-y-6 text-start w-full">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-border/40">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-mono font-medium mb-2">
+            <span className="size-1.5 rounded-full bg-primary" />
+            <span>Compliance & Security</span>
+          </div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
             {t('admin:audit.title', 'Security & Audit Log')}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-1">
             {t('admin:audit.subtitle', 'Append-only tamper-evident record of all operator mutations and access events')}
           </p>
         </div>
@@ -94,7 +98,7 @@ export function AdminAuditRoute() {
             size="sm"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="gap-2 h-9 text-xs cursor-pointer"
+            className="gap-2 h-9 text-xs font-medium cursor-pointer"
           >
             <RefreshCw className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`} />
             <span>{t('admin:audit.refresh', 'Refresh')}</span>
@@ -104,7 +108,7 @@ export function AdminAuditRoute() {
             size="sm"
             onClick={handleExportCsv}
             disabled={exportMutation.isPending}
-            className="gap-2 h-9 text-xs cursor-pointer"
+            className="gap-2 h-9 text-xs font-medium cursor-pointer"
           >
             <Download className="size-3.5" />
             <span>
@@ -116,109 +120,113 @@ export function AdminAuditRoute() {
         </div>
       </div>
 
-      {/* Filter and Search */}
-      <Card className="border-border">
-        <CardContent className="p-4">
-          <div className="relative max-w-md">
+      {/* Streamlined Toolbar */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
             <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder={t('admin:audit.searchPlaceholder', 'Filter by action, operator name, or target...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-9 h-9 text-sm"
+              className="ps-9 h-9 text-xs sm:text-sm bg-muted/30 border-border/70 focus-visible:bg-background transition-colors"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Audit Log Table */}
-      <Card className="border-border">
-        <CardHeader className="p-4 pb-2 text-start">
-          <CardTitle className="text-base font-semibold">
-            {t('admin:audit.tableTitle', 'Operator Audit Trail')}
-            <span className="ms-2 font-mono text-xs font-normal text-muted-foreground">
-              ({filteredLogs.length} {t('admin:common.records', 'records')})
-            </span>
-          </CardTitle>
-          <CardDescription>
-            {t('admin:audit.tableDesc', 'Zero-trust audit events are signed with operator identity and IP address.')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">
-              {t('admin:common.loading', 'Loading audit trail...')}
+        {/* Audit Log Table */}
+        <Card className="border-border/80 shadow-none overflow-hidden">
+          <CardHeader className="p-4 pb-3 text-start border-b border-border/40 bg-muted/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-bold tracking-tight">
+                  {t('admin:audit.tableTitle', 'Operator Audit Trail')}
+                  <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
+                    ({filteredLogs.length} {t('admin:common.records', 'records')})
+                  </span>
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  {t('admin:audit.tableDesc', 'Zero-trust audit events are signed with operator identity and IP address.')}
+                </CardDescription>
+              </div>
             </div>
-          ) : filteredLogs.length === 0 ? (
-            <div className="p-8">
-              <EmptyState
-                icon={ShieldAlert}
-                title={t('admin:audit.emptyTitle', 'No audit logs found')}
-                description={t(
-                  'admin:audit.emptyDesc',
-                  'Security and mutation events will be recorded here.'
-                )}
-              />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-start">{t('admin:audit.action', 'Action')}</TableHead>
-                  <TableHead className="text-start">{t('admin:audit.operator', 'Operator')}</TableHead>
-                  <TableHead className="text-start">{t('admin:audit.resource', 'Target')}</TableHead>
-                  <TableHead className="text-start">{t('admin:audit.ipAddress', 'IP')}</TableHead>
-                  <TableHead className="text-start">{t('admin:audit.timestamp', 'Date')}</TableHead>
-                  <TableHead className="text-end">{t('admin:common.actions', 'Details')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.map((log) => (
-                  <TableRow key={log.id} className="hover:bg-muted/40 transition-colors">
-                    <TableCell className="font-mono text-xs font-semibold text-start">
-                      <Badge variant="outline" className="text-[10px]">
-                        {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-start font-mono text-muted-foreground">
-                      {log.admin_name}
-                    </TableCell>
-                    <TableCell className="text-xs text-start">
-                      <span className="font-medium text-foreground">{log.target_type}</span>
-                      <span className="ms-1 font-mono text-muted-foreground text-[10px]">
-                        ({log.target_id.slice(0, 8)})
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-start text-muted-foreground">
-                      {log.ip_address || '—'}
-                    </TableCell>
-                    <TableCell className="text-xs text-start text-muted-foreground">
-                      {new Date(log.created_at).toLocaleString(
-                        lang === 'ar' ? 'ar-EG' : 'en-US',
-                        {
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        }
-                      )}
-                    </TableCell>
-                    <TableCell className="text-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDetail(log)}
-                        className="h-7 gap-1 text-xs cursor-pointer"
-                      >
-                        <Eye className="size-3" />
-                        <span>{t('admin:audit.viewPayload', 'Payload')}</span>
-                      </Button>
-                    </TableCell>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="py-20 text-center text-sm font-mono text-muted-foreground">
+                {t('admin:common.loading', 'Loading audit trail...')}
+              </div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="p-8">
+                <EmptyState
+                  icon={ShieldAlert}
+                  title={t('admin:audit.emptyTitle', 'No audit logs found')}
+                  description={t(
+                    'admin:audit.emptyDesc',
+                    'Security and mutation events will be recorded here.'
+                  )}
+                />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="border-border/60 hover:bg-transparent">
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.action', 'Action')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.operator', 'Operator')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.resource', 'Target')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.ipAddress', 'IP')}</TableHead>
+                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.timestamp', 'Date')}</TableHead>
+                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:common.actions', 'Details')}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs.map((log) => (
+                    <TableRow key={log.id} className="border-border/40 hover:bg-muted/20 transition-colors">
+                      <TableCell className="font-mono text-xs font-semibold text-start py-3.5">
+                        <Badge variant="outline" className="text-[10px] font-mono border-border/60 bg-muted/40">
+                          {log.action}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-start font-mono text-foreground font-medium py-3.5">
+                        {log.admin_name}
+                      </TableCell>
+                      <TableCell className="text-xs text-start py-3.5">
+                        <span className="font-semibold text-foreground">{log.target_type}</span>
+                        <span className="ms-1.5 font-mono text-muted-foreground text-[10px]">
+                          ({log.target_id.slice(0, 8)})
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-start text-muted-foreground py-3.5">
+                        {log.ip_address || '—'}
+                      </TableCell>
+                      <TableCell className="text-xs text-start text-muted-foreground font-mono py-3.5">
+                        {new Date(log.created_at).toLocaleString(
+                          lang === 'ar' ? 'ar-EG' : 'en-US',
+                          {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          }
+                        )}
+                      </TableCell>
+                      <TableCell className="text-end py-3.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenDetail(log)}
+                          className="h-7 gap-1 text-xs font-medium cursor-pointer hover:text-foreground"
+                        >
+                          <Eye className="size-3" />
+                          <span>{t('admin:audit.viewPayload', 'Payload')}</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Payload JSON Inspector Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>

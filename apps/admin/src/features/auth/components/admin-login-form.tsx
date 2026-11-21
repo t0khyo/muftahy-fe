@@ -89,8 +89,8 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="border-border shadow-md">
-        <CardHeader className="text-center space-y-2">
+      <Card className="border-border/80 shadow-sm">
+        <CardHeader className="text-center space-y-2 pb-4">
           <div className="mx-auto mb-1 flex items-center justify-center">
             <BrandLogoMark className="h-10 w-auto" idPrefix="admin-login-logo" />
           </div>
@@ -118,6 +118,7 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
                 <Input
                   id="admin-email"
                   type="email"
+                  dir="ltr"
                   autoComplete="email"
                   placeholder={t('auth:emailPlaceholder')}
                   {...register('email')}
@@ -132,6 +133,7 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
                   <Input
                     id="admin-password"
                     type={showPassword ? 'text' : 'password'}
+                    dir="ltr"
                     autoComplete="current-password"
                     placeholder={t('auth:passwordPlaceholder')}
                     className="pe-10"
@@ -140,7 +142,7 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
                   />
                   <button
                     type="button"
-                    className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? t('auth:hidePassword') : t('auth:showPassword')}
                   >
@@ -153,7 +155,7 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
               <Field>
                 <Button
                   type="submit"
-                  className="w-full active:scale-[0.98] transition-transform"
+                  className="w-full active:translate-y-px transition-all font-medium cursor-pointer shadow-xs"
                   disabled={isSubmitting || retrySeconds !== null}
                 >
                   {isSubmitting ? (

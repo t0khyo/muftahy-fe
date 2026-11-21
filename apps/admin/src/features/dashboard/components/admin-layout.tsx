@@ -22,10 +22,10 @@ export function AdminLayout() {
           side={isRtl ? 'right' : 'left'}
           dir={isRtl ? 'rtl' : 'ltr'}
         />
-        <SidebarInset>
+        <SidebarInset className="bg-background">
           <SiteHeader />
           <div className="flex flex-1 flex-col">
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 w-full max-w-[1400px] mx-auto">
               <Outlet />
             </main>
           </div>
