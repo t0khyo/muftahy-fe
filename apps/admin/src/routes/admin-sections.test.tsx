@@ -10,6 +10,7 @@ import { AdminTicketsRoute } from './admin-tickets-route'
 import { AdminPromosRoute } from './admin-promos-route'
 import { AdminLedgerRoute } from './admin-ledger-route'
 import { AdminAuditRoute } from './admin-audit-route'
+import { AdminProfileRoute } from './admin-profile-route'
 import * as useAdminAuthModule from '../features/auth/hooks/use-admin-auth'
 import * as apiFactory from '@workspace/api/factory'
 import type { AdminDashboardService } from '@workspace/api/services/admin-dashboard-service'
@@ -237,5 +238,24 @@ describe('Admin Section Workstation Pages', () => {
     expect(screen.getByRole('heading', { name: 'Security & Audit Log' })).toBeInTheDocument()
     expect(await screen.findByText('No audit logs found')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument()
+  })
+
+  it('renders Operator Profile workstation at /en/profile', async () => {
+    mockAuth()
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <MemoryRouter initialEntries={['/en/profile']}>
+          <Routes>
+            <Route path="/:lang" element={<AdminLayout />}>
+              <Route path="profile" element={<AdminProfileRoute />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByRole('heading', { name: 'Operator Profile' })).toBeInTheDocument()
+    expect(screen.getAllByText('Lead Admin').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('admin1@souqmuftah.com').length).toBeGreaterThanOrEqual(1)
   })
 })

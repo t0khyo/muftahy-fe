@@ -1,8 +1,9 @@
 import * as React from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronsUpDown,
   LogOut,
-  ShieldCheck,
   User,
   Loader2,
 } from 'lucide-react'
@@ -25,6 +26,9 @@ import {
 import { useAdminAuth } from '../../auth/hooks/use-admin-auth'
 
 export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
+  const navigate = useNavigate()
+  const { lang = 'en' } = useParams<{ lang: string }>()
+  const { t } = useTranslation(['admin'])
   const { isMobile } = useSidebar()
   const { user, logout, isLoading } = useAdminAuth()
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
@@ -34,6 +38,7 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
     setIsLoggingOut(true)
     try {
       await logout()
+      navigate(`/${lang}/login`, { replace: true })
     } finally {
       setIsLoggingOut(false)
     }
@@ -75,32 +80,33 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
             align={isRtl ? 'start' : 'end'}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-start text-xs">
-                <Blobatar
-                  name={name}
-                  className="size-8 rounded-lg"
-                  blobatar={{
-                    animate: 'hover',
-                  }}
-                />
-                <div className="grid flex-1 text-start text-xs leading-tight">
-                  <span className="truncate font-semibold">{name}</span>
-                  <span className="truncate text-[10px] text-muted-foreground font-mono">
-                    {email}
-                  </span>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-start text-xs">
+                  <Blobatar
+                    name={name}
+                    className="size-8 rounded-lg"
+                    blobatar={{
+                      animate: 'hover',
+                    }}
+                  />
+                  <div className="grid flex-1 text-start text-xs leading-tight">
+                    <span className="truncate font-semibold">{name}</span>
+                    <span className="truncate text-[10px] text-muted-foreground font-mono">
+                      {email}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 cursor-pointer">
-                <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Zero-Trust Session Active</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer">
+              <DropdownMenuItem
+                render={<Link to={`/${lang}/profile`} />}
+                className="gap-2 cursor-pointer"
+              >
                 <User className="size-4" />
-                <span>Operator Profile</span>
+                <span>{t('admin:nav.profile', 'Operator Profile')}</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -115,7 +121,7 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
               ) : (
                 <LogOut className="size-4 rtl:rotate-180" />
               )}
-              <span>End Admin Session</span>
+              <span>{t('admin:logout', 'Logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
