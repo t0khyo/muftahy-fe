@@ -183,8 +183,11 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                 <Input
                   id="login-email"
                   type="email"
+                  dir="ltr"
                   autoComplete="email"
                   placeholder={t('emailPlaceholder')}
+                  /* Explicit physical LTR direction: email addresses are always in Latin script */
+                  className="text-start [direction:ltr]"
                   {...register('email')}
                   disabled={isSubmitting || retrySeconds !== null}
                 />
@@ -205,8 +208,11 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                 <Input
                   id="login-password"
                   type="password"
+                  dir="ltr"
                   autoComplete="current-password"
                   placeholder={t('passwordPlaceholder')}
+                  /* Explicit physical LTR direction: passwords are typed in Latin script */
+                  className="text-start [direction:ltr]"
                   {...register('password')}
                   disabled={isSubmitting || retrySeconds !== null}
                 />

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
 import { getCartService } from '@workspace/api/factory'
+import type { CartService } from '@workspace/api/services/cart-service'
 import { AuthContext, type AuthContextValue } from '../features/auth/context/auth-context'
 import { useCartStore } from '../features/cart/stores/cart-store'
 import { CheckoutRoute } from './checkout-route'
@@ -88,7 +89,7 @@ describe('CheckoutRoute (Digital Goods Checkout)', () => {
   beforeEach(() => {
     useCartStore.getState().clear()
     vi.clearAllMocks()
-    vi.mocked(getCartService).mockReturnValue(mockCartService as any)
+    vi.mocked(getCartService).mockReturnValue(mockCartService as unknown as CartService)
   })
 
   it('redirects unauthenticated user to login', () => {

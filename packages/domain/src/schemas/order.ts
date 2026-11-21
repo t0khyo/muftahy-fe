@@ -91,3 +91,30 @@ export const uploadReceiptFormSchema = z.object({
 })
 
 export type UploadReceiptFormInput = z.infer<typeof uploadReceiptFormSchema>
+
+export const orderReviewRequestSchema = z.object({
+  action: z.enum(['approve', 'reject_wrong_amount', 'reject_refund']),
+  reason: z.string().optional(),
+})
+
+export type OrderReviewRequest = z.infer<typeof orderReviewRequestSchema>
+
+export const orderItemRefundRequestSchema = z.object({
+  gateway_fee_egp: z.number().nonnegative().default(0),
+})
+
+export type OrderItemRefundRequest = z.infer<typeof orderItemRefundRequestSchema>
+
+export const orderListResponseSchema = z.array(orderResponseSchema)
+export type OrderListResponse = z.infer<typeof orderListResponseSchema>
+
+export const paymentAttemptListSchema = z.array(paymentAttemptSchema)
+export type PaymentAttemptList = z.infer<typeof paymentAttemptListSchema>
+
+export const refundItemResponseSchema = z.object({
+  status: z.string(),
+  message: z.string(),
+})
+export type RefundItemResponse = z.infer<typeof refundItemResponseSchema>
+
+

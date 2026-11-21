@@ -3,6 +3,15 @@ import { renderHook, act } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminAuthProvider } from '../context/admin-auth-provider'
 import { useAdminAuth } from './use-admin-auth'
+import * as apiFactory from '@workspace/api/factory'
+import type { AuthService } from '@workspace/api/services/auth-service'
+import type { UserService } from '@workspace/api/services/user-service'
+
+// Valid JWT payload for testing: { sub: 'usr-1', role: 'admin', aud: 'admin' }
+const MOCK_ADMIN_ACCESS_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItMSIsInJvbGUiOiJhZG1pbiIsImF1ZCI6ImFkbWluIn0.mock_signature'
+const MOCK_ADMIN_REFRESH_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItMSIsInJvbGUiOiJhZG1pbiIsImF1ZCI6ImFkbWluIn0.mock_refresh'
 
 describe('useAdminAuth hook', () => {
   let mockStorage: Record<string, string> = {}
@@ -45,6 +54,33 @@ describe('useAdminAuth hook', () => {
   })
 
   it('authenticates admin operator on valid credentials and clears on logout', async () => {
+    const mockAuthService = {
+      login: vi.fn(),
+      adminLogin: vi.fn().mockResolvedValue({
+        access_token: MOCK_ADMIN_ACCESS_TOKEN,
+        refresh_token: MOCK_ADMIN_REFRESH_TOKEN,
+        token_type: 'bearer',
+      }),
+      register: vi.fn(),
+      refreshToken: vi.fn(),
+      logout: vi.fn().mockResolvedValue(undefined),
+    }
+
+    const mockUserService = {
+      getProfile: vi.fn().mockResolvedValue({
+        id: 'usr-1',
+        email: 'admin1@souqmuftah.com',
+        full_name: 'Lead Admin',
+        is_active: true,
+        created_at: '2026-01-01T00:00:00Z',
+        phone: null,
+      }),
+      updateProfile: vi.fn(),
+    }
+
+    vi.spyOn(apiFactory, 'getAuthService').mockReturnValue(mockAuthService as unknown as AuthService)
+    vi.spyOn(apiFactory, 'getUserService').mockReturnValue(mockUserService as unknown as UserService)
+
     const wrapper = ({ children }: { children: React.ReactNode }) => <AdminAuthProvider>{children}</AdminAuthProvider>
     const { result } = renderHook(() => useAdminAuth(), { wrapper })
 

@@ -164,5 +164,49 @@ describe('HttpTicketAdapter', () => {
     )
     expect(result.id).toBe('923e4567-e89b-12d3-a456-426614174009')
   })
+
+  it('calls POST /tickets/:id/resolve with adjudication payload', async () => {
+    const resolvedResponse = {
+      ...mockTicketResponse,
+      status: 'closed',
+      outcome: 'replacement',
+      is_locked: true,
+      replacement_key_serial: 'REPLACEMENT-KEY-1234',
+    }
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => resolvedResponse,
+    })
+
+    const client = new NativeFetchClient({
+      baseURL: 'http://localhost:8000/api/v1',
+      fetchFn: mockFetch as unknown as typeof fetch,
+    })
+    const adapter = new HttpTicketAdapter(client)
+
+    const result = await adapter.resolveTicket('123e4567-e89b-12d3-a456-426614174000', {
+      outcome: 'replacement',
+      replacement_key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      admin_override: true,
+      customer_message: 'Defective key replaced.',
+    })
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:8000/api/v1/tickets/123e4567-e89b-12d3-a456-426614174000/resolve',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          outcome: 'replacement',
+          replacement_key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+          admin_override: true,
+          customer_message: 'Defective key replaced.',
+        }),
+      }),
+    )
+    expect(result.status).toBe('closed')
+    expect(result.outcome).toBe('replacement')
+  })
 })
 

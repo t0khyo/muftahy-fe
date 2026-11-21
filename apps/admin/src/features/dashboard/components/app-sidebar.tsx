@@ -6,7 +6,9 @@ import {
   PackageCheck,
   ShoppingCart,
   KeyRound,
-  Users,
+  LifeBuoy,
+  Tag,
+  BookOpen,
   ShieldAlert,
 } from 'lucide-react'
 import {
@@ -21,6 +23,7 @@ import {
 } from '@workspace/ui/components/sidebar'
 import { NavMain, type NavSection } from './nav-main'
 import { NavUser } from './nav-user'
+import { useDashboardOverview } from '../hooks/use-admin-dashboard'
 
 export function AppSidebar({
   side,
@@ -30,8 +33,13 @@ export function AppSidebar({
   const { lang = 'en' } = useParams<{ lang: string }>()
   const { pathname } = useLocation()
   const { t } = useTranslation(['admin'])
+  const { data: overview } = useDashboardOverview()
 
   const isExactDashboard = pathname === `/${lang}` || pathname === `/${lang}/`
+
+  const pendingOrders = overview?.pending_orders_count
+  const openTickets = overview?.open_tickets_count
+  const lowStockCount = overview?.low_stock_products?.length
 
   const navSections: NavSection[] = [
     {
@@ -48,26 +56,39 @@ export function AppSidebar({
           url: `/${lang}/products`,
           icon: PackageCheck,
           isActive: pathname.startsWith(`/${lang}/products`),
-          badge: '184',
         },
         {
           title: t('admin:nav.orders', 'Orders & Fulfillment'),
           url: `/${lang}/orders`,
           icon: ShoppingCart,
           isActive: pathname.startsWith(`/${lang}/orders`),
-          badge: '14',
+          badge: pendingOrders && pendingOrders > 0 ? String(pendingOrders) : undefined,
         },
         {
           title: t('admin:nav.inventory', 'Key Pool Inventory'),
           url: `/${lang}/inventory`,
           icon: KeyRound,
           isActive: pathname.startsWith(`/${lang}/inventory`),
+          badge: lowStockCount && lowStockCount > 0 ? t('admin:nav.lowStockBadge', 'Low') : undefined,
         },
         {
-          title: t('admin:nav.customers', 'Customer Accounts'),
-          url: `/${lang}/customers`,
-          icon: Users,
-          isActive: pathname.startsWith(`/${lang}/customers`),
+          title: t('admin:nav.tickets', 'Support Tickets'),
+          url: `/${lang}/tickets`,
+          icon: LifeBuoy,
+          isActive: pathname.startsWith(`/${lang}/tickets`),
+          badge: openTickets && openTickets > 0 ? String(openTickets) : undefined,
+        },
+        {
+          title: t('admin:nav.promos', 'Promotions'),
+          url: `/${lang}/promos`,
+          icon: Tag,
+          isActive: pathname.startsWith(`/${lang}/promos`),
+        },
+        {
+          title: t('admin:nav.ledger', 'Financial Ledger'),
+          url: `/${lang}/ledger`,
+          icon: BookOpen,
+          isActive: pathname.startsWith(`/${lang}/ledger`),
         },
       ],
     },
@@ -121,4 +142,3 @@ export function AppSidebar({
     </Sidebar>
   )
 }
-

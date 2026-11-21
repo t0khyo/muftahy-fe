@@ -780,11 +780,97 @@
       "products": "Products & SKUs",
       "orders": "Orders & Fulfillment",
       "inventory": "Key Pool Inventory",
+      "tickets": "Support Tickets",
+      "promos": "Promotions",
+      "ledger": "Financial Ledger",
       "customers": "Customer Accounts",
       "audit": "Security & Audit Log"
     },
     "sidebar": {
       "toggle": "Toggle sidebar"
+    },
+    "dashboardMetrics": {
+      "todayRevenue": "Today's Revenue",
+      "todayOrders": "Today's Orders",
+      "pendingReview": "Pending Review",
+      "openTickets": "Open Disputes",
+      "lowStockAlert": "Low Stock Products",
+      "replenishNow": "Replenish Vault",
+      "salesTrend": "Sales Trend (EGP Volume)",
+      "preorderWatch": "Pending Pre-orders",
+      "oldestWaitingOrder": "Oldest backlog: {{hours}}h ago",
+      "noLowStock": "All inventory levels healthy"
+    },
+    "ordersModule": {
+      "startReview": "Start Review",
+      "underReview": "Under Review",
+      "receiptImage": "Transfer Receipt",
+      "claimedAmount": "Claimed Amount",
+      "orderTotal": "Order Total",
+      "paymentMethod": "Payment Channel",
+      "approveAction": "Approve & Dispatch Keys",
+      "rejectAction": "Reject Transfer",
+      "rejectReason": "Rejection Reason",
+      "rejectWrongAmount": "Wrong Amount (Allow Re-upload)",
+      "rejectRefund": "Fraudulent / Refund",
+      "refundItem": "Refund Item",
+      "gatewayFee": "Gateway Fee (EGP)",
+      "preorderConverted": "Order converted to preorder backorder due to zero available stock"
+    },
+    "inventoryModule": {
+      "ingestKeys": "Ingest Keys",
+      "keyVault": "License Key Vault",
+      "totalCostUsd": "Total Acquisition Cost (USD)",
+      "pasteKeysLabel": "Activation Serials (one per line)",
+      "dropFile": "Drag & drop .txt or .csv key list",
+      "poolStandard": "Standard Delivery Pool",
+      "poolReplacement": "Customer Replacement Pool",
+      "revealKey": "Reveal",
+      "maskKey": "Mask",
+      "copyKey": "Copy",
+      "copied": "Copied!",
+      "markDefective": "Mark Defective",
+      "reconciliationTitle": "Partial Failure Reconciliation",
+      "failedSerials": "Failed Serials ({{count}})",
+      "copyFailedOnly": "Copy Failed Serials Only"
+    },
+    "ticketsModule": {
+      "resolveTicket": "Resolve Ticket",
+      "outcome": "Resolution Outcome",
+      "outcomeReplacement": "Provide Replacement Key",
+      "outcomeRefund": "Issue Refund",
+      "outcomeRefused": "Refuse / Invalid Claim",
+      "replacementKey": "Select Replacement Key",
+      "adminOverride": "Admin Override Replacement Policy",
+      "internalNote": "Operator Message to Customer",
+      "ticketLocked": "This dispute ticket is resolved and locked."
+    },
+    "promosModule": {
+      "createPromo": "Create Promo Code",
+      "promoCode": "Promo Code",
+      "discountPercentage": "Discount %",
+      "maxUses": "Max Uses",
+      "currentUses": "Current Uses",
+      "expiresAt": "Expiration Date",
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "ledgerModule": {
+      "cashOnHand": "EGP Cash on Hand",
+      "usdWallet": "USD Supplier Wallet",
+      "heldDeferred": "Held Deferred Revenue",
+      "grossProfit": "Gross Profit",
+      "doubleEntryJournal": "Audit Journal Stream",
+      "credit": "Credit",
+      "debit": "Debit"
+    },
+    "common": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "save": "Save",
+      "loading": "Loading...",
+      "search": "Search...",
+      "rateLimitExceeded": "Rate limit exceeded. Automatic retry in {{seconds}}s."
     },
     "emptyState": {
       "products": {

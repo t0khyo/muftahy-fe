@@ -6,7 +6,9 @@ import { AdminDashboardRoute } from '../routes/admin-dashboard-route'
 import { AdminProductsRoute } from '../routes/admin-products-route'
 import { AdminOrdersRoute } from '../routes/admin-orders-route'
 import { AdminInventoryRoute } from '../routes/admin-inventory-route'
-import { AdminCustomersRoute } from '../routes/admin-customers-route'
+import { AdminTicketsRoute } from '../routes/admin-tickets-route'
+import { AdminPromosRoute } from '../routes/admin-promos-route'
+import { AdminLedgerRoute } from '../routes/admin-ledger-route'
 import { AdminAuditRoute } from '../routes/admin-audit-route'
 import { AdminGuard } from '../features/auth/components/admin-guard'
 import { AdminLayout } from '../features/dashboard/components/admin-layout'
@@ -48,8 +50,20 @@ export const router = createBrowserRouter([
             element: <AdminInventoryRoute />,
           },
           {
+            path: 'tickets',
+            element: <AdminTicketsRoute />,
+          },
+          {
+            path: 'promos',
+            element: <AdminPromosRoute />,
+          },
+          {
+            path: 'ledger',
+            element: <AdminLedgerRoute />,
+          },
+          {
             path: 'customers',
-            element: <AdminCustomersRoute />,
+            element: <Navigate to="../orders" replace />,
           },
           {
             path: 'audit',

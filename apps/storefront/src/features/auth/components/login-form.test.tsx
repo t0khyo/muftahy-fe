@@ -46,8 +46,12 @@ describe('LoginForm (login-03 adaptation)', () => {
     expect(screen.getByText(/or continue with/i)).toBeInTheDocument()
 
     // Email & Password inputs
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+    const emailInput = screen.getByLabelText(/email address/i)
+    const passwordInput = screen.getByLabelText(/password/i)
+    expect(emailInput).toBeInTheDocument()
+    expect(emailInput).toHaveAttribute('dir', 'ltr')
+    expect(passwordInput).toBeInTheDocument()
+    expect(passwordInput).toHaveAttribute('dir', 'ltr')
     expect(screen.getByRole('link', { name: /forgot password\?/i })).toBeInTheDocument()
 
     // Submit button & link to register
@@ -68,8 +72,12 @@ describe('LoginForm (login-03 adaptation)', () => {
     expect(screen.getByRole('button', { name: /المتابعة باستخدام Google/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /المتابعة باستخدام Apple/i })).not.toBeInTheDocument()
     expect(screen.getByText(/أو المتابعة عبر/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/البريد الإلكتروني/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/كلمة المرور/i)).toBeInTheDocument()
+    const arEmailInput = screen.getByLabelText(/البريد الإلكتروني/i)
+    const arPasswordInput = screen.getByLabelText(/كلمة المرور/i)
+    expect(arEmailInput).toBeInTheDocument()
+    expect(arEmailInput).toHaveAttribute('dir', 'ltr')
+    expect(arPasswordInput).toBeInTheDocument()
+    expect(arPasswordInput).toHaveAttribute('dir', 'ltr')
     expect(screen.getByRole('link', { name: /نسيت كلمة المرور؟/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /تسجيل الدخول/i })).toBeInTheDocument()
   })

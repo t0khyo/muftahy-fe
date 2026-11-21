@@ -3,6 +3,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCartService } from '@workspace/api/factory'
+import type { CartService } from '@workspace/api/services/cart-service'
 import { AuthContext, type AuthContextValue } from '../../auth/context/auth-context'
 import { useCartStore } from '../stores/cart-store'
 import {
@@ -68,7 +69,7 @@ describe('useCart hooks', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useCartStore.getState().clear()
-    vi.mocked(getCartService).mockReturnValue(mockCartService as any)
+    vi.mocked(getCartService).mockReturnValue(mockCartService as unknown as CartService)
   })
 
   it('returns guest cart state when unauthenticated', () => {
@@ -197,13 +198,13 @@ describe('useCart hooks', () => {
       wrapper: createWrapper(true),
     })
 
-    let promoResult: any
+    let promoResult: { valid: boolean } | undefined
     await act(async () => {
-      promoResult = await result.current.mutateAsync('SAVE10')
+      promoResult = (await result.current.mutateAsync('SAVE10')) as { valid: boolean }
     })
 
     expect(mockCartService.validatePromo).toHaveBeenCalledWith('SAVE10')
-    expect(promoResult.valid).toBe(true)
+    expect(promoResult?.valid).toBe(true)
   })
 
   it('useCheckout executes checkout and clears guest cart', async () => {

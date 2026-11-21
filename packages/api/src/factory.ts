@@ -4,6 +4,12 @@ import type { UserService } from './services/user-service'
 import type { OrderService } from './services/order-service'
 import type { TicketService } from './services/ticket-service'
 import type { CartService } from './services/cart-service'
+import type { AdminDashboardService } from './services/admin-dashboard-service'
+import type { InventoryService } from './services/inventory-service'
+import type { AdminOrderService } from './services/admin-order-service'
+import type { AuditService } from './services/audit-service'
+import type { PromoService } from './services/promo-service'
+import type { LedgerService } from './services/ledger-service'
 import { TokenStorage } from './adapters/http/token-storage'
 import { NativeFetchClient } from './adapters/http/fetch-client'
 import { HttpAuthAdapter } from './adapters/http/http-auth-adapter'
@@ -12,6 +18,12 @@ import { HttpProductAdapter } from './adapters/http/http-product-adapter'
 import { HttpOrderAdapter } from './adapters/http/http-order-adapter'
 import { HttpTicketAdapter } from './adapters/http/http-ticket-adapter'
 import { HttpCartAdapter } from './adapters/http/http-cart-adapter'
+import { HttpAdminDashboardAdapter } from './adapters/http/http-admin-dashboard-adapter'
+import { HttpInventoryAdapter } from './adapters/http/http-inventory-adapter'
+import { HttpAdminOrderAdapter } from './adapters/http/http-admin-order-adapter'
+import { HttpAuditAdapter } from './adapters/http/http-audit-adapter'
+import { HttpPromoAdapter } from './adapters/http/http-promo-adapter'
+import { HttpLedgerAdapter } from './adapters/http/http-ledger-adapter'
 
 export interface ApiServices {
   products: ProductService
@@ -69,6 +81,12 @@ class ServiceRegistry {
   private readonly orderServices = new Map<string, OrderService>()
   private readonly ticketServices = new Map<string, TicketService>()
   private readonly cartServices = new Map<string, CartService>()
+  private readonly adminDashboardServices = new Map<string, AdminDashboardService>()
+  private readonly inventoryServices = new Map<string, InventoryService>()
+  private readonly adminOrderServices = new Map<string, AdminOrderService>()
+  private readonly auditServices = new Map<string, AuditService>()
+  private readonly promoServices = new Map<string, PromoService>()
+  private readonly ledgerServices = new Map<string, LedgerService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
 
   getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService {
@@ -172,6 +190,96 @@ class ServiceRegistry {
     }
     return service
   }
+
+  getAdminDashboardService(options?: { baseURL?: string }): AdminDashboardService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.adminDashboardServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage('admin')
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpAdminDashboardAdapter(client)
+      this.adminDashboardServices.set(key, service)
+    }
+    return service
+  }
+
+  getInventoryService(options?: { baseURL?: string }): InventoryService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.inventoryServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage('admin')
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpInventoryAdapter(client)
+      this.inventoryServices.set(key, service)
+    }
+    return service
+  }
+
+  getAdminOrderService(options?: { baseURL?: string }): AdminOrderService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.adminOrderServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage('admin')
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpAdminOrderAdapter(client)
+      this.adminOrderServices.set(key, service)
+    }
+    return service
+  }
+
+  getAuditService(options?: { baseURL?: string }): AuditService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.auditServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage('admin')
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpAuditAdapter(client)
+      this.auditServices.set(key, service)
+    }
+    return service
+  }
+
+  getPromoService(options?: { baseURL?: string }): PromoService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.promoServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage('admin')
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpPromoAdapter(client)
+      this.promoServices.set(key, service)
+    }
+    return service
+  }
+
+  getLedgerService(options?: { baseURL?: string }): LedgerService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.ledgerServices.get(key)
+    if (!service) {
+      const tokenStorage = this.getTokenStorage('admin')
+      const client = new NativeFetchClient({
+        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
+      })
+      service = new HttpLedgerAdapter(client)
+      this.ledgerServices.set(key, service)
+    }
+    return service
+  }
 }
 
 export const services = new ServiceRegistry()
@@ -187,4 +295,16 @@ export const getTicketService = (app: AppScope = 'storefront', options?: { baseU
   services.getTicketService(app, options)
 export const getCartService = (app: AppScope = 'storefront', options?: { baseURL?: string }): CartService =>
   services.getCartService(app, options)
+export const getAdminDashboardService = (options?: { baseURL?: string }): AdminDashboardService =>
+  services.getAdminDashboardService(options)
+export const getInventoryService = (options?: { baseURL?: string }): InventoryService =>
+  services.getInventoryService(options)
+export const getAdminOrderService = (options?: { baseURL?: string }): AdminOrderService =>
+  services.getAdminOrderService(options)
+export const getAuditService = (options?: { baseURL?: string }): AuditService =>
+  services.getAuditService(options)
+export const getPromoService = (options?: { baseURL?: string }): PromoService =>
+  services.getPromoService(options)
+export const getLedgerService = (options?: { baseURL?: string }): LedgerService =>
+  services.getLedgerService(options)
 export const getTokenStorage = (app: AppScope = 'storefront'): TokenStorage => services.getTokenStorage(app)

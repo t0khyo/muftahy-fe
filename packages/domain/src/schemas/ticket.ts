@@ -62,3 +62,13 @@ export const addCommentFormSchema = z.object({
 })
 
 export type AddCommentFormInput = z.infer<typeof addCommentFormSchema>
+
+export const ticketResolveRequestSchema = z.object({
+  outcome: ticketOutcomeSchema,
+  replacement_key_id: z.string().uuid().optional(),
+  admin_override: z.boolean().default(false),
+  customer_message: z.string().optional(),
+})
+
+export type TicketResolveRequest = z.infer<typeof ticketResolveRequestSchema>
+

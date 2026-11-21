@@ -217,7 +217,7 @@ export function CartRoute() {
                   {items.map((item) => (
                     <CartLineItem
                       key={item.id}
-                      item={item as any}
+                      item={item as unknown as Parameters<typeof CartLineItem>[0]['item']}
                       lang={lang}
                       onRemove={handleRemove}
                       removeButtonRef={(el) => {

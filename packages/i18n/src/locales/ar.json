@@ -784,11 +784,97 @@
       "products": "المنتجات والمفاتيح",
       "orders": "الطلبات والتنفيذ",
       "inventory": "مخزون المفاتيح الرقمية",
+      "tickets": "تذاكر الدعم",
+      "promos": "العروض والخصومات",
+      "ledger": "الدفتر المالي",
       "customers": "حسابات العملاء",
       "audit": "سجل الأمان والتدقيق"
     },
     "sidebar": {
       "toggle": "تبديل الشريط الجانبي"
+    },
+    "dashboardMetrics": {
+      "todayRevenue": "إيرادات اليوم",
+      "todayOrders": "طلبات اليوم",
+      "pendingReview": "قيد المراجعة",
+      "openTickets": "شكاوى مفتوحة",
+      "lowStockAlert": "منتجات قاربت على النفاد",
+      "replenishNow": "تزويد المخزون",
+      "salesTrend": "حركة المبيعات (بالجنيه)",
+      "preorderWatch": "الطلبات المسبقة المعلقة",
+      "oldestWaitingOrder": "أقدم طلب: منذ {{hours}} ساعة",
+      "noLowStock": "مستويات المخزون كافية"
+    },
+    "ordersModule": {
+      "startReview": "بدء المراجعة",
+      "underReview": "قيد التدقيق",
+      "receiptImage": "إيصال التحويل",
+      "claimedAmount": "المبلغ المحول",
+      "orderTotal": "إجمالي الطلب",
+      "paymentMethod": "طريقة الدفع",
+      "approveAction": "اعتماد وتسليم المفاتيح",
+      "rejectAction": "رفض التحويل",
+      "rejectReason": "سبب الرفض",
+      "rejectWrongAmount": "المبلغ غير مطابق (إتاحة إعادة الرفع)",
+      "rejectRefund": "إيصال وهمي / استرجاع",
+      "refundItem": "استرجاع عنصر",
+      "gatewayFee": "رسوم بوابة الدفع (جنيه)",
+      "preorderConverted": "تم تحويل الطلب لطلب مسبق لنفاد المخزون الفوري"
+    },
+    "inventoryModule": {
+      "ingestKeys": "إدخال مفاتيح",
+      "keyVault": "خزنة المفاتيح الرقمية",
+      "totalCostUsd": "تكلفة الشراء الإجمالية (دولار)",
+      "pasteKeysLabel": "أكواد التفعيل (كود في كل سطر)",
+      "dropFile": "اسحب وأفلت ملف .txt أو .csv",
+      "poolStandard": "مخزون المبيعات العادي",
+      "poolReplacement": "مخزون استبدال الضمان",
+      "revealKey": "إظهار",
+      "maskKey": "إخفاء",
+      "copyKey": "نسخ",
+      "copied": "تم النسخ!",
+      "markDefective": "تعليم كتالف",
+      "reconciliationTitle": "تقرير الأكواد المرفوضة",
+      "failedSerials": "أكواد فشل إدخالها ({{count}})",
+      "copyFailedOnly": "نسخ الأكواد الفاشلة فقط"
+    },
+    "ticketsModule": {
+      "resolveTicket": "معالجة التذكرة",
+      "outcome": "القرار النهائي",
+      "outcomeReplacement": "تسليم مفتاح بديل",
+      "outcomeRefund": "استرجاع المبلغ",
+      "outcomeRefused": "رفض الطلب",
+      "replacementKey": "اختيار المفتاح البديل",
+      "adminOverride": "استثناء إداري لسياسة الاستبدال",
+      "internalNote": "رسالة المشغل للعميل",
+      "ticketLocked": "تم حل التذكرة وإغلاقها."
+    },
+    "promosModule": {
+      "createPromo": "إنشاء كود خصم",
+      "promoCode": "كود الخصم",
+      "discountPercentage": "نسبة الخصم %",
+      "maxUses": "الحد الأقصى للاستخدام",
+      "currentUses": "مرات الاستخدام",
+      "expiresAt": "تاريخ الانتهاء",
+      "deactivate": "إيقاف الكود",
+      "activate": "تفعيل الكود"
+    },
+    "ledgerModule": {
+      "cashOnHand": "السيولة النقدية (جنيه)",
+      "usdWallet": "محفظة الموردين (دولار)",
+      "heldDeferred": "إيرادات معلقة ومؤجلة",
+      "grossProfit": "إجمالي الأرباح",
+      "doubleEntryJournal": "سجل العمليات المزدوج",
+      "credit": "دائن",
+      "debit": "مدين"
+    },
+    "common": {
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "loading": "جاري التحميل...",
+      "search": "بحث...",
+      "rateLimitExceeded": "تم تجاوز حد الطلبات. إعادة المحاولة تلقائياً خلال {{seconds}} ثانية."
     },
     "emptyState": {
       "products": {

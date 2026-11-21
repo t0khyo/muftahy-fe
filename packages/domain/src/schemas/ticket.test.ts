@@ -3,6 +3,7 @@ import {
   ticketDetailSchema,
   openTicketFormSchema,
   addCommentFormSchema,
+  ticketResolveRequestSchema,
 } from './ticket'
 
 describe('ticket schemas', () => {
@@ -103,6 +104,31 @@ describe('ticket schemas', () => {
 
     it('rejects empty comment', () => {
       expect(() => addCommentFormSchema.parse({ content: '' })).toThrow()
+    })
+  })
+
+  describe('ticketResolveRequestSchema', () => {
+    it('validates replacement resolution with key ID and admin override', () => {
+      const payload = {
+        outcome: 'replacement',
+        replacement_key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        admin_override: true,
+        customer_message: 'Here is your replacement key.',
+      }
+      const parsed = ticketResolveRequestSchema.parse(payload)
+      expect(parsed.outcome).toBe('replacement')
+      expect(parsed.admin_override).toBe(true)
+    })
+
+    it('validates refund resolution with default override', () => {
+      const payload = { outcome: 'refund' }
+      const parsed = ticketResolveRequestSchema.parse(payload)
+      expect(parsed.outcome).toBe('refund')
+      expect(parsed.admin_override).toBe(false)
+    })
+
+    it('rejects invalid outcome', () => {
+      expect(() => ticketResolveRequestSchema.parse({ outcome: 'unknown' })).toThrow()
     })
   })
 })

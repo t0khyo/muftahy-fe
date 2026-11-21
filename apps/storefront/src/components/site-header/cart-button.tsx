@@ -3,8 +3,6 @@ import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   KeyRound,
-  Minus,
-  Plus,
   ShoppingBag,
   X,
 } from 'lucide-react'

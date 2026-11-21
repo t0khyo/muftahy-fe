@@ -3,6 +3,8 @@ import {
   orderResponseSchema,
   userOrderSummarySchema,
   uploadReceiptFormSchema,
+  orderReviewRequestSchema,
+  orderItemRefundRequestSchema,
 } from './order'
 
 describe('order schemas', () => {
@@ -127,6 +129,38 @@ describe('order schemas', () => {
       }
 
       expect(() => uploadReceiptFormSchema.parse(payload)).toThrow()
+    })
+  })
+
+  describe('orderReviewRequestSchema', () => {
+    it('validates approve action', () => {
+      const parsed = orderReviewRequestSchema.parse({ action: 'approve' })
+      expect(parsed.action).toBe('approve')
+    })
+
+    it('validates reject_wrong_amount with reason', () => {
+      const parsed = orderReviewRequestSchema.parse({
+        action: 'reject_wrong_amount',
+        reason: 'Receipt shows 200 EGP instead of 500 EGP',
+      })
+      expect(parsed.action).toBe('reject_wrong_amount')
+      expect(parsed.reason).toContain('200 EGP')
+    })
+
+    it('rejects unrecognized action', () => {
+      expect(() => orderReviewRequestSchema.parse({ action: 'unknown' })).toThrow()
+    })
+  })
+
+  describe('orderItemRefundRequestSchema', () => {
+    it('validates refund request with default gateway fee', () => {
+      const parsed = orderItemRefundRequestSchema.parse({})
+      expect(parsed.gateway_fee_egp).toBe(0)
+    })
+
+    it('validates custom gateway fee', () => {
+      const parsed = orderItemRefundRequestSchema.parse({ gateway_fee_egp: 15.5 })
+      expect(parsed.gateway_fee_egp).toBe(15.5)
     })
   })
 })

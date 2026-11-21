@@ -1,6 +1,7 @@
 import {
   type CommentResponse,
   type TicketDetail,
+  type TicketResolveRequest,
   commentResponseSchema,
   ticketDetailListSchema,
   ticketDetailSchema,
@@ -57,5 +58,13 @@ export class HttpTicketAdapter implements TicketService {
       body: { content },
     })
     return commentResponseSchema.parse(raw)
+  }
+
+  async resolveTicket(ticketId: string, payload: TicketResolveRequest): Promise<TicketDetail> {
+    const raw = await this.client.request<unknown>(`/tickets/${ticketId}/resolve`, {
+      method: 'POST',
+      body: payload,
+    })
+    return ticketDetailSchema.parse(raw)
   }
 }

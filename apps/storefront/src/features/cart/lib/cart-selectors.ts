@@ -1,5 +1,4 @@
 import { formatMoney, type SupportedCurrency } from '@workspace/domain/formatters/money'
-import type { CartItem } from '../stores/cart-store'
 
 export function resolveLocalizedName(
   value: { en: string; ar: string } | string | undefined,

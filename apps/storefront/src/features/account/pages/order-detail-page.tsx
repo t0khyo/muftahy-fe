@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router'
 import {
@@ -32,15 +32,12 @@ export function OrderDetailPage() {
   const isNewOrder = searchParams.get('new') === 'true'
   const { order, isLoading, isError, refetch } = useOrderDetail(id)
 
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [manualUploadOpen, setManualUploadOpen] = useState<boolean | null>(null)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false)
 
-  useEffect(() => {
-    if (isNewOrder && order && order.status === 'pending_payment') {
-      setUploadDialogOpen(true)
-    }
-  }, [isNewOrder, order])
+  const uploadDialogOpen = manualUploadOpen ?? Boolean(isNewOrder && order?.status === 'pending_payment')
+  const setUploadDialogOpen = (open: boolean) => setManualUploadOpen(open)
   const [selectedItemForTicket, setSelectedItemForTicket] = useState<{
     itemId: string
     keySerial?: string
