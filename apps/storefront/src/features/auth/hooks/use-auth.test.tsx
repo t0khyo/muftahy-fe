@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getAuthService, getUserService } from '@workspace/api/factory'
 import { AuthProvider } from '../context/auth-provider'
 import { useAuth } from './use-auth'
 
@@ -43,6 +44,24 @@ describe('useAuth hook', () => {
   })
 
   it('authenticates user on login and clears on logout', async () => {
+    const authService = getAuthService('storefront')
+    const userService = getUserService('storefront')
+    vi.spyOn(authService, 'login').mockResolvedValue({
+      access_token: 'mock-access',
+      refresh_token: 'mock-refresh',
+      token_type: 'bearer',
+      expires_in: 3600,
+    })
+    vi.spyOn(userService, 'getProfile').mockResolvedValue({
+      id: '123',
+      email: 'customer@example.com',
+      full_name: 'Customer Test',
+      is_active: true,
+      created_at: '2026-01-01T00:00:00Z',
+      phone: null,
+    })
+    vi.spyOn(authService, 'logout').mockResolvedValue({ status: 'success', message: 'Logged out successfully' })
+
     const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>
     const { result } = renderHook(() => useAuth(), { wrapper })
 

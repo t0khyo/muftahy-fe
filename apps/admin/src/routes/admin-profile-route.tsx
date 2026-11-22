@@ -16,7 +16,7 @@ import { Blobatar } from '@workspace/ui/components/blobatar'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
+import { FieldGroup, Field, FieldLabel, FieldError } from '@workspace/ui/components/field'
 import {
   Card,
   CardContent,
@@ -87,7 +87,7 @@ export function AdminProfileRoute() {
 
   if (isLoading || !profile) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6" data-testid="admin-profile-loading">
+      <div className="max-w-3xl mx-auto space-y-6" data-testid="admin-profile-loading">
         <div className="rounded-xl border border-border bg-card p-6 shadow-xs">
           <div className="flex items-center gap-4">
             <Skeleton className="size-16 rounded-xl" />
@@ -105,7 +105,7 @@ export function AdminProfileRoute() {
   const email = profile.email || 'admin1@souqmuftah.com'
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Page Title */}
       <AdminPageHeader
         title={t('admin:profile.title', 'Profile')}
@@ -157,50 +157,52 @@ export function AdminProfileRoute() {
 
           {/* Form */}
           <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
-            <div className="space-y-2 text-start">
-              <Label htmlFor="full_name" className="text-xs font-medium">
-                {t('admin:profile.fullName', 'Full Name')}
-              </Label>
-              <Input
-                id="full_name"
-                {...register('full_name')}
-                placeholder={displayName}
-                className="h-9 text-sm"
-              />
-              {errors.full_name && (
-                <p className="text-xs text-destructive">{errors.full_name.message}</p>
-              )}
-            </div>
+            <FieldGroup className="gap-4">
+              <Field data-invalid={!!errors.full_name} className="space-y-2 text-start">
+                <FieldLabel htmlFor="full_name" className="text-xs font-medium">
+                  {t('admin:profile.fullName', 'Full Name')}
+                </FieldLabel>
+                <Input
+                  id="full_name"
+                  {...register('full_name')}
+                  placeholder={displayName}
+                  className="h-9 text-sm"
+                />
+                {errors.full_name && (
+                  <FieldError>{errors.full_name.message}</FieldError>
+                )}
+              </Field>
 
-            <div className="space-y-2 text-start">
-              <Label htmlFor="email" className="text-xs font-medium">
-                {t('admin:profile.email', 'Email Address')}
-              </Label>
-              <Input
-                id="email"
-                value={email}
-                disabled
-                className="h-9 text-sm bg-muted/50 font-mono text-muted-foreground"
-              />
-              <p className="text-[11px] text-muted-foreground">
-                {t('admin:profile.emailHint', 'Your email cannot be changed.')}
-              </p>
-            </div>
+              <Field className="space-y-2 text-start">
+                <FieldLabel htmlFor="email" className="text-xs font-medium">
+                  {t('admin:profile.email', 'Email Address')}
+                </FieldLabel>
+                <Input
+                  id="email"
+                  value={email}
+                  disabled
+                  className="h-9 text-sm bg-muted/50 font-mono text-muted-foreground"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {t('admin:profile.emailHint', 'Your email cannot be changed.')}
+                </p>
+              </Field>
 
-            <div className="space-y-2 text-start">
-              <Label htmlFor="phone" className="text-xs font-medium">
-                {t('admin:profile.phone', 'Phone Number')}
-              </Label>
-              <Input
-                id="phone"
-                {...register('phone')}
-                placeholder={t('admin:profile.phonePlaceholder', '+20 100 000 0000')}
-                className="h-9 text-sm font-mono"
-              />
-              {errors.phone && (
-                <p className="text-xs text-destructive">{errors.phone.message}</p>
-              )}
-            </div>
+              <Field data-invalid={!!errors.phone} className="space-y-2 text-start">
+                <FieldLabel htmlFor="phone" className="text-xs font-medium">
+                  {t('admin:profile.phone', 'Phone Number')}
+                </FieldLabel>
+                <Input
+                  id="phone"
+                  {...register('phone')}
+                  placeholder={t('admin:profile.phonePlaceholder', '+20 100 000 0000')}
+                  className="h-9 text-sm font-mono"
+                />
+                {errors.phone && (
+                  <FieldError>{errors.phone.message}</FieldError>
+                )}
+              </Field>
+            </FieldGroup>
 
             <div className="pt-2 flex justify-end">
               <Button

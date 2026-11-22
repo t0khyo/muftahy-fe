@@ -242,7 +242,7 @@ describe('Home Page Skeleton', () => {
     await screen.findAllByRole('article')
 
     // Track does not have negative margin -mx-4, preserving 16px container padding before cards
-    const track = within(railSection).getByTestId('rail-content-best-sellers')
+    const track = await within(railSection).findByTestId('rail-content-best-sellers')
     expect(track.className).not.toContain('-mx-4')
 
     // Desktop side arrows
@@ -285,8 +285,8 @@ describe('Home Page Skeleton', () => {
 
     await screen.findAllByRole('article')
 
-    const prevBtn = within(railSection).getByRole('button', { name: /المنتجات السابقة/i })
-    const nextBtn = within(railSection).getByRole('button', { name: /المنتجات التالية/i })
+    const prevBtn = await within(railSection).findByRole('button', { name: /المنتجات السابقة/i })
+    const nextBtn = await within(railSection).findByRole('button', { name: /المنتجات التالية/i })
 
     expect(prevBtn).toBeInTheDocument()
     expect(nextBtn).toBeInTheDocument()

@@ -10,6 +10,14 @@ import { formatMoney } from '@workspace/domain/formatters/money'
 import { resolveProductImage } from '../../features/products/utils/asset-resolver'
 import { Button } from '@workspace/ui/components/button'
 import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@workspace/ui/components/empty'
+import {
   Sheet,
   SheetClose,
   SheetContent,
@@ -223,34 +231,38 @@ export function CartButton({
           {/* 2 ── Body: Scrollable Item List OR Empty State */}
           {items.length === 0 ? (
             /* Empty State (no footer) */
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 space-y-4">
-              <div className="size-16 rounded-2xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground mb-2">
-                <ShoppingBag className="size-8" aria-hidden="true" />
-              </div>
+            <Empty className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 border-none">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-secondary/60 border border-border/40 mb-2">
+                  <ShoppingBag className="size-8 text-muted-foreground" aria-hidden="true" />
+                </EmptyMedia>
 
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t('nothingSelectedYet', {
-                  ns: 'header',
-                  defaultValue: 'Nothing selected yet',
-                })}
-              </span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {t('nothingSelectedYet', {
+                    ns: 'header',
+                    defaultValue: 'Nothing selected yet',
+                  })}
+                </span>
 
-              <h2 className="text-[26px] lg:text-[28px] font-semibold text-foreground leading-tight">
-                {t('yourBagIsEmpty', {
-                  ns: 'header',
-                  defaultValue: 'Your bag is empty',
-                })}
-              </h2>
+                <EmptyTitle className="text-[26px] lg:text-[28px] font-semibold text-foreground leading-tight">
+                  <h2>
+                    {t('yourBagIsEmpty', {
+                      ns: 'header',
+                      defaultValue: 'Your bag is empty',
+                    })}
+                  </h2>
+                </EmptyTitle>
 
-              <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                {t('findNext', {
-                  ns: 'header',
-                  defaultValue:
-                    'Find your next game, license, or subscription.',
-                })}
-              </p>
+                <EmptyDescription className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                  {t('findNext', {
+                    ns: 'header',
+                    defaultValue:
+                      'Find your next game, license, or subscription.',
+                  })}
+                </EmptyDescription>
+              </EmptyHeader>
 
-              <div className="pt-4 flex flex-col items-center w-full max-w-[280px] gap-2.5">
+              <EmptyContent className="pt-4 flex flex-col items-center w-full max-w-[280px] gap-2.5">
                 <Button
                   nativeButton={false}
                   render={
@@ -284,8 +296,8 @@ export function CartButton({
                     defaultValue: 'Browse bundles',
                   })}
                 </Button>
-              </div>
-            </div>
+              </EmptyContent>
+            </Empty>
           ) : (
             /* Populated Scrollable List (only this scrolls) */
             <div className="flex-1 overflow-y-auto px-5 lg:px-6 py-4 space-y-5">

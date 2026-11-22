@@ -17,6 +17,17 @@ import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
+import { Card } from '@workspace/ui/components/card'
+import { Separator } from '@workspace/ui/components/separator'
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@workspace/ui/components/empty'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import {
   useApplyPromoCode,
@@ -164,34 +175,38 @@ export function CheckoutRoute() {
 
         {/* Empty State */}
         {!hasItems ? (
-          <div className="flex flex-col items-center justify-center p-8 sm:p-16 text-center rounded-2xl border border-dashed border-border/70 bg-card/40 max-w-xl mx-auto space-y-4">
-            <div className="size-20 rounded-2xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground mb-2">
-              <ShoppingBag className="size-10" aria-hidden="true" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {t('yourBagIsEmpty', { ns: 'cart', defaultValue: 'Your bag is empty' })}
-            </h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
-              {t('findNext', {
-                ns: 'cart',
-                defaultValue: 'Find your next game, license, or subscription.',
-              })}
-            </p>
-            <Button
-              nativeButton={false}
-              render={<Link to={`/${lang}/products`} />}
-              variant="default"
-              className="h-12 px-8 rounded-full font-medium text-sm"
-            >
-              {t('exploreProducts', { ns: 'cart', defaultValue: 'Explore products' })}
-            </Button>
-          </div>
+          <Empty className="border border-dashed border-border/70 bg-card/40 max-w-xl mx-auto p-8 sm:p-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="size-20 rounded-2xl bg-secondary/60 border border-border/40 mb-2">
+                <ShoppingBag className="size-10 text-muted-foreground" aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle className="text-2xl sm:text-3xl font-bold text-foreground">
+                <h2>{t('yourBagIsEmpty', { ns: 'cart', defaultValue: 'Your bag is empty' })}</h2>
+              </EmptyTitle>
+              <EmptyDescription className="text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
+                {t('findNext', {
+                  ns: 'cart',
+                  defaultValue: 'Find your next game, license, or subscription.',
+                })}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent className="pt-4 flex justify-center">
+              <Button
+                nativeButton={false}
+                render={<Link to={`/${lang}/products`} />}
+                variant="default"
+                className="h-12 px-8 rounded-full font-medium text-sm"
+              >
+                {t('exploreProducts', { ns: 'cart', defaultValue: 'Explore products' })}
+              </Button>
+            </EmptyContent>
+          </Empty>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Column: Customer details & Offline Payment Instructions */}
             <div className="lg:col-span-7 xl:col-span-7 space-y-6 text-start">
               {/* Customer Account Info */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-4">
+              <Card className="rounded-2xl border-border/60 bg-card p-6 shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-foreground">
                   {isRtl ? 'بيانات الحساب والتسليم' : 'Customer & Delivery Account'}
                 </h2>
@@ -213,10 +228,10 @@ export function CheckoutRoute() {
                       : 'Digital keys are delivered to your email upon payment confirmation'}
                   </span>
                 </div>
-              </div>
+              </Card>
 
               {/* Payment Method Notice: Offline Receipt */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-4">
+              <Card className="rounded-2xl border-border/60 bg-card p-6 shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Smartphone className="size-5 text-primary" />
                   <span>{isRtl ? 'طريقة الدفع: تحويل محلي (مصر)' : 'Payment Method: Local Transfer (Egypt)'}</span>
@@ -243,7 +258,7 @@ export function CheckoutRoute() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Terms Checkbox & Error Banner */}
               <div className="space-y-4">
@@ -262,17 +277,17 @@ export function CheckoutRoute() {
                 </div>
 
                 {checkoutError && (
-                  <div className="flex items-center gap-2.5 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs">
+                  <Alert variant="destructive">
                     <AlertCircle className="size-4 shrink-0" />
-                    <span>{checkoutError}</span>
-                  </div>
+                    <AlertDescription className="text-xs">{checkoutError}</AlertDescription>
+                  </Alert>
                 )}
               </div>
             </div>
 
             {/* Right Column: Order Review & Checkout Confirmation */}
             <div className="lg:col-span-5 xl:col-span-5 sticky top-24 space-y-4 text-start">
-              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-6">
+              <Card className="rounded-2xl border-border/60 bg-card p-6 shadow-sm space-y-6">
                 <h2 className="text-xl font-bold text-foreground">
                   {isRtl ? 'مراجعة الطلب' : 'Order Review'}
                 </h2>
@@ -337,7 +352,9 @@ export function CheckoutRoute() {
                 </form>
 
                 {/* Totals */}
-                <div className="border-t border-border/40 pt-4 space-y-2 text-sm">
+                <div className="space-y-2 text-sm">
+                  <Separator className="my-2 bg-border/40" />
+
                   <div className="flex items-center justify-between text-muted-foreground">
                     <span>{t('subtotal', { ns: 'cart', defaultValue: 'Subtotal' })}</span>
                     <span className="font-medium text-foreground tabular-nums">{formattedSubtotal}</span>
@@ -358,7 +375,9 @@ export function CheckoutRoute() {
                     <span className="text-primary font-semibold">{isRtl ? 'مجاني' : 'FREE'}</span>
                   </div>
 
-                  <div className="border-t border-border/40 pt-3 flex items-baseline justify-between">
+                  <Separator className="my-2 bg-border/40" />
+
+                  <div className="flex items-baseline justify-between">
                     <span className="text-base font-semibold text-foreground">
                       {t('total', { ns: 'cart', defaultValue: 'Total' })}
                     </span>
@@ -396,7 +415,7 @@ export function CheckoutRoute() {
                     <span>{isRtl ? 'حجز فوري للمفاتيح لمدة 24 ساعة' : 'Instant 24-hour inventory hold upon checkout'}</span>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         )}

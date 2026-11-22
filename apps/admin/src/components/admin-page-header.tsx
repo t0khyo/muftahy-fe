@@ -15,7 +15,7 @@ export function AdminPageHeader({
 }: AdminPageHeaderProps) {
   return (
     <div
-      className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-border/40 ${className}`}
+      className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 mb-6 border-b border-border/50 ${className}`}
     >
       <div className="space-y-1 text-start">
         <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">

@@ -40,6 +40,15 @@ export function useAddTicketComment() {
           comments: [...prev.comments, newComment],
         }
       })
+      // Update any cached ticket list so comments count badge updates immediately
+      queryClient.setQueriesData<TicketDetail[]>({ queryKey: adminTicketKeys.all }, (prev) => {
+        if (!Array.isArray(prev)) return prev
+        return prev.map((t) =>
+          t.id === ticketId
+            ? { ...t, comments: [...t.comments, newComment] }
+            : t
+        )
+      })
     },
   })
 }

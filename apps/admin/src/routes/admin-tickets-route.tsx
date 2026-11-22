@@ -6,12 +6,18 @@ import {
   Search,
   Clock,
   ShieldCheck,
+  MessageSquare,
+  Copy,
+  Tag,
+  KeyRound,
 } from 'lucide-react'
 import { useAdminTickets } from '../features/tickets/hooks/use-tickets'
-import { type TicketStatus } from '@workspace/domain/schemas/ticket'
+import { type TicketStatus, type TicketDetail } from '@workspace/domain/schemas/ticket'
+import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import {
   Card,
   CardContent,
@@ -28,8 +34,12 @@ import {
   TableRow,
 } from '@workspace/ui/components/table'
 import { TicketResolveDialog } from '../features/tickets/components/ticket-resolve-dialog'
+import { AdminTicketChatSheet } from '../features/tickets/components/admin-ticket-chat-sheet'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
+import { DataTableColumnHeader } from '../components/data-table-column-header'
+import { DataTableRowActions } from '../components/data-table-row-actions'
+import { useDataTableSort } from '../hooks/use-data-table-sort'
 
 const STATUS_FILTERS: { label: string; value: TicketStatus | 'all' }[] = [
   { label: 'All Tickets', value: 'all' },
@@ -47,6 +57,8 @@ export function AdminTicketsRoute() {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [resolveDialogOpen, setResolveDialogOpen] = React.useState(false)
   const [activeTicketId, setActiveTicketId] = React.useState<string | null>(null)
+  const [chatSheetOpen, setChatSheetOpen] = React.useState(false)
+  const [activeChatTicketId, setActiveChatTicketId] = React.useState<string | null>(null)
 
   const { data: tickets, isLoading } = useAdminTickets(
     selectedStatus === 'all' ? undefined : selectedStatus
@@ -64,9 +76,22 @@ export function AdminTicketsRoute() {
     )
   }, [tickets, searchQuery])
 
+  const { sortedItems, sortConfig, toggleSort } = useDataTableSort<TicketDetail>(
+    filteredTickets,
+    { column: 'created_at', direction: 'desc' },
+    {
+      comments_count: (t) => t.comments.length,
+    }
+  )
+
   const handleOpenResolve = (id: string) => {
     setActiveTicketId(id)
     setResolveDialogOpen(true)
+  }
+
+  const handleOpenChat = (id: string) => {
+    setActiveChatTicketId(id)
+    setChatSheetOpen(true)
   }
 
   const getStatusBadgeVariant = (status: TicketStatus) => {
@@ -87,8 +112,8 @@ export function AdminTicketsRoute() {
     <div className="space-y-6 text-start w-full">
       {/* Header */}
       <AdminPageHeader
-        title={t('admin:tickets.title', 'Customer Dispute Tickets')}
-        description={t('admin:tickets.subtitle', 'Adjudicate defective key claims, replacement dispatches, and refund concessions')}
+        title={t('admin:tickets.title', 'Customer Support')}
+        description={t('admin:tickets.subtitle', 'Manage customer tickets, issue replacement keys, and process refunds')}
       />
 
       {/* Streamlined Toolbar */}
@@ -105,25 +130,20 @@ export function AdminTicketsRoute() {
           </div>
 
           {/* Segmented Status Rail */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-            {STATUS_FILTERS.map((tab) => {
-              const isSelected = selectedStatus === tab.value
-              return (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => setSelectedStatus(tab.value)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
+          <Tabs
+            value={selectedStatus}
+            onValueChange={(val) => {
+              if (val) setSelectedStatus(val as TicketStatus | 'all')
+            }}
+          >
+            <TabsList className="h-8">
+              {STATUS_FILTERS.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
                   {tab.label}
-                </button>
-              )
-            })}
-          </div>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Tickets Table */}
@@ -132,13 +152,13 @@ export function AdminTicketsRoute() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold tracking-tight">
-                  {t('admin:tickets.queueTitle', 'Dispute Queue')}
+                  {t('admin:tickets.queueTitle', 'Support Tickets')}
                   <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
                     ({filteredTickets.length} {t('admin:common.records', 'records')})
                   </span>
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                  {t('admin:tickets.queueDesc', 'Strict SLA adjudication. Every replacement issues a new key from inventory.')}
+                  {t('admin:tickets.queueDesc', 'Resolve customer requests. Approving a replacement allocates a key from inventory.')}
                 </CardDescription>
               </div>
             </div>
@@ -161,33 +181,80 @@ export function AdminTicketsRoute() {
               </div>
             ) : (
               <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.ticketId', 'Ticket ID')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.orderItem', 'Item ID')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.serial', 'Defective Serial')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.status', 'Status')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.comments', 'Comments')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:tickets.created', 'Created At')}</TableHead>
-                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:common.actions', 'Actions')}</TableHead>
+                    <TableHead className="ps-4 pe-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="id"
+                        title={t('admin:tickets.ticketId', 'Ticket ID')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="order_item_id"
+                        title={t('admin:tickets.orderItem', 'Item ID')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="key_serial"
+                        title={t('admin:tickets.serial', 'Defective Serial')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-center">
+                      <DataTableColumnHeader
+                        column="status"
+                        title={t('admin:tickets.status', 'Status')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="center"
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-center">
+                      <DataTableColumnHeader
+                        column="comments_count"
+                        title={t('admin:tickets.comments', 'Comments')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="center"
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-end">
+                      <DataTableColumnHeader
+                        column="created_at"
+                        title={t('admin:tickets.created', 'Created At')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="end"
+                      />
+                    </TableHead>
+                    <TableHead className="ps-3 pe-4 py-3.5 text-center w-44 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {t('admin:common.actions', 'Actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTickets.map((ticket) => {
+                  {sortedItems.map((ticket) => {
                     const isClosed = ticket.status === 'closed' || ticket.status === 'resolved'
 
                     return (
                       <TableRow key={ticket.id} className="border-border/40 hover:bg-muted/20 transition-colors">
-                        <TableCell className="font-mono text-xs font-bold text-start text-foreground py-3.5">
+                        <TableCell className="ps-4 pe-3 py-3.5 font-mono text-xs font-bold text-start text-foreground">
                           #{ticket.id.slice(0, 8)}
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-start text-muted-foreground py-3.5">
+                        <TableCell className="px-3 py-3.5 font-mono text-xs text-start text-muted-foreground">
                           #{ticket.order_item_id.slice(0, 8)}
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-start py-3.5">
+                        <TableCell className="px-3 py-3.5 font-mono text-xs text-start">
                           <span className="font-semibold text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/40">{ticket.key_serial}</span>
                         </TableCell>
-                        <TableCell className="text-start py-3.5">
+                        <TableCell className="px-3 py-3.5 text-center">
                           <Badge
                             variant={getStatusBadgeVariant(ticket.status)}
                             className="capitalize text-[10px] font-mono tracking-tight"
@@ -195,37 +262,76 @@ export function AdminTicketsRoute() {
                             {ticket.status.replace('_', ' ')}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-start text-xs font-mono text-muted-foreground py-3.5">
-                          {ticket.comments.length}
-                        </TableCell>
-                        <TableCell className="text-xs text-start text-muted-foreground font-mono py-3.5">
-                          {new Date(ticket.created_at).toLocaleString(
-                            lang === 'ar' ? 'ar-EG' : 'en-US',
-                            {
-                              dateStyle: 'short',
-                              timeStyle: 'short',
-                            }
-                          )}
-                        </TableCell>
-                        <TableCell className="text-end py-3.5">
+                        <TableCell className="px-3 py-3.5 text-center">
                           <Button
-                            variant={isClosed ? 'ghost' : 'default'}
-                            size="sm"
-                            onClick={() => handleOpenResolve(ticket.id)}
-                            className="h-7 gap-1.5 text-xs font-medium cursor-pointer"
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            onClick={() => handleOpenChat(ticket.id)}
+                            className="h-6 px-2 gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer inline-flex items-center justify-center"
+                            aria-label={`${ticket.comments.length} comments. Open dispute chat.`}
                           >
-                            {isClosed ? (
-                              <>
-                                <ShieldCheck className="size-3" />
-                                <span>{t('admin:tickets.viewResolution', 'View Outcome')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="size-3" />
-                                <span>{t('admin:tickets.resolveTicket', 'Resolve')}</span>
-                              </>
-                            )}
+                            <MessageSquare className="size-3 text-primary" />
+                            <span className="tabular-nums font-semibold">{ticket.comments.length}</span>
                           </Button>
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 text-end text-xs text-muted-foreground font-mono tabular-nums">
+                          {formatDate(ticket.created_at, {
+                            locale: lang,
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })}
+                        </TableCell>
+                        <TableCell className="ps-3 pe-4 py-3.5 text-center">
+                          <div className="inline-flex items-center justify-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenChat(ticket.id)}
+                              className="h-7 gap-1 text-xs font-medium cursor-pointer"
+                            >
+                              <MessageSquare className="size-3 text-primary" />
+                              <span>{t('admin:ticketsModule.chat', 'Chat')}</span>
+                            </Button>
+                            <Button
+                              variant={isClosed ? 'ghost' : 'default'}
+                              size="sm"
+                              onClick={() => handleOpenResolve(ticket.id)}
+                              className="h-7 gap-1.5 text-xs font-medium cursor-pointer"
+                            >
+                              {isClosed ? (
+                                <>
+                                  <ShieldCheck className="size-3" />
+                                  <span>{t('admin:ticketsModule.viewOutcome', 'View Outcome')}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="size-3" />
+                                  <span>{t('admin:tickets.resolveTicket', 'Resolve')}</span>
+                                </>
+                              )}
+                            </Button>
+                            <DataTableRowActions
+                              items={[
+                                {
+                                  label: t('admin:tickets.copyId', 'Copy Ticket ID'),
+                                  icon: Copy,
+                                  onClick: () => navigator.clipboard.writeText(ticket.id),
+                                },
+                                {
+                                  label: t('admin:tickets.copySerial', 'Copy Defective Serial'),
+                                  icon: KeyRound,
+                                  onClick: () => navigator.clipboard.writeText(ticket.key_serial),
+                                },
+                                {
+                                  label: t('admin:tickets.copyItem', 'Copy Order Item ID'),
+                                  icon: Tag,
+                                  onClick: () => navigator.clipboard.writeText(ticket.order_item_id),
+                                  separatorBefore: true,
+                                },
+                              ]}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -242,6 +348,17 @@ export function AdminTicketsRoute() {
         ticketId={activeTicketId}
         open={resolveDialogOpen}
         onOpenChange={setResolveDialogOpen}
+      />
+
+      {/* Ticket Chat & Dispute Workstation Sheet */}
+      <AdminTicketChatSheet
+        ticketId={activeChatTicketId}
+        open={chatSheetOpen}
+        onOpenChange={setChatSheetOpen}
+        onOpenResolve={(id) => {
+          setChatSheetOpen(false)
+          handleOpenResolve(id)
+        }}
       />
     </div>
   )

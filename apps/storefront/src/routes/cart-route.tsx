@@ -14,6 +14,16 @@ import {
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
+import { Card } from '@workspace/ui/components/card'
+import { Separator } from '@workspace/ui/components/separator'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@workspace/ui/components/empty'
 import { CART_CONFIG } from '../features/cart/cart.config'
 import { CartLineItem } from '../features/cart/components/cart-line-item'
 import {
@@ -146,33 +156,37 @@ export function CartRoute() {
 
         {items.length === 0 ? (
           /* Empty State */
-          <div className="flex flex-col items-center justify-center p-8 sm:p-16 text-center rounded-2xl border border-dashed border-border/70 bg-card/40 max-w-xl mx-auto space-y-4">
-            <div className="size-20 rounded-2xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground mb-2">
-              <ShoppingBag className="size-10" aria-hidden="true" />
-            </div>
+          <Empty className="border border-dashed border-border/70 bg-card/40 max-w-xl mx-auto p-8 sm:p-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="size-20 rounded-2xl bg-secondary/60 border border-border/40 mb-2">
+                <ShoppingBag className="size-10 text-muted-foreground" aria-hidden="true" />
+              </EmptyMedia>
 
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('nothingSelectedYet', {
-                ns: 'cart',
-                defaultValue: 'Nothing selected yet',
-              })}
-            </span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {t('nothingSelectedYet', {
+                  ns: 'cart',
+                  defaultValue: 'Nothing selected yet',
+                })}
+              </span>
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {t('yourBagIsEmpty', {
-                ns: 'cart',
-                defaultValue: 'Your bag is empty',
-              })}
-            </h2>
+              <EmptyTitle className="text-2xl sm:text-3xl font-bold text-foreground">
+                <h2>
+                  {t('yourBagIsEmpty', {
+                    ns: 'cart',
+                    defaultValue: 'Your bag is empty',
+                  })}
+                </h2>
+              </EmptyTitle>
 
-            <p className="text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
-              {t('findNext', {
-                ns: 'cart',
-                defaultValue: 'Find your next game, license, or subscription.',
-              })}
-            </p>
+              <EmptyDescription className="text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
+                {t('findNext', {
+                  ns: 'cart',
+                  defaultValue: 'Find your next game, license, or subscription.',
+                })}
+              </EmptyDescription>
+            </EmptyHeader>
 
-            <div className="pt-4 flex flex-col items-center w-full max-w-[280px] gap-2.5">
+            <EmptyContent className="pt-4 flex flex-col items-center w-full max-w-[280px] gap-2.5">
               <Button
                 nativeButton={false}
                 render={
@@ -205,8 +219,8 @@ export function CartRoute() {
                   defaultValue: 'Browse bundles',
                 })}
               </Button>
-            </div>
-          </div>
+            </EmptyContent>
+          </Empty>
         ) : (
           /* 2-Column Responsive Layout */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
@@ -250,7 +264,7 @@ export function CartRoute() {
 
             {/* Sticky Order Summary Sidebar */}
             <div className="lg:col-span-5 xl:col-span-4 sticky top-24 space-y-4">
-              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-6 text-start">
+              <Card className="rounded-2xl border-border/60 bg-card p-6 shadow-sm space-y-6 text-start">
                 <h2 className="text-xl font-bold text-foreground">
                   {t('orderSummary', { ns: 'cart', defaultValue: 'Order Summary' })}
                 </h2>
@@ -318,8 +332,7 @@ export function CartRoute() {
                     )}
                   </form>
 
-                  {/* Separator */}
-                  <div className="border-t border-border/40 pt-3" />
+                  <Separator className="my-3 bg-border/40" />
 
                   {/* Grand Total */}
                   <div className="flex items-baseline justify-between">
@@ -354,7 +367,8 @@ export function CartRoute() {
                 </Button>
 
                 {/* Trust Seals */}
-                <div className="pt-3 border-t border-border/30 space-y-2.5 text-xs text-muted-foreground">
+                <Separator className="my-3 bg-border/30" />
+                <div className="space-y-2.5 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="size-4 text-primary shrink-0" aria-hidden="true" />
                     <span>{isRtl ? 'ضمان مفاتيح رسمية 100% ومضمونة' : '100% verified official distributor keys'}</span>
@@ -372,7 +386,7 @@ export function CartRoute() {
                     <span>{isRtl ? 'دعم فني عبر واتساب للمساعدة في التفعيل' : 'Dedicated activation & warranty support'}</span>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         )}

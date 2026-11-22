@@ -13,6 +13,24 @@ import {
 import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertAction,
+} from '@workspace/ui/components/alert'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@workspace/ui/components/empty'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@workspace/ui/components/toggle-group'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { useTicketsList } from '../hooks/use-tickets'
 import { TicketStatusBadge } from '../components/support/ticket-status-badge'
@@ -60,42 +78,27 @@ export function TicketsPage() {
         </Button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 rounded-xl bg-muted/60 p-1 border border-border/50 w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveTab('all')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
-            activeTab === 'all'
-              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
+      {/* Filter Tabs using shadcn ToggleGroup */}
+      <ToggleGroup
+        value={[activeTab]}
+        onValueChange={(val) => {
+          if (val.length > 0) {
+            setActiveTab(val[val.length - 1] as TicketFilterTab)
+          }
+        }}
+        variant="outline"
+        className="w-fit"
+      >
+        <ToggleGroupItem value="all" className="text-xs sm:text-sm">
           {t('support.all')} ({tickets.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('open')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
-            activeTab === 'open'
-              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="open" className="text-xs sm:text-sm">
           {t('support.open')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('resolved')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
-            activeTab === 'resolved'
-              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="resolved" className="text-xs sm:text-sm">
           {t('support.resolved')}
-        </button>
-      </div>
+        </ToggleGroupItem>
+      </ToggleGroup>
 
       {/* Loading Skeletons */}
       {isLoading && (
@@ -107,39 +110,41 @@ export function TicketsPage() {
 
       {/* Error State */}
       {isError && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center">
-          <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-          <h3 className="font-heading text-base font-semibold text-foreground">
-            {t('common.error', 'An error occurred')}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>{t('common.error', 'An error occurred')}</AlertTitle>
+          <AlertDescription>
             Failed to load support tickets. Please try again.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="mt-4 gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span>{t('common.retry', 'Try again')}</span>
-          </Button>
-        </div>
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => refetch()}
+              className="gap-1.5"
+            >
+              <RefreshCw className="size-3.5" />
+              <span>{t('common.retry', 'Try again')}</span>
+            </Button>
+          </AlertAction>
+        </Alert>
       )}
 
       {/* Empty State */}
       {!isLoading && !isError && filteredTickets.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-10 text-center">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <LifeBuoy className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="font-heading text-base sm:text-lg font-semibold text-foreground">
-            {t('support.emptyTitle')}
-          </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 max-w-md">
-            {t('support.emptyDesc')}
-          </p>
-          <div className="flex gap-3 mt-5">
+        <Empty className="rounded-xl border border-border bg-card p-10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-full bg-muted mb-4">
+              <LifeBuoy className="size-8 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle className="text-base sm:text-lg font-semibold">
+              {t('support.emptyTitle')}
+            </EmptyTitle>
+            <EmptyDescription className="max-w-md text-xs sm:text-sm">
+              {t('support.emptyDesc')}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="mt-4 flex flex-row gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -157,8 +162,8 @@ export function TicketsPage() {
               <Plus className="h-4 w-4" />
               <span>{t('support.openTicket')}</span>
             </Button>
-          </div>
-        </div>
+          </EmptyContent>
+        </Empty>
       )}
 
       {/* Tickets List */}
@@ -201,13 +206,15 @@ export function TicketsPage() {
                   </div>
 
                   <div className="flex items-center justify-end">
-                    <Link
-                      to={`/${lang}/account/support/${tk.id}`}
-                      className="inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-2 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      render={<Link to={`/${lang}/account/support/${tk.id}`} />}
+                      className="gap-1 text-xs sm:text-sm"
                     >
                       <span>{t('orders.viewDetails')}</span>
                       <ChevronRight className="h-4 w-4 shrink-0 rtl:rotate-180" />
-                    </Link>
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -224,4 +231,3 @@ export function TicketsPage() {
     </div>
   )
 }
-

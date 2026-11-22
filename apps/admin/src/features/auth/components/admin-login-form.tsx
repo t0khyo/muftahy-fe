@@ -8,6 +8,12 @@ import { cn } from '@workspace/ui/lib/utils'
 import { loginRequestSchema, type LoginRequest } from '@workspace/domain/schemas/auth'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@workspace/ui/components/input-group'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import {
@@ -129,26 +135,26 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
 
               <Field>
                 <FieldLabel htmlFor="admin-password">{t('auth:password')}</FieldLabel>
-                <div className="relative">
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     id="admin-password"
                     type={showPassword ? 'text' : 'password'}
                     dir="ltr"
                     autoComplete="current-password"
                     placeholder={t('auth:passwordPlaceholder')}
-                    className="pe-10"
                     {...register('password')}
                     disabled={isSubmitting || retrySeconds !== null}
                   />
-                  <button
-                    type="button"
-                    className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm cursor-pointer"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? t('auth:hidePassword') : t('auth:showPassword')}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      size="icon-xs"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? t('auth:hidePassword') : t('auth:showPassword')}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
                 {errors.password && <FieldError>{errors.password.message}</FieldError>}
               </Field>
 

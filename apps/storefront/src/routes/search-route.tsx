@@ -1,5 +1,13 @@
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { SearchX } from 'lucide-react'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from '@workspace/ui/components/empty'
 import { useProducts } from '../features/products/hooks/use-products'
 import { ProductCard } from '../features/products/components/product-card'
 import { ProductCardSkeleton } from '../features/products/components/product-card-skeleton'
@@ -37,9 +45,24 @@ export function SearchRoute() {
           ))}
         </div>
       ) : (
-        <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          <p>{t('noResults', { ns: 'search', query, defaultValue: 'No products found' })}</p>
-        </div>
+        <Empty className="min-h-[240px] rounded-2xl border border-dashed border-border p-8">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SearchX className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>
+              {t('noResults', { ns: 'search', query, defaultValue: 'No products found' })}
+            </EmptyTitle>
+            {query && (
+              <EmptyDescription>
+                {t('tryDifferentKeywords', {
+                  ns: 'search',
+                  defaultValue: 'Try searching with different keywords.',
+                })}
+              </EmptyDescription>
+            )}
+          </EmptyHeader>
+        </Empty>
       )}
     </div>
   )

@@ -1,6 +1,13 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight } from 'lucide-react'
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@workspace/ui/components/breadcrumb'
 
 export interface DetailBreadcrumbProps {
   category: string
@@ -21,34 +28,26 @@ export function DetailBreadcrumb({
       : t('categories.office', { ns: 'products', defaultValue: 'Office' })
 
   return (
-    <nav aria-label="Breadcrumb" className="w-full mb-6">
-      <ol className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-        <li>
-          <Link
-            to={`/${lang}`}
-            className="hover:text-foreground transition-colors"
-          >
+    <Breadcrumb aria-label="Breadcrumb" className="w-full mb-6">
+      <BreadcrumbList className="gap-1.5 text-xs text-muted-foreground">
+        <BreadcrumbItem>
+          <BreadcrumbLink render={<Link to={`/${lang}`} />}>
             {t('home', { ns: 'common', defaultValue: lang === 'ar' ? 'الرئيسية' : 'Home' })}
-          </Link>
-        </li>
-        <li aria-hidden="true" className="flex items-center">
-          <ChevronRight className="size-3.5 rtl:rotate-180 text-muted-foreground/60" />
-        </li>
-        <li>
-          <Link
-            to={`/${lang}/products?category=${category}`}
-            className="hover:text-foreground transition-colors"
-          >
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink render={<Link to={`/${lang}/products?category=${category}`} />}>
             {categoryLabel}
-          </Link>
-        </li>
-        <li aria-hidden="true" className="flex items-center">
-          <ChevronRight className="size-3.5 rtl:rotate-180 text-muted-foreground/60" />
-        </li>
-        <li aria-current="page" className="font-medium text-foreground truncate max-w-[200px] sm:max-w-md">
-          {productTitle}
-        </li>
-      </ol>
-    </nav>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage className="font-medium text-foreground truncate max-w-[200px] sm:max-w-md">
+            {productTitle}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
   )
 }

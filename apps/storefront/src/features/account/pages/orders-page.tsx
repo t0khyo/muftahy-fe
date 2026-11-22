@@ -4,6 +4,24 @@ import { Link, useParams } from 'react-router'
 import { ShoppingBag, AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertAction,
+} from '@workspace/ui/components/alert'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@workspace/ui/components/empty'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@workspace/ui/components/toggle-group'
 import { useUserOrders } from '../hooks/use-orders'
 import { OrderCard } from '../components/orders/order-card'
 
@@ -39,42 +57,27 @@ export function OrdersPage() {
         </p>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 rounded-xl bg-muted/60 p-1 border border-border/50 w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveTab('all')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
-            activeTab === 'all'
-              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
+      {/* Filter Tabs using shadcn ToggleGroup */}
+      <ToggleGroup
+        value={[activeTab]}
+        onValueChange={(val) => {
+          if (val.length > 0) {
+            setActiveTab(val[val.length - 1] as OrderFilterTab)
+          }
+        }}
+        variant="outline"
+        className="w-fit"
+      >
+        <ToggleGroupItem value="all" className="text-xs sm:text-sm">
           {t('orders.all')} ({orders.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('pending')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
-            activeTab === 'pending'
-              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="pending" className="text-xs sm:text-sm">
           {t('orders.pending')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('completed')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all active:scale-[0.98] ${
-            activeTab === 'completed'
-              ? 'bg-card text-foreground font-semibold shadow-xs dark:bg-card/90'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="completed" className="text-xs sm:text-sm">
           {t('orders.completed')}
-        </button>
-      </div>
+        </ToggleGroupItem>
+      </ToggleGroup>
 
       {/* Loading Skeletons */}
       {isLoading && (
@@ -87,42 +90,46 @@ export function OrdersPage() {
 
       {/* Error State */}
       {isError && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center">
-          <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-          <h3 className="font-heading text-base font-semibold text-foreground">
-            {t('common.error', 'An error occurred')}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>{t('common.error', 'An error occurred')}</AlertTitle>
+          <AlertDescription>
             Failed to load your orders from the marketplace.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="mt-4 gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span>{t('common.retry', 'Try again')}</span>
-          </Button>
-        </div>
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => refetch()}
+              className="gap-1.5"
+            >
+              <RefreshCw className="size-3.5" />
+              <span>{t('common.retry', 'Try again')}</span>
+            </Button>
+          </AlertAction>
+        </Alert>
       )}
 
       {/* Empty State */}
       {!isLoading && !isError && filteredOrders.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-10 text-center">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="font-heading text-base sm:text-lg font-semibold text-foreground">
-            {t('orders.emptyTitle')}
-          </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 max-w-md">
-            {t('orders.emptyDesc')}
-          </p>
-          <Button className="mt-5" render={<Link to={`/${lang}/products`} />}>
-            <span>{t('orders.browseCatalog')}</span>
-          </Button>
-        </div>
+        <Empty className="rounded-xl border border-border bg-card p-10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-full bg-muted mb-4">
+              <ShoppingBag className="size-8 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle className="text-base sm:text-lg font-semibold">
+              {t('orders.emptyTitle')}
+            </EmptyTitle>
+            <EmptyDescription className="max-w-md text-xs sm:text-sm">
+              {t('orders.emptyDesc')}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="mt-4">
+            <Button render={<Link to={`/${lang}/products`} />}>
+              <span>{t('orders.browseCatalog')}</span>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       {/* Order List */}
@@ -136,4 +143,3 @@ export function OrdersPage() {
     </div>
   )
 }
-

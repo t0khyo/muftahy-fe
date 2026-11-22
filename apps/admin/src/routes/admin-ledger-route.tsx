@@ -6,13 +6,17 @@ import {
   DollarSign,
   Wallet,
   ShieldCheck,
+  Copy,
 } from 'lucide-react'
 import {
   useAdminLedgerEntries,
   useAdminLedgerSummary,
 } from '../features/ledger/hooks/use-ledger'
+import type { LedgerEntryResponse } from '@workspace/domain/schemas/ledger'
 import { formatMoney, type SupportedCurrency } from '@workspace/domain/formatters/money'
+import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import {
   Card,
   CardContent,
@@ -30,6 +34,9 @@ import {
 } from '@workspace/ui/components/table'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
+import { DataTableColumnHeader } from '../components/data-table-column-header'
+import { DataTableRowActions } from '../components/data-table-row-actions'
+import { useDataTableSort } from '../hooks/use-data-table-sort'
 
 const ENTRY_TYPE_FILTERS = [
   { label: 'All Transactions', value: 'all' },
@@ -53,6 +60,15 @@ export function AdminLedgerRoute() {
 
   const entries = ledgerData || []
 
+  const { sortedItems, sortConfig, toggleSort } = useDataTableSort<LedgerEntryResponse>(
+    entries,
+    { column: 'created_at', direction: 'desc' },
+    {
+      amount: (e) => Number(e.amount),
+      running_balance: (e) => Number(e.running_balance),
+    }
+  )
+
   const cashOnHandNum = summary?.egp_cash_on_hand ? Number(summary.egp_cash_on_hand) : 0
   const usdWalletNum = summary?.usd_wallet_balance ? Number(summary.usd_wallet_balance) : 0
   const deferredNum = summary?.held_funds_egp ? Number(summary.held_funds_egp) : 0
@@ -62,8 +78,8 @@ export function AdminLedgerRoute() {
     <div className="space-y-6 text-start w-full">
       {/* Header */}
       <AdminPageHeader
-        title={t('admin:ledger.title', 'Financial Ledger & Escrow')}
-        description={t('admin:ledger.subtitle', 'Immutable double-entry accounting journal, deferred revenue reserves, and net balance')}
+        title={t('admin:ledger.title', 'Finance')}
+        description={t('admin:ledger.subtitle', 'Track store revenue, wholesale costs, pending funds, and net profit')}
       />
 
       {/* Financial Health & Balances Ribbon */}
@@ -92,7 +108,7 @@ export function AdminLedgerRoute() {
         <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-              {t('admin:ledger.deferredRevenue', 'Held Escrow (EGP)')}
+              {t('admin:ledger.deferredRevenue', 'Pending Clearance (EGP)')}
             </span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-colors group-hover:bg-amber-500/15">
               <ShieldCheck className="size-4" />
@@ -103,7 +119,7 @@ export function AdminLedgerRoute() {
               {summaryLoading ? '...' : formatMoney(deferredNum, { currency: 'EGP', locale: lang })}
             </div>
             <p className="text-xs text-muted-foreground mt-1.5">
-              {t('admin:ledger.heldUntilDelivery', 'Escrow held until code release')}
+              {t('admin:ledger.heldUntilDelivery', 'Funds held until order completion')}
             </p>
           </div>
         </div>
@@ -112,7 +128,7 @@ export function AdminLedgerRoute() {
         <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-              {t('admin:ledger.usdLiquidity', 'USD Wholesale Wallet')}
+              {t('admin:ledger.usdLiquidity', 'Wholesale Balance (USD)')}
             </span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 transition-colors group-hover:bg-blue-500/15">
               <Wallet className="size-4" />
@@ -152,25 +168,20 @@ export function AdminLedgerRoute() {
       {/* Streamlined Toolbar & Journal Table */}
       <div className="space-y-4">
         {/* Entry Type Filter Rail */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          {ENTRY_TYPE_FILTERS.map((tab) => {
-            const isSelected = selectedType === tab.value
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setSelectedType(tab.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
-              >
+        <Tabs
+          value={selectedType}
+          onValueChange={(val) => {
+            if (val) setSelectedType(val)
+          }}
+        >
+          <TabsList className="h-8">
+            {ENTRY_TYPE_FILTERS.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
                 {tab.label}
-              </button>
-            )
-          })}
-        </div>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         {/* Double-entry Journal Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -178,13 +189,13 @@ export function AdminLedgerRoute() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold tracking-tight">
-                  {t('admin:ledger.journalTitle', 'General Journal Entries')}
+                  {t('admin:ledger.journalTitle', 'Transactions')}
                   <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
                     ({entries.length} {t('admin:common.records', 'records')})
                   </span>
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                  {t('admin:ledger.journalDesc', 'Double-entry accounting log. Running balance is updated synchronously per mutation.')}
+                  {t('admin:ledger.journalDesc', 'Complete record of store sales, wholesale costs, and refunds.')}
                 </CardDescription>
               </div>
             </div>
@@ -192,33 +203,82 @@ export function AdminLedgerRoute() {
           <CardContent className="p-0">
             {entriesLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
-                {t('admin:common.loading', 'Loading ledger journal...')}
+                {t('admin:common.loading', 'Loading transactions...')}
               </div>
-            ) : entries.length === 0 ? (
+            ) : sortedItems.length === 0 ? (
               <div className="p-8">
                 <EmptyState
                   icon={BookOpen}
-                  title={t('admin:ledger.emptyTitle', 'No journal entries')}
+                  title={t('admin:ledger.emptyTitle', 'No transactions yet')}
                   description={t(
                     'admin:ledger.emptyDesc',
-                    'Transactions and automated payments will populate double-entry ledger records here.'
+                    'Completed customer orders and wholesale costs will appear here.'
                   )}
                 />
               </div>
             ) : (
               <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:ledger.id', 'Entry ID')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:ledger.type', 'Type')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:ledger.description', 'Description')}</TableHead>
-                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:ledger.amount', 'Amount')}</TableHead>
-                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:ledger.runningBalance', 'Balance')}</TableHead>
-                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:ledger.timestamp', 'Date')}</TableHead>
+                    <TableHead className="ps-4 pe-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="id"
+                        title={t('admin:ledger.id', 'Entry ID')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-center">
+                      <DataTableColumnHeader
+                        column="entry_type"
+                        title={t('admin:ledger.type', 'Type')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="center"
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="description"
+                        title={t('admin:ledger.description', 'Description')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-end">
+                      <DataTableColumnHeader
+                        column="amount"
+                        title={t('admin:ledger.amount', 'Amount')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="end"
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-end">
+                      <DataTableColumnHeader
+                        column="running_balance"
+                        title={t('admin:ledger.runningBalance', 'Balance')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="end"
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-end">
+                      <DataTableColumnHeader
+                        column="created_at"
+                        title={t('admin:ledger.timestamp', 'Date')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="end"
+                      />
+                    </TableHead>
+                    <TableHead className="ps-3 pe-4 py-3.5 text-center w-20 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {t('admin:common.actions', 'Actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entries.map((entry) => {
+                  {sortedItems.map((entry) => {
                     const amountNum = Number(entry.amount)
                     const balanceNum = Number(entry.running_balance)
                     const isPositive = amountNum >= 0
@@ -226,31 +286,42 @@ export function AdminLedgerRoute() {
 
                     return (
                       <TableRow key={entry.id} className="border-border/40 hover:bg-muted/20 transition-colors">
-                        <TableCell className="font-mono text-xs font-bold text-start text-foreground py-3.5">
+                        <TableCell className="ps-4 pe-3 py-3.5 font-mono text-xs font-bold text-start text-foreground">
                           #{entry.id.slice(0, 8)}
                         </TableCell>
-                        <TableCell className="text-start py-3.5">
+                        <TableCell className="px-3 py-3.5 text-center">
                           <Badge variant="outline" className="font-mono text-[10px] capitalize border-border/60 bg-muted/40">
                             {entry.entry_type.replace('_', ' ')}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs text-start max-w-xs truncate py-3.5 text-foreground">
+                        <TableCell className="px-3 py-3.5 text-xs text-start max-w-xs truncate text-foreground">
                           {entry.description}
                         </TableCell>
-                        <TableCell className={`text-end font-mono text-xs font-semibold tabular-nums py-3.5 ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
+                        <TableCell className={`px-3 py-3.5 text-end font-mono text-xs font-semibold tabular-nums ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
                           {isPositive ? '+' : ''}{formatMoney(amountNum, { currency: curr, locale: lang })}
                         </TableCell>
-                        <TableCell className="text-end font-mono text-xs text-muted-foreground tabular-nums py-3.5">
+                        <TableCell className="px-3 py-3.5 text-end font-mono text-xs text-muted-foreground tabular-nums">
                           {formatMoney(balanceNum, { currency: curr, locale: lang })}
                         </TableCell>
-                        <TableCell className="text-end text-xs text-muted-foreground font-mono py-3.5">
-                          {new Date(entry.created_at).toLocaleString(
-                            lang === 'ar' ? 'ar-EG' : 'en-US',
-                            {
-                              dateStyle: 'short',
-                              timeStyle: 'short',
-                            }
-                          )}
+                        <TableCell className="px-3 py-3.5 text-end text-xs text-muted-foreground font-mono tabular-nums">
+                          {formatDate(entry.created_at, {
+                            locale: lang,
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })}
+                        </TableCell>
+                        <TableCell className="ps-3 pe-4 py-3.5 text-center">
+                          <div className="inline-flex items-center justify-center">
+                            <DataTableRowActions
+                              items={[
+                                {
+                                  label: t('admin:ledger.copyId', 'Copy Entry ID'),
+                                  icon: Copy,
+                                  onClick: () => navigator.clipboard.writeText(entry.id),
+                                },
+                              ]}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     )

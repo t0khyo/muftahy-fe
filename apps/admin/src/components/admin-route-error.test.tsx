@@ -31,11 +31,11 @@ describe('AdminRouteError Component', () => {
 
     render(<RouterProvider router={router} />)
 
-    expect(screen.getByText('Workstation Encountered an Error')).toBeInTheDocument()
+    expect(screen.getByText('An Error Occurred')).toBeInTheDocument()
     expect(
       screen.getByText('Database connection failed in inventory workstation'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /reload workstation/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument()
   })
 

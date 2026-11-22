@@ -13,10 +13,14 @@ import {
   LayoutDashboard,
   Copy,
   Check,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@workspace/ui/components/accordion'
 import {
   Card,
   CardContent,
@@ -32,22 +36,21 @@ export function AdminRouteError() {
   const navigate = useNavigate()
   const { t } = useTranslation(['admin', 'common'])
   const [copied, setCopied] = React.useState(false)
-  const [showDetails, setShowDetails] = React.useState(false)
 
-  let title: string = t('admin:error.title', 'Workstation Encountered an Error')
+  let title: string = t('admin:error.title', 'An Error Occurred')
   let description: string = t(
     'admin:error.description',
-    'An unexpected runtime exception interrupted this administrative workstation. Your session remains active.',
+    'An unexpected error occurred while loading this page. Your session remains active.',
   )
   let statusText: string | undefined
   let errorStack: string | undefined
 
   if (isRouteErrorResponse(error)) {
     if (error.status === 404) {
-      title = t('admin:error.notFoundTitle', 'Workstation Route Not Found')
+      title = t('admin:error.notFoundTitle', 'Page Not Found')
       description = t(
         'admin:error.notFoundDescription',
-        'The requested administrative workstation route does not exist or may have been relocated.',
+        'The requested page does not exist or may have been moved.',
       )
     } else {
       title = `${error.status} ${error.statusText || t('admin:error.httpError', 'HTTP Error')}`
@@ -100,37 +103,35 @@ export function AdminRouteError() {
 
         <CardContent className="space-y-4">
           {errorStack && (
-            <div className="rounded-lg border border-border/60 bg-muted/40 p-3 text-start">
-              <button
-                type="button"
-                onClick={() => setShowDetails((prev) => !prev)}
-                className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                aria-expanded={showDetails}
+            <Accordion className="w-full">
+              <AccordionItem
+                value="diagnostics"
+                className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1 text-start"
               >
-                <span>{showDetails ? t('admin:error.hideDetails', 'Hide Technical Diagnostics') : t('admin:error.showDetails', 'View Technical Diagnostics')}</span>
-                {showDetails ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-              </button>
-
-              {showDetails && (
-                <div className="mt-2.5 space-y-2">
-                  <pre className="max-h-48 overflow-auto rounded bg-background/80 p-2.5 font-mono text-[11px] text-muted-foreground border border-border/40 select-all leading-normal whitespace-pre-wrap break-all">
-                    {errorStack}
-                  </pre>
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      onClick={handleCopy}
-                      className="gap-1.5 text-[11px] h-7 px-2"
-                    >
-                      {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
-                      <span>{copied ? t('common:copied', 'Copied') : t('admin:error.copyTrace', 'Copy Stack Trace')}</span>
-                    </Button>
+                <AccordionTrigger className="py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:no-underline cursor-pointer">
+                  <span>{t('admin:error.showDetails', 'View Technical Diagnostics')}</span>
+                </AccordionTrigger>
+                <AccordionContent className="pt-1 pb-2">
+                  <div className="space-y-2">
+                    <pre className="max-h-48 overflow-auto rounded bg-background/80 p-2.5 font-mono text-[11px] text-muted-foreground border border-border/40 select-all leading-normal whitespace-pre-wrap break-all">
+                      {errorStack}
+                    </pre>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={handleCopy}
+                        className="gap-1.5 text-[11px] h-7 px-2"
+                      >
+                        {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                        <span>{copied ? t('common:copied', 'Copied') : t('admin:error.copyTrace', 'Copy Stack Trace')}</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
         </CardContent>
 
@@ -152,7 +153,7 @@ export function AdminRouteError() {
             className="w-full sm:w-auto gap-2"
           >
             <RefreshCw className="size-4" />
-            <span>{t('admin:error.reload', 'Reload Workstation')}</span>
+            <span>{t('admin:error.reload', 'Reload Page')}</span>
           </Button>
         </CardFooter>
       </Card>

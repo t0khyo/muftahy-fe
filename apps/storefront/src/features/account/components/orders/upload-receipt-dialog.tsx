@@ -11,7 +11,19 @@ import {
 } from '@workspace/ui/components/dialog'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
+import {
+  Alert,
+  AlertDescription,
+} from '@workspace/ui/components/alert'
+import {
+  FieldGroup,
+  Field,
+  FieldLabel,
+} from '@workspace/ui/components/field'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@workspace/ui/components/toggle-group'
 import { useUploadReceipt } from '../../hooks/use-orders'
 
 interface UploadReceiptDialogProps {
@@ -90,85 +102,86 @@ export function UploadReceiptDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {errorMsg && (
-            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+            </Alert>
           )}
 
           {successMsg && (
-            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
-              <FileCheck className="h-4 w-4 shrink-0" />
-              <span>{successMsg}</span>
-            </div>
+            <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <FileCheck className="size-4" />
+              <AlertDescription className="text-xs">{successMsg}</AlertDescription>
+            </Alert>
           )}
 
-          {/* Payment Method Selector */}
-          <div className="space-y-1.5">
-            <Label>{t('orders.detail.selectMethod')}</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('vodafone_cash')}
-                className={`flex flex-col items-center justify-center rounded-lg border p-3 text-xs font-medium transition-colors ${
-                  paymentMethod === 'vodafone_cash'
-                    ? 'border-primary bg-primary/10 text-primary font-semibold'
-                    : 'border-border text-muted-foreground hover:bg-muted'
-                }`}
+          <FieldGroup>
+            {/* Payment Method Selector */}
+            <Field>
+              <FieldLabel>{t('orders.detail.selectMethod')}</FieldLabel>
+              <ToggleGroup
+                value={[paymentMethod]}
+                onValueChange={(val) => {
+                  if (val.length > 0) {
+                    setPaymentMethod(val[val.length - 1] as 'vodafone_cash' | 'instapay')
+                  }
+                }}
+                variant="outline"
+                className="grid grid-cols-2 gap-3 w-full"
               >
-                <span>{t('orders.detail.vodafoneCash')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('instapay')}
-                className={`flex flex-col items-center justify-center rounded-lg border p-3 text-xs font-medium transition-colors ${
-                  paymentMethod === 'instapay'
-                    ? 'border-primary bg-primary/10 text-primary font-semibold'
-                    : 'border-border text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                <span>{t('orders.detail.instapay')}</span>
-              </button>
-            </div>
-          </div>
+                <ToggleGroupItem
+                  value="vodafone_cash"
+                  className="h-auto py-3 flex flex-col items-center justify-center text-xs font-medium"
+                >
+                  <span>{t('orders.detail.vodafoneCash')}</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="instapay"
+                  className="h-auto py-3 flex flex-col items-center justify-center text-xs font-medium"
+                >
+                  <span>{t('orders.detail.instapay')}</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </Field>
 
-          {/* Amount Input */}
-          <div className="space-y-1.5">
-            <Label htmlFor="amount_claimed">{t('orders.detail.claimedAmountLabel')}</Label>
-            <Input
-              id="amount_claimed"
-              type="number"
-              step="0.01"
-              value={amountClaimed}
-              onChange={(e) => setAmountClaimed(e.target.value)}
-              placeholder={t('orders.detail.claimedAmountPlaceholder')}
-            />
-          </div>
-
-          {/* File Picker */}
-          <div className="space-y-1.5">
-            <Label htmlFor="receipt_file">{t('orders.detail.receiptFileLabel')}</Label>
-            <div className="relative flex flex-col items-center justify-center rounded-lg border border-dashed border-border p-6 text-center hover:border-primary/50 transition-colors">
-              <input
-                id="receipt_file"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleFileChange}
-                className="absolute inset-0 cursor-pointer opacity-0"
+            {/* Amount Input */}
+            <Field>
+              <FieldLabel htmlFor="amount_claimed">{t('orders.detail.claimedAmountLabel')}</FieldLabel>
+              <Input
+                id="amount_claimed"
+                type="number"
+                step="0.01"
+                value={amountClaimed}
+                onChange={(e) => setAmountClaimed(e.target.value)}
+                placeholder={t('orders.detail.claimedAmountPlaceholder')}
               />
-              <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-              {selectedFile ? (
-                <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
-                  <FileCheck className="h-4 w-4" />
-                  <span>{selectedFile.name}</span>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {t('orders.detail.dropFilePrompt')}
-                </p>
-              )}
-            </div>
-          </div>
+            </Field>
+
+            {/* File Picker */}
+            <Field>
+              <FieldLabel htmlFor="receipt_file">{t('orders.detail.receiptFileLabel')}</FieldLabel>
+              <div className="relative flex flex-col items-center justify-center rounded-lg border border-dashed border-border p-6 text-center hover:border-primary/50 transition-colors">
+                <input
+                  id="receipt_file"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                {selectedFile ? (
+                  <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                    <FileCheck className="h-4 w-4" />
+                    <span>{selectedFile.name}</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t('orders.detail.dropFilePrompt')}
+                  </p>
+                )}
+              </div>
+            </Field>
+          </FieldGroup>
 
           <DialogFooter className="pt-2">
             <Button
@@ -189,4 +202,3 @@ export function UploadReceiptDialog({
     </Dialog>
   )
 }
-

@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { ChevronRight, PackageCheck } from 'lucide-react'
 import { Card } from '@workspace/ui/components/card'
+import { Button } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatDate } from '@workspace/domain/formatters/date'
 import type { UserOrderSummary } from '@workspace/domain/schemas/order'
@@ -33,9 +35,9 @@ export function OrderCard({ order }: OrderCardProps) {
         {/* Left / Info */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm sm:text-base font-semibold text-foreground px-2 py-0.5 rounded-md bg-muted/60 border border-border/50">
+            <Badge variant="outline" className="font-mono text-xs sm:text-sm font-semibold">
               {order.reference_code}
-            </span>
+            </Badge>
             <OrderStatusBadge status={order.status} />
           </div>
 
@@ -58,16 +60,17 @@ export function OrderCard({ order }: OrderCardProps) {
             </span>
           </div>
 
-          <Link
-            to={`/${lang}/account/orders/${order.id}`}
-            className="inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-2 text-xs sm:text-sm font-medium text-foreground transition-all duration-150 hover:bg-primary hover:text-primary-foreground active:scale-[0.98] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+          <Button
+            variant="secondary"
+            size="sm"
+            render={<Link to={`/${lang}/account/orders/${order.id}`} />}
+            className="gap-1 text-xs sm:text-sm"
           >
             <span>{t('orders.viewDetails')}</span>
             <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-          </Link>
+          </Button>
         </div>
       </div>
     </Card>
   )
 }
-

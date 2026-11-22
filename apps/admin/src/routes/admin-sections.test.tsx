@@ -125,7 +125,7 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Products & SKUs' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Products' })).toBeInTheDocument()
     expect(await screen.findByText('No products found')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /add product/i }).length).toBeGreaterThan(0)
   })
@@ -144,7 +144,7 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Orders & Fulfillment' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument()
     expect(await screen.findByText('No orders found')).toBeInTheDocument()
   })
 
@@ -162,9 +162,9 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Key Pool Inventory' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Inventory' })).toBeInTheDocument()
     expect(await screen.findByText('No keys found')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /ingest key batch/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /import keys/i }).length).toBeGreaterThan(0)
   })
 
   it('renders Support Tickets workstation at /en/tickets', async () => {
@@ -181,7 +181,7 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Customer Dispute Tickets' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Customer Support' })).toBeInTheDocument()
     expect(await screen.findByText('No tickets found')).toBeInTheDocument()
   })
 
@@ -199,9 +199,9 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Promotions & Coupons' })).toBeInTheDocument()
-    expect(await screen.findByText('No promotions yet')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /create coupon/i }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Discounts' })).toBeInTheDocument()
+    expect(await screen.findByText('No discounts yet')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /create discount/i }).length).toBeGreaterThan(0)
   })
 
   it('renders Financial Ledger workstation at /en/ledger', async () => {
@@ -218,8 +218,8 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Financial Ledger & Escrow' })).toBeInTheDocument()
-    expect(await screen.findByText('No journal entries')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Finance' })).toBeInTheDocument()
+    expect(await screen.findByText('No transactions yet')).toBeInTheDocument()
   })
 
   it('renders Audit Log workstation at /en/audit', async () => {
@@ -236,8 +236,8 @@ describe('Admin Section Workstation Pages', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByRole('heading', { name: 'Security & Audit Log' })).toBeInTheDocument()
-    expect(await screen.findByText('No audit logs found')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Audit Log' })).toBeInTheDocument()
+    expect(await screen.findByText('No activity logs found')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument()
   })
 

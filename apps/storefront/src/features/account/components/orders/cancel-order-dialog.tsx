@@ -10,6 +10,10 @@ import {
   DialogFooter,
 } from '@workspace/ui/components/dialog'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Alert,
+  AlertDescription,
+} from '@workspace/ui/components/alert'
 import { useCancelOrder } from '../../hooks/use-orders'
 
 interface CancelOrderDialogProps {
@@ -54,9 +58,9 @@ export function CancelOrderDialog({
         </DialogHeader>
 
         {errorMsg && (
-          <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-md">
-            {errorMsg}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+          </Alert>
         )}
 
         <DialogFooter className="pt-2">
@@ -82,4 +86,3 @@ export function CancelOrderDialog({
     </Dialog>
   )
 }
-

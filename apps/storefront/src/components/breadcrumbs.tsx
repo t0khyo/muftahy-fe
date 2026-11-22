@@ -1,6 +1,15 @@
+import * as React from 'react'
 import { Link } from 'react-router'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@workspace/ui/components/breadcrumb'
 
 export interface BreadcrumbItem {
   label: string
@@ -26,7 +35,7 @@ export function Breadcrumbs({
   if (items.length === 0) return null
 
   return (
-    <nav
+    <Breadcrumb
       aria-label={label}
       className={cn('flex items-center h-8 mb-3 lg:mb-4 text-[13px] leading-none', className)}
     >
@@ -44,9 +53,9 @@ export function Breadcrumbs({
       ) : null}
 
       {/* ── Full Trail (Always visible on sm+, and on mobile when not filtered) ── */}
-      <ol
+      <BreadcrumbList
         className={cn(
-          'flex items-center gap-1.5 flex-wrap list-none p-0 m-0',
+          'gap-1.5',
           backHref && backLabel ? 'hidden sm:flex' : 'flex',
         )}
       >
@@ -54,34 +63,27 @@ export function Breadcrumbs({
           const isLast = index === items.length - 1 || item.current
 
           return (
-            <li key={index} className="inline-flex items-center gap-1.5">
-              {index > 0 && (
-                <ChevronRight
-                  className="size-3.5 text-muted-foreground/60 shrink-0 rtl:rotate-180"
-                  aria-hidden="true"
-                />
-              )}
-
-              {isLast || !item.href ? (
-                <span
-                  aria-current={isLast ? 'page' : undefined}
-                  className="font-medium text-foreground truncate max-w-[200px] sm:max-w-none"
-                >
-                  {item.label}
-                </span>
-              ) : (
-                <Link
-                  to={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:underline"
-                >
-                  {item.label}
-                </Link>
-              )}
-            </li>
+            <React.Fragment key={index}>
+              {index > 0 && <BreadcrumbSeparator />}
+              <BreadcrumbItem>
+                {isLast || !item.href ? (
+                  <BreadcrumbPage className="font-medium text-foreground truncate max-w-[200px] sm:max-w-none">
+                    {item.label}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    render={<Link to={item.href} />}
+                    className="text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:underline"
+                  >
+                    {item.label}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </React.Fragment>
           )
         })}
-      </ol>
-    </nav>
+      </BreadcrumbList>
+    </Breadcrumb>
   )
 }
 

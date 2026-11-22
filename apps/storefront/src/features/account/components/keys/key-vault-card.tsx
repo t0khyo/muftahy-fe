@@ -13,6 +13,12 @@ import {
 } from 'lucide-react'
 import { Card } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@workspace/ui/components/tooltip'
 import { formatDate } from '@workspace/domain/formatters/date'
 import type { UserKey } from '@workspace/domain/schemas/key'
 
@@ -71,10 +77,13 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
           </div>
 
           <div className="flex items-center gap-1.5 self-start sm:self-auto">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <Badge
+              variant="outline"
+              className="gap-1 rounded-full border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+            >
               <ShieldCheck className="size-3 shrink-0" />
               <span>{t('orders.detail.keyReady')}</span>
-            </span>
+            </Badge>
           </div>
         </div>
 
@@ -92,52 +101,70 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
 
           <div className="flex items-center gap-2 shrink-0">
             {/* Reveal / Hide Button */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsRevealed(!isRevealed)}
-              className="gap-1.5 text-xs active:scale-[0.98] transition-all"
-              aria-label={isRevealed ? t('keys.hide') : t('keys.reveal')}
-            >
-              {isRevealed ? (
-                <>
-                  <EyeOff className="size-3.5" />
-                  <span>{t('keys.hide')}</span>
-                </>
-              ) : (
-                <>
-                  <Eye className="size-3.5" />
-                  <span>{t('keys.reveal')}</span>
-                </>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsRevealed(!isRevealed)}
+                    className="gap-1.5 text-xs active:scale-[0.98] transition-all"
+                    aria-label={isRevealed ? t('keys.hide') : t('keys.reveal')}
+                  />
+                }
+              >
+                {isRevealed ? (
+                  <>
+                    <EyeOff className="size-3.5" />
+                    <span>{t('keys.hide')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="size-3.5" />
+                    <span>{t('keys.reveal')}</span>
+                  </>
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                {isRevealed ? t('keys.hide') : t('keys.reveal')}
+              </TooltipContent>
+            </Tooltip>
 
             {/* Copy Button */}
-            <Button
-              type="button"
-              variant={isCopied ? 'outline' : 'default'}
-              size="sm"
-              onClick={handleCopy}
-              className={`gap-1.5 text-xs transition-all active:scale-[0.98] ${
-                isCopied
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                  : ''
-              }`}
-              aria-label={t('keys.copy')}
-            >
-              {isCopied ? (
-                <>
-                  <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>{t('keys.copied')}</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="size-3.5" />
-                  <span>{t('keys.copy')}</span>
-                </>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant={isCopied ? 'outline' : 'default'}
+                    size="sm"
+                    onClick={handleCopy}
+                    className={`gap-1.5 text-xs transition-all active:scale-[0.98] ${
+                      isCopied
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        : ''
+                    }`}
+                    aria-label={t('keys.copy')}
+                  />
+                }
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{t('keys.copied')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3.5" />
+                    <span>{t('keys.copy')}</span>
+                  </>
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCopied ? t('keys.copied') : t('keys.copy')}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

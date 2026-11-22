@@ -18,6 +18,21 @@ import {
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
+import { Textarea } from '@workspace/ui/components/textarea'
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from '@workspace/ui/components/alert'
+import {
+  Field,
+  FieldLabel,
+} from '@workspace/ui/components/field'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@workspace/ui/components/tooltip'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { useTicketDetail, useAddTicketComment } from '../hooks/use-tickets'
@@ -73,11 +88,11 @@ export function TicketThreadPage() {
 
   if (isError || !ticket) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-4">
+      <Alert variant="destructive" className="flex flex-col items-center justify-center p-8 text-center space-y-4">
         <AlertCircle className="h-10 w-10 text-destructive" />
-        <h3 className="font-heading text-lg font-semibold text-foreground">
+        <AlertTitle className="font-heading text-lg font-semibold text-foreground">
           {t('common.error', 'Ticket not found or access denied')}
-        </h3>
+        </AlertTitle>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             {t('common.retry', 'Try again')}
@@ -86,7 +101,7 @@ export function TicketThreadPage() {
             {t('support.thread.backToTickets')}
           </Button>
         </div>
-      </div>
+      </Alert>
     )
   }
 
@@ -166,47 +181,65 @@ export function TicketThreadPage() {
               </span>
 
               <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsReplacementRevealed(!isReplacementRevealed)}
-                  className="h-8 gap-1.5 text-xs"
-                >
-                  {isReplacementRevealed ? (
-                    <>
-                      <EyeOff className="h-3 w-3" />
-                      <span>{t('keys.hide')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-3 w-3" />
-                      <span>{t('keys.reveal')}</span>
-                    </>
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsReplacementRevealed(!isReplacementRevealed)}
+                        className="h-8 gap-1.5 text-xs"
+                      />
+                    }
+                  >
+                    {isReplacementRevealed ? (
+                      <>
+                        <EyeOff className="h-3 w-3" />
+                        <span>{t('keys.hide')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-3 w-3" />
+                        <span>{t('keys.reveal')}</span>
+                      </>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isReplacementRevealed ? t('keys.hide') : t('keys.reveal')}
+                  </TooltipContent>
+                </Tooltip>
 
-                <Button
-                  type="button"
-                  variant={isReplacementCopied ? 'outline' : 'default'}
-                  size="sm"
-                  onClick={() =>
-                    handleCopyReplacementKey(ticket.replacement_key_serial!)
-                  }
-                  className="h-8 gap-1.5 text-xs"
-                >
-                  {isReplacementCopied ? (
-                    <>
-                      <Check className="h-3 w-3 text-emerald-500" />
-                      <span>{t('keys.copied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3 w-3" />
-                      <span>{t('keys.copy')}</span>
-                    </>
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant={isReplacementCopied ? 'outline' : 'default'}
+                        size="sm"
+                        onClick={() =>
+                          handleCopyReplacementKey(ticket.replacement_key_serial!)
+                        }
+                        className="h-8 gap-1.5 text-xs"
+                      />
+                    }
+                  >
+                    {isReplacementCopied ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-500" />
+                        <span>{t('keys.copied')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        <span>{t('keys.copy')}</span>
+                      </>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isReplacementCopied ? t('keys.copied') : t('keys.copy')}
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -215,32 +248,28 @@ export function TicketThreadPage() {
 
       {/* Outcome Banner: Refund */}
       {ticket.outcome === 'refund' && (
-        <div className="flex items-start gap-3 rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 text-xs text-foreground">
-          <RotateCcw className="h-5 w-5 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <h4 className="font-semibold text-sm">
-              {t('support.thread.refundBannerTitle')}
-            </h4>
-            <p className="text-muted-foreground">
-              {t('support.thread.refundBannerDesc')}
-            </p>
-          </div>
-        </div>
+        <Alert className="border-sky-500/30 bg-sky-500/5 text-foreground">
+          <RotateCcw className="size-4 text-sky-600 dark:text-sky-400" />
+          <AlertTitle className="text-sm font-semibold">
+            {t('support.thread.refundBannerTitle')}
+          </AlertTitle>
+          <AlertDescription className="text-xs text-muted-foreground">
+            {t('support.thread.refundBannerDesc')}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Outcome Banner: Refused */}
       {ticket.outcome === 'refused' && (
-        <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-xs text-foreground">
-          <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <h4 className="font-semibold text-sm text-destructive">
-              {t('support.thread.refusedBannerTitle')}
-            </h4>
-            <p className="text-muted-foreground">
-              {t('support.thread.refusedBannerDesc')}
-            </p>
-          </div>
-        </div>
+        <Alert variant="destructive">
+          <XCircle className="size-4" />
+          <AlertTitle className="text-sm font-semibold">
+            {t('support.thread.refusedBannerTitle')}
+          </AlertTitle>
+          <AlertDescription className="text-xs">
+            {t('support.thread.refusedBannerDesc')}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Attachments Section (If Any) */}
@@ -273,7 +302,7 @@ export function TicketThreadPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 divide-y divide-border/40">
+          <div className="space-y-3">
             {ticket.comments.map((comment) => (
               <TicketMessageItem key={comment.id} comment={comment} />
             ))}
@@ -282,31 +311,33 @@ export function TicketThreadPage() {
           {/* Reply Form or Locked Notice */}
           <div className="border-t border-border pt-4 mt-6">
             {ticket.is_locked ? (
-              <div className="flex items-center justify-center gap-2 rounded-lg bg-muted p-4 text-xs text-muted-foreground">
-                <Lock className="h-4 w-4 shrink-0" />
-                <span>{t('support.thread.ticketLocked')}</span>
-              </div>
+              <Alert className="bg-muted border-border text-muted-foreground">
+                <Lock className="size-4" />
+                <AlertDescription className="text-xs">
+                  {t('support.thread.ticketLocked')}
+                </AlertDescription>
+              </Alert>
             ) : (
               <form onSubmit={handleSendComment} className="space-y-3">
                 {errorMsg && (
-                  <p className="text-xs text-destructive bg-destructive/10 p-2 rounded-md">
-                    {errorMsg}
-                  </p>
+                  <Alert variant="destructive">
+                    <AlertCircle className="size-4" />
+                    <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+                  </Alert>
                 )}
-                <div className="space-y-1.5">
-                  <label htmlFor="reply_content" className="text-xs font-medium text-foreground">
+                <Field>
+                  <FieldLabel htmlFor="reply_content" className="text-xs font-medium text-foreground">
                     {t('support.thread.replyBoxLabel')}
-                  </label>
-                  <textarea
+                  </FieldLabel>
+                  <Textarea
                     id="reply_content"
                     rows={3}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder={t('support.thread.replyPlaceholder')}
-                    className="w-full rounded-lg border border-border bg-background p-3 text-sm text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                     disabled={isAddingComment}
                   />
-                </div>
+                </Field>
                 <div className="flex justify-end">
                   <Button
                     type="submit"
@@ -326,4 +357,3 @@ export function TicketThreadPage() {
     </div>
   )
 }
-

@@ -13,7 +13,7 @@ import {
 import { updateProfileRequestSchema, type UpdateProfileRequest } from '@workspace/domain/schemas/auth'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
+import { FieldGroup, Field, FieldLabel, FieldError } from '@workspace/ui/components/field'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Skeleton } from '@workspace/ui/components/skeleton'
@@ -175,55 +175,53 @@ export function ProfilePage() {
             <CardContent>
               {isEditing ? (
                 <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-                  <div className="space-y-1.5 text-start">
-                    <Label htmlFor="edit-name" className="text-xs font-semibold">
-                      {t('profile.fullName')}
-                    </Label>
-                    <Input
-                      id="edit-name"
-                      placeholder={t('auth:fullNamePlaceholder')}
-                      {...register('full_name')}
-                      disabled={isUpdating}
-                      aria-invalid={Boolean(errors.full_name)}
-                    />
-                    {errors.full_name && (
-                      <p role="alert" className="text-xs text-destructive">
-                        {errors.full_name.message}
-                      </p>
-                    )}
-                  </div>
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="edit-name">
+                        {t('profile.fullName')}
+                      </FieldLabel>
+                      <Input
+                        id="edit-name"
+                        placeholder={t('auth:fullNamePlaceholder')}
+                        {...register('full_name')}
+                        disabled={isUpdating}
+                        aria-invalid={Boolean(errors.full_name)}
+                      />
+                      {errors.full_name && (
+                        <FieldError>{errors.full_name.message}</FieldError>
+                      )}
+                    </Field>
 
-                  <div className="space-y-1.5 text-start">
-                    <Label htmlFor="edit-phone" className="text-xs font-semibold">
-                      {t('profile.phone')}
-                    </Label>
-                    <Input
-                      id="edit-phone"
-                      dir="ltr"
-                      placeholder={t('auth:phonePlaceholder')}
-                      className="text-start [direction:ltr]"
-                      {...register('phone')}
-                      disabled={isUpdating}
-                      aria-invalid={Boolean(errors.phone)}
-                    />
-                    {errors.phone && (
-                      <p role="alert" className="text-xs text-destructive">
-                        {errors.phone.message}
-                      </p>
-                    )}
-                  </div>
+                    <Field>
+                      <FieldLabel htmlFor="edit-phone">
+                        {t('profile.phone')}
+                      </FieldLabel>
+                      <Input
+                        id="edit-phone"
+                        dir="ltr"
+                        placeholder={t('auth:phonePlaceholder')}
+                        className="text-start [direction:ltr]"
+                        {...register('phone')}
+                        disabled={isUpdating}
+                        aria-invalid={Boolean(errors.phone)}
+                      />
+                      {errors.phone && (
+                        <FieldError>{errors.phone.message}</FieldError>
+                      )}
+                    </Field>
 
-                  {/* Readonly Identity Reference */}
-                  <div className="space-y-1.5 text-start pt-1">
-                    <Label className="text-xs font-semibold text-muted-foreground">
-                      {t('profile.email')}
-                    </Label>
-                    <Input
-                      value={profile.email}
-                      disabled
-                      className="bg-muted/50 cursor-not-allowed opacity-80"
-                    />
-                  </div>
+                    {/* Readonly Identity Reference */}
+                    <Field>
+                      <FieldLabel className="text-muted-foreground">
+                        {t('profile.email')}
+                      </FieldLabel>
+                      <Input
+                        value={profile.email}
+                        disabled
+                        className="bg-muted/50 cursor-not-allowed opacity-80"
+                      />
+                    </Field>
+                  </FieldGroup>
 
                   <div className="flex items-center gap-2 pt-3 border-t border-border/60">
                     <Button

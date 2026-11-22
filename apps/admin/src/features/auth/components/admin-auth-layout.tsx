@@ -45,7 +45,7 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
                 Muftahy
               </span>
               <span className="text-[10px] font-mono uppercase tracking-widest text-background/60">
-                Security Console
+                Admin Console
               </span>
             </div>
           </div>
@@ -56,13 +56,13 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
           <div className="max-w-md space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/5 px-3 py-1 text-xs font-mono text-background/80">
               <Lock className="size-3 text-background" />
-              <span>Restricted Access Area</span>
+              <span>Staff Sign In</span>
             </div>
             <h1 className="font-heading text-3xl font-extrabold tracking-tight leading-tight lg:text-4xl text-background">
-              {t('signInTitle', 'Administrator Access')}
+              {t('signInTitle', 'Merchant Sign In')}
             </h1>
             <p className="text-background/70 text-sm leading-relaxed">
-              {t('signInSubtitle', 'Enter your operator credentials to access the management portal')}
+              {t('signInSubtitle', 'Sign in to access the merchant management dashboard')}
             </p>
           </div>
 
@@ -71,15 +71,15 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
             <div className="flex items-center gap-3 rounded-md border border-background/20 bg-background/5 p-3">
               <Terminal className="size-4 shrink-0 text-background" />
               <div className="text-xs font-mono">
-                <div className="text-background font-semibold">Audit Logging</div>
+                <div className="text-background font-semibold">Audit Log</div>
                 <div className="text-background/60 text-[10px]">Active & Recorded</div>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-md border border-background/20 bg-background/5 p-3">
               <ShieldCheck className="size-4 shrink-0 text-background" />
               <div className="text-xs font-mono">
-                <div className="text-background font-semibold">Session Guard</div>
-                <div className="text-background/60 text-[10px]">Zero-Trust Enforcement</div>
+                <div className="text-background font-semibold">Protected Session</div>
+                <div className="text-background/60 text-[10px]">Encrypted & Verified</div>
               </div>
             </div>
           </div>
@@ -87,7 +87,7 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
 
         {/* Footer verification note */}
         <div className="relative z-10 border-t border-background/15 pt-6 text-[11px] font-mono text-background/60">
-          © 2026 Muftahy Ops · Protected by 2FA & IP Allowlist
+          © 2026 Muftahy · Merchant Administration
         </div>
       </div>
 
@@ -134,7 +134,7 @@ export function AdminAuthLayout({ children, className }: AdminAuthLayoutProps) {
 
         {/* Footer info */}
         <footer className="pt-6 text-center text-xs text-muted-foreground">
-          <p>© 2026 Muftahy. {t('subtitle', 'Secure Operator Console')}</p>
+          <p>© 2026 Muftahy. {t('subtitle', 'Merchant Management Dashboard')}</p>
         </footer>
       </div>
     </div>

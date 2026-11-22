@@ -11,8 +11,18 @@ import {
   DialogFooter,
 } from '@workspace/ui/components/dialog'
 import { Button } from '@workspace/ui/components/button'
-import { Label } from '@workspace/ui/components/label'
 import { Input } from '@workspace/ui/components/input'
+import { Textarea } from '@workspace/ui/components/textarea'
+import {
+  Alert,
+  AlertDescription,
+} from '@workspace/ui/components/alert'
+import {
+  FieldGroup,
+  Field,
+  FieldLabel,
+} from '@workspace/ui/components/field'
+import { Card } from '@workspace/ui/components/card'
 import { useOpenTicket } from '../../hooks/use-tickets'
 
 interface OpenTicketDialogProps {
@@ -91,76 +101,77 @@ export function OpenTicketDialog({
         </DialogHeader>
 
         {productName && (
-          <div className="rounded-lg bg-muted/60 p-3 text-xs border border-border space-y-1">
+          <Card className="bg-muted/60 p-3 text-xs border-border space-y-1">
             <div className="font-semibold text-foreground">{productName}</div>
             {keySerial && (
               <div className="font-mono text-muted-foreground">{keySerial}</div>
             )}
-          </div>
+          </Card>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {errorMsg && (
-            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+            </Alert>
           )}
 
-          {!initialOrderItemId && (
-            <div className="space-y-1.5">
-              <Label htmlFor="order_item_id">Order Item ID (UUID)</Label>
-              <Input
-                id="order_item_id"
-                value={orderItemId}
-                onChange={(e) => setOrderItemId(e.target.value)}
-                placeholder="e.g. 323e4567-e89b-12d3-a456-426614174000"
+          <FieldGroup>
+            {!initialOrderItemId && (
+              <Field>
+                <FieldLabel htmlFor="order_item_id">Order Item ID (UUID)</FieldLabel>
+                <Input
+                  id="order_item_id"
+                  value={orderItemId}
+                  onChange={(e) => setOrderItemId(e.target.value)}
+                  placeholder="e.g. 323e4567-e89b-12d3-a456-426614174000"
+                  required
+                />
+              </Field>
+            )}
+
+            <Field>
+              <FieldLabel htmlFor="initial_comment">{t('support.dialog.problemDescription')}</FieldLabel>
+              <Textarea
+                id="initial_comment"
+                rows={4}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={t('support.dialog.problemPlaceholder')}
                 required
               />
-            </div>
-          )}
+            </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="initial_comment">{t('support.dialog.problemDescription')}</Label>
-            <textarea
-              id="initial_comment"
-              rows={4}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder={t('support.dialog.problemPlaceholder')}
-              className="w-full rounded-lg border border-border bg-background p-3 text-sm text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="ticket_screenshots">{t('support.dialog.attachments')}</Label>
-            <div className="relative flex flex-col items-center justify-center rounded-lg border border-dashed border-border p-4 text-center hover:border-primary/50 transition-colors">
-              <input
-                id="ticket_screenshots"
-                type="file"
-                multiple
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleFilesChange}
-                className="absolute inset-0 cursor-pointer opacity-0"
-              />
-              <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-              {files.length > 0 ? (
-                <div className="flex flex-wrap gap-2 text-xs text-primary font-medium">
-                  {files.map((f) => (
-                    <span key={f.name} className="inline-flex items-center gap-1">
-                      <FileCheck className="h-3.5 w-3.5" />
-                      {f.name}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {t('orders.detail.dropFilePrompt')}
-                </p>
-              )}
-            </div>
-          </div>
+            <Field>
+              <FieldLabel htmlFor="ticket_screenshots">{t('support.dialog.attachments')}</FieldLabel>
+              <div className="relative flex flex-col items-center justify-center rounded-lg border border-dashed border-border p-4 text-center hover:border-primary/50 transition-colors">
+                <input
+                  id="ticket_screenshots"
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleFilesChange}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+                <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+                {files.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 text-xs text-primary font-medium">
+                    {files.map((f) => (
+                      <span key={f.name} className="inline-flex items-center gap-1">
+                        <FileCheck className="h-3.5 w-3.5" />
+                        {f.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t('orders.detail.dropFilePrompt')}
+                  </p>
+                )}
+              </div>
+            </Field>
+          </FieldGroup>
 
           <DialogFooter className="pt-2">
             <Button

@@ -17,6 +17,17 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertAction,
+} from '@workspace/ui/components/alert'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@workspace/ui/components/tooltip'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { useOrderDetail } from '../hooks/use-orders'
@@ -94,14 +105,14 @@ export function OrderDetailPage() {
 
   if (isError || !order) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-4">
+      <Alert variant="destructive" className="flex flex-col items-center justify-center p-8 text-center space-y-4">
         <AlertCircle className="h-10 w-10 text-destructive" />
-        <h3 className="font-heading text-lg font-semibold text-foreground">
+        <AlertTitle className="font-heading text-lg font-semibold text-foreground">
           {t('common.error', 'Order not found or access denied')}
-        </h3>
-        <p className="text-xs text-muted-foreground max-w-sm">
+        </AlertTitle>
+        <AlertDescription className="text-xs text-muted-foreground max-w-sm">
           We could not load details for this order. It may not exist or belongs to another account.
-        </p>
+        </AlertDescription>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             {t('common.retry', 'Try again')}
@@ -110,7 +121,7 @@ export function OrderDetailPage() {
             {t('orders.detail.backToOrders')}
           </Button>
         </div>
-      </div>
+      </Alert>
     )
   }
 
@@ -156,13 +167,17 @@ export function OrderDetailPage() {
 
       {/* New Order Banner */}
       {isNewOrder && isPendingPayment && (
-        <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4 text-start">
-          <Check className="h-5 w-5 text-primary shrink-0" />
-          <div className="text-xs sm:text-sm text-foreground">
-            <span className="font-semibold block">{lang === 'ar' ? 'تم إنشاء طلبك بنجاح!' : 'Order created successfully!'}</span>
-            <span className="text-muted-foreground">{lang === 'ar' ? 'يُرجى إتمام التحويل عبر فودافون كاش أو إنستاباي، ثم رفع صورة إيصال الدفع.' : 'Please complete transfer via Vodafone Cash or InstaPay, then upload your receipt below.'}</span>
-          </div>
-        </div>
+        <Alert className="border-primary/30 bg-primary/10 text-foreground">
+          <Check className="size-4 text-primary" />
+          <AlertTitle className="font-semibold">
+            {lang === 'ar' ? 'تم إنشاء طلبك بنجاح!' : 'Order created successfully!'}
+          </AlertTitle>
+          <AlertDescription className="text-muted-foreground text-xs sm:text-sm">
+            {lang === 'ar'
+              ? 'يُرجى إتمام التحويل عبر فودافون كاش أو إنستاباي، ثم رفع صورة إيصال الدفع.'
+              : 'Please complete transfer via Vodafone Cash or InstaPay, then upload your receipt below.'}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Order Header Card */}
@@ -208,50 +223,50 @@ export function OrderDetailPage() {
 
         {/* Verification Status Banner */}
         {isUnderReview && (
-          <div className="mt-4 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs">
-            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-semibold text-foreground">
-                {t('orders.status.under_review')}
-              </span>
-              <p className="text-muted-foreground">
-                {t('orders.detail.reviewDeadline')}:{' '}
-                {order.review_deadline
-                  ? formatDate(order.review_deadline, {
-                      locale: lang,
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : '1-2 hours'}
-              </p>
-            </div>
-          </div>
+          <Alert className="mt-4 border-primary/20 bg-primary/5 text-foreground">
+            <Info className="size-4 text-primary" />
+            <AlertTitle className="text-sm font-semibold">
+              {t('orders.status.under_review')}
+            </AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground">
+              {t('orders.detail.reviewDeadline')}:{' '}
+              {order.review_deadline
+                ? formatDate(order.review_deadline, {
+                    locale: lang,
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '1-2 hours'}
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Rejection / Warning Notice */}
         {order.rejection_reason && (
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs">
+          <Alert variant="destructive" className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-destructive" />
+              <AlertTriangle className="size-4 shrink-0 mt-0.5 text-destructive" />
               <div className="space-y-0.5">
-                <span className="font-semibold text-foreground">{t('orders.detail.rejectionReason')}</span>
-                <p className="text-muted-foreground">{order.rejection_reason}</p>
+                <AlertTitle className="text-sm font-semibold">{t('orders.detail.rejectionReason')}</AlertTitle>
+                <AlertDescription className="text-xs">{order.rejection_reason}</AlertDescription>
               </div>
             </div>
             {isPendingPayment && (
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setUploadDialogOpen(true)}
-                className="gap-1.5 text-xs shrink-0 active:scale-[0.98]"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                <span>{t('orders.detail.uploadReceipt')}</span>
-              </Button>
+              <AlertAction>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setUploadDialogOpen(true)}
+                  className="gap-1.5 text-xs shrink-0"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>{t('orders.detail.uploadReceipt')}</span>
+                </Button>
+              </AlertAction>
             )}
-          </div>
+          </Alert>
         )}
       </Card>
 
@@ -279,24 +294,33 @@ export function OrderDetailPage() {
                   <span className="font-mono text-sm font-bold text-foreground">
                     {order.payment_instructions.vodafone_cash_number}
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() =>
-                      handleCopyInstruction(
-                        order.payment_instructions.vodafone_cash_number,
-                        'vf',
-                      )
-                    }
-                  >
-                    {copiedInstruction === 'vf' ? (
-                      <Check className="h-3 w-3 text-emerald-500" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() =>
+                            handleCopyInstruction(
+                              order.payment_instructions.vodafone_cash_number,
+                              'vf',
+                            )
+                          }
+                        />
+                      }
+                    >
+                      {copiedInstruction === 'vf' ? (
+                        <Check className="h-3 w-3 text-emerald-500" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {copiedInstruction === 'vf' ? t('orders.detail.copied') : t('orders.detail.copy')}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -309,21 +333,30 @@ export function OrderDetailPage() {
                   <span className="font-mono text-sm font-bold text-foreground">
                     {order.payment_instructions.instapay_ipa}
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() =>
-                      handleCopyInstruction(order.payment_instructions.instapay_ipa, 'ipa')
-                    }
-                  >
-                    {copiedInstruction === 'ipa' ? (
-                      <Check className="h-3 w-3 text-emerald-500" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() =>
+                            handleCopyInstruction(order.payment_instructions.instapay_ipa, 'ipa')
+                          }
+                        />
+                      }
+                    >
+                      {copiedInstruction === 'ipa' ? (
+                        <Check className="h-3 w-3 text-emerald-500" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {copiedInstruction === 'ipa' ? t('orders.detail.copied') : t('orders.detail.copy')}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -380,45 +413,63 @@ export function OrderDetailPage() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleRevealKey(item.id)}
-                          className="h-8 gap-1.5 text-xs"
-                        >
-                          {isRevealed ? (
-                            <>
-                              <EyeOff className="h-3 w-3" />
-                              <span>{t('orders.detail.hideKey')}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="h-3 w-3" />
-                              <span>{t('orders.detail.revealKey')}</span>
-                            </>
-                          )}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleRevealKey(item.id)}
+                                className="h-8 gap-1.5 text-xs"
+                              />
+                            }
+                          >
+                            {isRevealed ? (
+                              <>
+                                <EyeOff className="h-3 w-3" />
+                                <span>{t('orders.detail.hideKey')}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-3 w-3" />
+                                <span>{t('orders.detail.revealKey')}</span>
+                              </>
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {isRevealed ? t('orders.detail.hideKey') : t('orders.detail.revealKey')}
+                          </TooltipContent>
+                        </Tooltip>
 
-                        <Button
-                          type="button"
-                          variant={isCopied ? 'outline' : 'default'}
-                          size="sm"
-                          onClick={() => handleCopyKey(item.id, item.key_serial!)}
-                          className="h-8 gap-1.5 text-xs"
-                        >
-                          {isCopied ? (
-                            <>
-                              <Check className="h-3 w-3 text-emerald-500" />
-                              <span>{t('orders.detail.copied')}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3 w-3" />
-                              <span>{t('orders.detail.copy')}</span>
-                            </>
-                          )}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                type="button"
+                                variant={isCopied ? 'outline' : 'default'}
+                                size="sm"
+                                onClick={() => handleCopyKey(item.id, item.key_serial!)}
+                                className="h-8 gap-1.5 text-xs"
+                              />
+                            }
+                          >
+                            {isCopied ? (
+                              <>
+                                <Check className="h-3 w-3 text-emerald-500" />
+                                <span>{t('orders.detail.copied')}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                <span>{t('orders.detail.copy')}</span>
+                              </>
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {isCopied ? t('orders.detail.copied') : t('orders.detail.copy')}
+                          </TooltipContent>
+                        </Tooltip>
 
                         <Button
                           type="button"
@@ -451,60 +502,13 @@ export function OrderDetailPage() {
                 <span>-{formattedDiscount}</span>
               </div>
             )}
-            <div className="flex justify-between text-base font-bold text-foreground border-t border-border pt-2">
+            <div className="flex justify-between font-bold text-foreground text-sm sm:text-base border-t border-border/50 pt-2">
               <span>{t('orders.detail.total')}</span>
               <span>{formattedTotal}</span>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Payment Attempts History (If any) */}
-      {order.payment_attempts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">
-              {t('orders.detail.paymentAttempts')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-border">
-              {order.payment_attempts.map((attempt) => (
-                <div key={attempt.id} className="py-3 first:pt-0 last:pb-0 text-xs space-y-1">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-foreground uppercase">
-                      {attempt.payment_method.replace('_', ' ')}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {formatDate(attempt.created_at, {
-                        locale: lang,
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  {attempt.amount_claimed_egp && (
-                    <div className="text-muted-foreground">
-                      {t('orders.detail.amountClaimed')}:{' '}
-                      {formatMoney(attempt.amount_claimed_egp, {
-                        currency: 'EGP',
-                        locale: lang,
-                      })}
-                    </div>
-                  )}
-                  {attempt.rejection_reason && (
-                    <div className="text-destructive">
-                      {t('orders.detail.rejectionReason')}: {attempt.rejection_reason}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Dialogs */}
       <UploadReceiptDialog
@@ -533,4 +537,3 @@ export function OrderDetailPage() {
     </div>
   )
 }
-

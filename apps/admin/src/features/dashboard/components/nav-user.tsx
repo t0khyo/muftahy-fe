@@ -29,10 +29,16 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
   const navigate = useNavigate()
   const { lang = 'en' } = useParams<{ lang: string }>()
   const { t } = useTranslation(['admin'])
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
   const { user, logout, isLoading } = useAdminAuth()
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
   const isRtl = side === 'right'
+
+  const handleProfileClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
@@ -102,7 +108,7 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem
-                render={<Link to={`/${lang}/profile`} />}
+                render={<Link to={`/${lang}/profile`} onClick={handleProfileClick} />}
                 className="gap-2 cursor-pointer"
               >
                 <User className="size-4" />

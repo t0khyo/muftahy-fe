@@ -86,6 +86,14 @@ Stop and ask the user first before doing any of these:
 - Primitives are **Base UI**. Use its composition pattern (the `render` prop), not Radix's `asChild`. Do not import from `@radix-ui/*`.
 - Prefer existing primitives over custom widgets.
 
+## Domain terminology and merchant UX
+
+Natural, simple, standard, descriptive e-commerce terminology for merchants running a digital key marketplace:
+
+- **Merchant-first language:** Use standard e-commerce and store operations terms (**Products**, **Orders**, **Inventory**, **Discounts**, **Customer Support**, **Finance**, **Audit Log**).
+- **No technical slop or sci-fi metaphors:** Never use developer pipeline jargon or theatrical phrases in user-facing merchant UI (avoid "Workstations", "Ingestion", "Vault", "SKU Repository", "Zero-Knowledge Delivery", "Zero-Trust").
+- **Clear action verbs:** Buttons, modal headers, and table controls must describe the merchant action directly (e.g., **Import Keys**, **Add Product**, **Resolve Ticket**, **Date Added**).
+
 ## Styling
  
 - Follow `docs/design-system.md` for every visual decision (colors, fonts, type scale, spacing, theming). Do not invent values.

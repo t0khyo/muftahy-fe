@@ -20,6 +20,9 @@ import {
 import { useAuditLogs } from '../features/audit/hooks/use-audit-logs'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Progress } from '@workspace/ui/components/progress'
+import { Alert, AlertTitle, AlertDescription, AlertAction } from '@workspace/ui/components/alert'
+import { Empty, EmptyTitle } from '@workspace/ui/components/empty'
 import {
   Card,
   CardContent,
@@ -36,6 +39,7 @@ import {
   TableRow,
 } from '@workspace/ui/components/table'
 import { formatMoney } from '@workspace/domain/formatters/money'
+import { formatDate } from '@workspace/domain/formatters/date'
 import { KeyBatchImportSheet } from '../features/inventory/components/key-batch-import-sheet'
 import { AdminPageHeader } from '../components/admin-page-header'
 
@@ -61,13 +65,13 @@ export function AdminDashboardRoute() {
   }
 
   return (
-    <div className="space-y-8 text-start w-full">
+    <div className="space-y-6 text-start w-full">
       {/* Header */}
       <AdminPageHeader
-        title={t('admin:dashboard.title', 'Operator Mission Control')}
+        title={t('admin:dashboard.title', 'Dashboard')}
         description={
           <span className="flex flex-wrap items-center gap-1.5">
-            <span>{t('admin:dashboard.subtitle', 'Live storefront telemetry and pending fulfillment actions')}</span>
+            <span>{t('admin:dashboard.subtitle', 'Live storefront overview and store operations')}</span>
             <span className="text-muted-foreground/60 hidden sm:inline">·</span>
             <span className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
               <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -81,39 +85,31 @@ export function AdminDashboardRoute() {
           className="gap-2 cursor-pointer shadow-xs active:translate-y-px transition-all font-medium"
         >
           <Upload className="size-4" />
-          <span>{t('admin:inventory.ingestBatch', 'Ingest Keys')}</span>
+          <span>{t('admin:inventory.importKeys', 'Import Keys')}</span>
         </Button>
       </AdminPageHeader>
 
       {/* Low Stock Alert Banner */}
       {lowStock.length > 0 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 sm:p-5 text-amber-900 dark:text-amber-200 transition-colors">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-amber-500/20 p-2.5 text-amber-600 dark:text-amber-400">
-                <AlertTriangle className="size-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm tracking-tight">
-                  {t('admin:dashboard.lowStockAlert', 'Low Stock Warning: Critical Key Reserves')}
-                </h3>
-                <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
-                  {lowStock.length} {t('admin:dashboard.productsRunningLow', 'products have reached or breached their reserve threshold.')}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleOpenImport(lowStock[0]?.product_id)}
-                className="border-amber-500/40 hover:bg-amber-500/20 text-xs font-medium cursor-pointer"
-              >
-                {t('admin:dashboard.restockFirst', 'Restock Now')}
-              </Button>
-            </div>
-          </div>
-          <div className="mt-3.5 flex flex-wrap gap-2 pt-3 border-t border-amber-500/20">
+        <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 transition-colors p-4 sm:p-5">
+          <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400" />
+          <AlertTitle className="text-sm font-semibold tracking-tight text-foreground">
+            {t('admin:dashboard.lowStockAlert', 'Low Stock Warning: Critical Key Reserves')}
+          </AlertTitle>
+          <AlertDescription className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+            {lowStock.length} {t('admin:dashboard.productsRunningLow', 'products have reached or breached their reserve threshold.')}
+          </AlertDescription>
+          <AlertAction className="top-4 end-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenImport(lowStock[0]?.product_id)}
+              className="border-amber-500/40 hover:bg-amber-500/20 text-xs font-medium cursor-pointer"
+            >
+              {t('admin:dashboard.restockFirst', 'Restock Now')}
+            </Button>
+          </AlertAction>
+          <div className="mt-3.5 flex flex-wrap gap-2 pt-3 border-t border-amber-500/20 col-span-full">
             {lowStock.map((prod) => (
               <Badge
                 key={prod.product_id}
@@ -125,13 +121,13 @@ export function AdminDashboardRoute() {
               </Badge>
             ))}
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* KPI Metric Ribbon */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Today's Revenue */}
-        <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
+        <Card className="group relative overflow-hidden border-border/80 p-5 shadow-none transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
               {t('admin:dashboard.todayRevenue', "Today's Revenue")}
@@ -149,10 +145,10 @@ export function AdminDashboardRoute() {
               <span>{t('admin:dashboard.clearedReceipts', 'Cleared manual & online payments')}</span>
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Orders Today */}
-        <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
+        <Card className="group relative overflow-hidden border-border/80 p-5 shadow-none transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
               {t('admin:dashboard.todayOrders', 'Orders Created Today')}
@@ -169,13 +165,13 @@ export function AdminDashboardRoute() {
               {t('admin:dashboard.acrossAllGateways', 'Across all payment methods')}
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Pending Adjudication */}
-        <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
+        <Card className="group relative overflow-hidden border-border/80 p-5 shadow-none transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-              {t('admin:dashboard.pendingOrders', 'Pending Adjudication')}
+              {t('admin:dashboard.pendingOrders', 'Pending Review')}
             </span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-colors group-hover:bg-amber-500/15">
               <Clock className="size-4" />
@@ -193,13 +189,13 @@ export function AdminDashboardRoute() {
               <ArrowUpRight className="size-3" />
             </Link>
           </div>
-        </div>
+        </Card>
 
         {/* Open Dispute Tickets */}
-        <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
+        <Card className="group relative overflow-hidden border-border/80 p-5 shadow-none transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-              {t('admin:dashboard.openDisputes', 'Open Dispute Tickets')}
+              {t('admin:dashboard.openDisputes', 'Open Support Tickets')}
             </span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 transition-colors group-hover:bg-rose-500/15">
               <LifeBuoy className="size-4" />
@@ -217,7 +213,7 @@ export function AdminDashboardRoute() {
               <ArrowUpRight className="size-3" />
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Mid Section: Daily Sales Breakdown & Preorders Queue */}
@@ -250,9 +246,11 @@ export function AdminDashboardRoute() {
                 {t('admin:common.loading', 'Loading sales trends...')}
               </div>
             ) : !sales || sales.daily_breakdown.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
-                {t('admin:dashboard.noSalesData', 'No historical sales data in this period.')}
-              </div>
+              <Empty className="h-48 border-0 bg-transparent py-8">
+                <EmptyTitle className="text-xs text-muted-foreground">
+                  {t('admin:dashboard.noSalesData', 'No historical sales data in this period.')}
+                </EmptyTitle>
+              </Empty>
             ) : (
               <div className="space-y-4">
                 <div className="grid gap-3">
@@ -264,11 +262,8 @@ export function AdminDashboardRoute() {
                     return (
                       <div key={day.date} className="flex items-center gap-3 text-xs group">
                         <span className="w-20 font-mono text-muted-foreground shrink-0">{day.date}</span>
-                        <div className="flex-1 h-3 rounded-full bg-muted/60 overflow-hidden p-0.5 border border-border/30">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all duration-300 group-hover:brightness-110"
-                            style={{ width: `${Math.max(pct, 4)}%` }}
-                          />
+                        <div className="flex-1 flex items-center">
+                          <Progress value={pct} className="w-full h-2.5" />
                         </div>
                         <span className="w-28 text-end font-mono font-semibold tabular-nums shrink-0">
                           {formatMoney(dayRev, { currency: 'EGP', locale: lang })}
@@ -297,9 +292,11 @@ export function AdminDashboardRoute() {
           </CardHeader>
           <CardContent className="pt-5">
             {!preorders || preorders.per_product_preorders.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-12 text-center">
-                {t('admin:dashboard.noPendingPreorders', 'No pending preorders awaiting release.')}
-              </p>
+              <Empty className="h-48 border-0 bg-transparent py-8">
+                <EmptyTitle className="text-xs text-muted-foreground">
+                  {t('admin:dashboard.noPendingPreorders', 'No pending preorders awaiting release.')}
+                </EmptyTitle>
+              </Empty>
             ) : (
               <div className="space-y-2.5">
                 {preorders.per_product_preorders.slice(0, 5).map((po) => (
@@ -329,10 +326,10 @@ export function AdminDashboardRoute() {
         <CardHeader className="flex flex-row items-center justify-between text-start pb-4 border-b border-border/40">
           <div>
             <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
-              {t('admin:audit.recentActivity', 'Live Security & Audit Trail')}
+              {t('admin:audit.recentActivity', 'Recent Store Activity')}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground mt-0.5">
-              {t('admin:audit.recentActivityDesc', 'Immutable log of administrative operations and inventory modifications.')}
+              {t('admin:audit.recentActivityDesc', 'Log of recent store activities and inventory updates.')}
             </CardDescription>
           </div>
           <Link to={`/${lang}/audit`}>
@@ -344,13 +341,13 @@ export function AdminDashboardRoute() {
         </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-muted/30">
+            <TableHeader className="bg-muted/40">
               <TableRow className="border-border/60 hover:bg-transparent">
-                <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.action', 'Action')}</TableHead>
-                <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.operator', 'Operator')}</TableHead>
-                <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.resource', 'Target')}</TableHead>
-                <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.ipAddress', 'IP')}</TableHead>
-                <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.timestamp', 'Timestamp')}</TableHead>
+                <TableHead className="ps-4 pe-3 py-3.5 text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t('admin:audit.action', 'Action')}</TableHead>
+                <TableHead className="px-3 py-3.5 text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t('admin:audit.operator', 'Operator')}</TableHead>
+                <TableHead className="px-3 py-3.5 text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t('admin:audit.resource', 'Target')}</TableHead>
+                <TableHead className="px-3 py-3.5 text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t('admin:audit.ipAddress', 'IP')}</TableHead>
+                <TableHead className="ps-3 pe-4 py-3.5 text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t('admin:audit.timestamp', 'Timestamp')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -363,25 +360,26 @@ export function AdminDashboardRoute() {
               ) : (
                 recentLogs.items.map((log) => (
                   <TableRow key={log.id} className="border-border/40 hover:bg-muted/20 transition-colors">
-                    <TableCell className="font-mono text-xs font-semibold text-start py-3">
+                    <TableCell className="ps-4 pe-3 py-3.5 font-mono text-xs font-semibold text-start">
                       <Badge variant="outline" className="text-[10px] font-mono border-border/60 bg-muted/40">
                         {log.action}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-start font-mono text-muted-foreground py-3">
+                    <TableCell className="px-3 py-3.5 text-xs text-start font-mono text-muted-foreground">
                       {log.admin_name}
                     </TableCell>
-                    <TableCell className="text-xs text-start py-3">
+                    <TableCell className="px-3 py-3.5 text-xs text-start">
                       <span className="font-medium text-foreground">{log.target_type}</span>
                       <span className="ms-1.5 font-mono text-muted-foreground text-[10px]">
                         ({log.target_id.slice(0, 8)})
                       </span>
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-start text-muted-foreground py-3">
+                    <TableCell className="px-3 py-3.5 font-mono text-xs text-start text-muted-foreground">
                       {log.ip_address || '—'}
                     </TableCell>
-                    <TableCell className="text-xs text-end text-muted-foreground font-mono py-3">
-                      {new Date(log.created_at).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                    <TableCell className="ps-3 pe-4 py-3.5 text-xs text-end text-muted-foreground font-mono tabular-nums">
+                      {formatDate(log.created_at, {
+                        locale: lang,
                         dateStyle: 'short',
                         timeStyle: 'short',
                       })}

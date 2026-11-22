@@ -14,6 +14,7 @@ import {
 } from '@workspace/ui/components/accordion'
 import { Switch } from '@workspace/ui/components/switch'
 import { Button } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
 import { X } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import type { ProductCategory, StockStatus } from '@workspace/domain/schemas/product'
@@ -63,9 +64,9 @@ export function FilterSheet({
               {t('listing.filters', { defaultValue: 'Filters' })}
             </SheetTitle>
             {activeFiltersCount > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-primary-foreground">
+              <Badge className="flex size-5 items-center justify-center rounded-full p-0 text-[11px] font-medium">
                 {activeFiltersCount}
-              </span>
+              </Badge>
             )}
           </div>
 
@@ -84,10 +85,11 @@ export function FilterSheet({
 
             <SheetClose
               render={
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   aria-label={t('close', { ns: 'common', defaultValue: 'Close' })}
-                  className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors"
+                  className="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer"
                 />
               }
             >

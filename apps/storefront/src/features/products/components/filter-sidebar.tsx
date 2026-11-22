@@ -7,6 +7,7 @@ import {
 } from '@workspace/ui/components/accordion'
 import { Switch } from '@workspace/ui/components/switch'
 import { Button } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
 import { cn } from '@workspace/ui/lib/utils'
 import type { ProductCategory, StockStatus } from '@workspace/domain/schemas/product'
 import type { ProductFiltersState } from '../hooks/use-product-filters'
@@ -49,9 +50,9 @@ export function FilterSidebar({
             {t('listing.filters', { defaultValue: 'Filters' })}
           </h2>
           {activeFiltersCount > 0 && (
-            <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-primary-foreground">
+            <Badge className="flex size-5 items-center justify-center rounded-full p-0 text-[11px] font-medium">
               {activeFiltersCount}
-            </span>
+            </Badge>
           )}
         </div>
 

@@ -4,9 +4,27 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
+import { getProductService } from '@workspace/api/factory'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { ProductDetailPage } from './pages/product-detail-page'
 import { useCartStore } from '../cart/stores/cart-store'
 import '../../test-setup'
+
+const mockDetailProduct: ProductResponse = {
+  id: '00000000-0000-4000-8000-000000000001',
+  name: 'Windows 11 Professional',
+  category: 'windows',
+  variant: 'retail',
+  base_price: '499.00',
+  sale_price: '349.00',
+  effective_price: '349.00',
+  discount_percentage: 30,
+  stock_status: 'in_stock',
+  available_count: 14,
+  preorder_enabled: true,
+  description: 'Genuine Microsoft Windows 11 Pro digital retail license key.',
+  is_active: true,
+}
 
 function renderProductDetail(initialEntry: string, queryClient?: QueryClient) {
   const lang = initialEntry.startsWith('/ar') ? 'ar' : 'en'
@@ -42,9 +60,12 @@ function renderProductDetail(initialEntry: string, queryClient?: QueryClient) {
 
 describe('ProductDetailPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     useCartStore.getState().clear()
     vi.clearAllTimers()
     vi.useRealTimers()
+    const productService = getProductService()
+    vi.spyOn(productService, 'getProductById').mockResolvedValue(mockDetailProduct)
   })
 
   it('renders product detail sections, title, price, and WhatsApp support', async () => {

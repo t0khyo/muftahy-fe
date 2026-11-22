@@ -1,5 +1,10 @@
 import * as React from 'react'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@workspace/ui/components/tooltip'
 import { Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -43,24 +48,42 @@ export function MaskedKeyReveal({ serial, className }: MaskedKeyRevealProps) {
       <span className="rounded bg-muted px-2 py-1 text-foreground border border-border select-all">
         {revealed ? serial : maskSerial(serial)}
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        onClick={() => setRevealed((prev) => !prev)}
-        aria-label={revealed ? t('admin.inventoryModule.maskKey', 'Mask') : t('admin.inventoryModule.revealKey', 'Reveal')}
-      >
-        {revealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        onClick={handleCopy}
-        aria-label={copied ? t('admin.inventoryModule.copied', 'Copied!') : t('admin.inventoryModule.copyKey', 'Copy')}
-      >
-        {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setRevealed((prev) => !prev)}
+              aria-label={revealed ? t('admin.inventoryModule.maskKey', 'Mask') : t('admin.inventoryModule.revealKey', 'Reveal')}
+            >
+              {revealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </Button>
+          }
+        />
+        <TooltipContent>
+          {revealed ? t('admin.inventoryModule.maskKey', 'Mask') : t('admin.inventoryModule.revealKey', 'Reveal')}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={handleCopy}
+              aria-label={copied ? t('admin.inventoryModule.copied', 'Copied!') : t('admin.inventoryModule.copyKey', 'Copy')}
+            >
+              {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
+            </Button>
+          }
+        />
+        <TooltipContent>
+          {copied ? t('admin.inventoryModule.copied', 'Copied!') : t('admin.inventoryModule.copyKey', 'Copy')}
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }

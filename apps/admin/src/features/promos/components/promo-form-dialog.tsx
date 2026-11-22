@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -8,8 +10,12 @@ import {
 } from '@workspace/ui/components/dialog'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
-import { useTranslation } from 'react-i18next'
+import { Field, FieldLabel, FieldGroup } from '@workspace/ui/components/field'
+import { InputGroup, InputGroupInput, InputGroupAddon } from '@workspace/ui/components/input-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
+import { Calendar } from '@workspace/ui/components/calendar'
+import { Calendar as CalendarIcon, X, Percent } from 'lucide-react'
+import { formatDate } from '@workspace/domain/formatters/date'
 import { useCreatePromo } from '../hooks/use-promos'
 
 interface PromoFormDialogProps {
@@ -19,13 +25,15 @@ interface PromoFormDialogProps {
 
 export function PromoFormDialog({ open, onOpenChange }: PromoFormDialogProps) {
   const { t } = useTranslation()
+  const { lang = 'en' } = useParams<{ lang: string }>()
   const createMutation = useCreatePromo()
 
   const [code, setCode] = React.useState('')
   const [discount, setDiscount] = React.useState('')
   const [maxTotalUses, setMaxTotalUses] = React.useState('')
   const [maxUsesPerUser, setMaxUsesPerUser] = React.useState('1')
-  const [expiresAt, setExpiresAt] = React.useState('')
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined)
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,13 +46,14 @@ export function PromoFormDialog({ open, onOpenChange }: PromoFormDialogProps) {
         discount_percentage: discountNum,
         max_total_uses: maxTotalUses ? parseInt(maxTotalUses, 10) : null,
         max_uses_per_user: maxUsesPerUser ? parseInt(maxUsesPerUser, 10) : null,
-        expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+        expires_at: selectedDate ? selectedDate.toISOString() : null,
       })
       setCode('')
       setDiscount('')
       setMaxTotalUses('')
       setMaxUsesPerUser('1')
-      setExpiresAt('')
+      setSelectedDate(undefined)
+      setIsCalendarOpen(false)
       onOpenChange(false)
     } catch {
       // Handled
@@ -53,84 +62,138 @@ export function PromoFormDialog({ open, onOpenChange }: PromoFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-lg p-6">
         <DialogHeader>
-          <DialogTitle>{t('admin.promosModule.createPromo', 'Create Promo Campaign')}</DialogTitle>
+          <DialogTitle>{t('admin.promosModule.createPromo', 'Create Discount Code')}</DialogTitle>
           <DialogDescription>
-            Generate a new coupon code with usage constraints and percentage discounts.
+            Create a new discount code with percentage discount and usage limits.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 mt-3 text-xs">
-          <div className="space-y-1">
-            <Label htmlFor="promo-code">{t('admin.promosModule.promoCode', 'Promo Code')}</Label>
-            <Input
-              id="promo-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="e.g. FLASH25"
-              className="font-mono uppercase font-bold"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="promo-disc">{t('admin.promosModule.discountPercentage', 'Discount %')}</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4 text-xs">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="promo-code">{t('admin.promosModule.promoCode', 'Promo Code')}</FieldLabel>
               <Input
-                id="promo-disc"
-                type="number"
-                min="1"
-                max="100"
-                step="1"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                placeholder="20"
+                id="promo-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="e.g. FLASH25"
+                className="h-9 font-mono uppercase font-bold"
                 required
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="promo-expiry">{t('admin.promosModule.expiresAt', 'Expiration Date')}</Label>
-              <Input
-                id="promo-expiry"
-                type="date"
-                value={expiresAt}
-                onChange={(e) => setExpiresAt(e.target.value)}
-              />
-            </div>
-          </div>
+            </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="promo-max-total">{t('admin.promosModule.maxUses', 'Max Total Redemptions')}</Label>
-              <Input
-                id="promo-max-total"
-                type="number"
-                min="1"
-                value={maxTotalUses}
-                onChange={(e) => setMaxTotalUses(e.target.value)}
-                placeholder="Unlimited"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="promo-max-user">Per-User Limit</Label>
-              <Input
-                id="promo-max-user"
-                type="number"
-                min="1"
-                value={maxUsesPerUser}
-                onChange={(e) => setMaxUsesPerUser(e.target.value)}
-                placeholder="1"
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="promo-disc">{t('admin.promosModule.discountPercentage', 'Discount %')}</FieldLabel>
+                <InputGroup className="h-9">
+                  <InputGroupInput
+                    id="promo-disc"
+                    type="number"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    placeholder="20"
+                    className="font-mono"
+                    required
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <Percent className="size-3.5 text-muted-foreground" />
+                  </InputGroupAddon>
+                </InputGroup>
+              </Field>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+              <Field>
+                <FieldLabel htmlFor="promo-expiry">{t('admin.promosModule.expiresAt', 'Expiration Date')}</FieldLabel>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger
+                    render={
+                      <Button
+                        id="promo-expiry"
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-start font-normal h-9 text-xs"
+                      >
+                        <CalendarIcon className="me-2 size-3.5 text-muted-foreground shrink-0" />
+                        {selectedDate ? (
+                          <span className="font-mono text-foreground truncate">
+                            {formatDate(selectedDate, { locale: lang, dateStyle: 'medium' })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground truncate">
+                            {t('admin.promosModule.pickDate', 'Pick expiration date')}
+                          </span>
+                        )}
+                        {selectedDate && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedDate(undefined)
+                            }}
+                            className="ms-auto rounded p-0.5 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                            aria-label={t('admin.common.clear', 'Clear date')}
+                          >
+                            <X className="size-3" />
+                          </span>
+                        )}
+                      </Button>
+                    }
+                  />
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date)
+                        setIsCalendarOpen(false)
+                      }}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      autoFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="promo-max-total">{t('admin.promosModule.maxUses', 'Max Total Redemptions')}</FieldLabel>
+                <Input
+                  id="promo-max-total"
+                  type="number"
+                  min="1"
+                  value={maxTotalUses}
+                  onChange={(e) => setMaxTotalUses(e.target.value)}
+                  placeholder="Unlimited"
+                  className="h-9 font-mono"
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="promo-max-user">Per-User Limit</FieldLabel>
+                <Input
+                  id="promo-max-user"
+                  type="number"
+                  min="1"
+                  value={maxUsesPerUser}
+                  onChange={(e) => setMaxUsesPerUser(e.target.value)}
+                  placeholder="1"
+                  className="h-9 font-mono"
+                />
+              </Field>
+            </div>
+          </FieldGroup>
+
+          <div className="flex justify-end gap-2.5 pt-4 border-t border-border mt-4">
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               {t('admin.common.cancel', 'Cancel')}
             </Button>
             <Button type="submit" size="sm" disabled={createMutation.isPending}>
-              {createMutation.isPending ? t('admin.common.loading', 'Creating...') : t('admin.promosModule.createPromo', 'Create Code')}
+              {createMutation.isPending ? t('admin.common.loading', 'Creating...') : t('admin.promosModule.createPromo', 'Create Discount')}
             </Button>
           </div>
         </form>

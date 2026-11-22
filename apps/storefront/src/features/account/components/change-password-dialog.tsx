@@ -5,7 +5,8 @@ import { getAuthService } from '@workspace/api/factory'
 import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
+import { Card } from '@workspace/ui/components/card'
+import { FieldGroup, Field, FieldLabel } from '@workspace/ui/components/field'
 import {
   Dialog,
   DialogContent,
@@ -155,7 +156,7 @@ export function ChangePasswordDialog({ email, open, onOpenChange }: ChangePasswo
             )}
 
             {/* Step 1: Send OTP code */}
-            <div className="rounded-lg border border-border/80 bg-muted/40 p-3.5 space-y-3">
+            <Card className="border-border/80 bg-muted/40 p-3.5 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-medium text-foreground">
                   {t('profile.enterOtp')}
@@ -198,14 +199,14 @@ export function ChangePasswordDialog({ email, open, onOpenChange }: ChangePasswo
                   </InputOTPGroup>
                 </InputOTP>
               </div>
-            </div>
+            </Card>
 
             {/* Step 2: New Password Inputs */}
-            <div className="space-y-3">
-              <div className="space-y-1.5 text-start">
-                <Label htmlFor="change-new-pass" className="text-xs font-medium">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="change-new-pass">
                   {t('profile.newPassword')}
-                </Label>
+                </FieldLabel>
                 <Input
                   id="change-new-pass"
                   type="password"
@@ -215,12 +216,12 @@ export function ChangePasswordDialog({ email, open, onOpenChange }: ChangePasswo
                   onChange={(e) => setNewPassword(e.target.value)}
                   disabled={isSubmitting}
                 />
-              </div>
+              </Field>
 
-              <div className="space-y-1.5 text-start">
-                <Label htmlFor="change-confirm-pass" className="text-xs font-medium">
+              <Field>
+                <FieldLabel htmlFor="change-confirm-pass">
                   {t('profile.confirmPassword')}
-                </Label>
+                </FieldLabel>
                 <Input
                   id="change-confirm-pass"
                   type="password"
@@ -230,8 +231,8 @@ export function ChangePasswordDialog({ email, open, onOpenChange }: ChangePasswo
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isSubmitting}
                 />
-              </div>
-            </div>
+              </Field>
+            </FieldGroup>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
               <Button

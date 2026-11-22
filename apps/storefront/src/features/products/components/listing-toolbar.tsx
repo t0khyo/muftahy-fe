@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontalIcon, XIcon } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
 import {
   Select,
   SelectContent,
@@ -93,9 +94,9 @@ export function ListingToolbar({
             <SlidersHorizontalIcon className="size-3.5" aria-hidden="true" />
             <span>{t('listing.filters', { defaultValue: 'Filters' })}</span>
             {activeFiltersCount > 0 && (
-              <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              <Badge className="flex size-4 items-center justify-center rounded-full p-0 text-[10px] font-bold">
                 {activeFiltersCount}
-              </span>
+              </Badge>
             )}
           </Button>
 
@@ -145,9 +146,10 @@ export function ListingToolbar({
           </span>
 
           {chips.map((chip) => (
-            <span
+            <Badge
               key={chip.id}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-secondary/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+              variant="secondary"
+              className="gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
             >
               <span>{chip.labelFallback}</span>
               <button
@@ -162,7 +164,7 @@ export function ListingToolbar({
               >
                 <XIcon className="size-3" aria-hidden="true" />
               </button>
-            </span>
+            </Badge>
           ))}
 
           <Button

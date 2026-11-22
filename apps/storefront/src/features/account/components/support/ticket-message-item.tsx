@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 import { ShieldAlert, User, Info } from 'lucide-react'
 import { formatDate } from '@workspace/domain/formatters/date'
 import type { CommentResponse } from '@workspace/domain/schemas/ticket'
+import { Bubble, BubbleContent } from '@workspace/ui/components/bubble'
 
 interface TicketMessageItemProps {
   comment: CommentResponse
@@ -35,7 +36,7 @@ export function TicketMessageItem({ comment }: TicketMessageItemProps) {
   const isCustomer = comment.author_type === 'customer'
 
   return (
-    <div className={`flex flex-col gap-1 my-3 max-w-[85%] ${isCustomer ? 'ms-auto items-end' : 'me-auto items-start'}`}>
+    <div className={`flex flex-col gap-1 my-2.5 max-w-[85%] ${isCustomer ? 'ms-auto items-end' : 'me-auto items-start'}`}>
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
         {isCustomer ? (
           <>
@@ -52,15 +53,14 @@ export function TicketMessageItem({ comment }: TicketMessageItemProps) {
         <span className="text-[11px]">{formattedTime}</span>
       </div>
 
-      <div
-        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
-          isCustomer
-            ? 'bg-primary text-primary-foreground rounded-te-xs'
-            : 'bg-muted border border-border text-foreground rounded-ts-xs'
-        }`}
+      <Bubble
+        variant={isCustomer ? 'default' : 'secondary'}
+        align={isCustomer ? 'end' : 'start'}
       >
-        {comment.content}
-      </div>
+        <BubbleContent className="whitespace-pre-wrap break-words text-sm">
+          {comment.content}
+        </BubbleContent>
+      </Bubble>
     </div>
   )
 }

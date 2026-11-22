@@ -2,9 +2,28 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { Search, KeyRound, AlertCircle, RefreshCw } from 'lucide-react'
-import { Input } from '@workspace/ui/components/input'
 import { Button } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertAction,
+} from '@workspace/ui/components/alert'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@workspace/ui/components/empty'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@workspace/ui/components/input-group'
 import type { UserKey } from '@workspace/domain/schemas/key'
 import { useUserKeys } from '../hooks/use-keys'
 import { KeyVaultCard } from '../components/keys/key-vault-card'
@@ -38,23 +57,24 @@ export function KeysPage() {
         </div>
 
         {allKeys.length > 0 && (
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary self-start sm:self-auto">
+          <Badge variant="secondary" className="self-start sm:self-auto font-semibold">
             {t('keys.totalKeys', { count: allKeys.length })}
-          </span>
+          </Badge>
         )}
       </div>
 
       {/* Search Bar */}
       {allKeys.length > 0 && (
-        <div className="relative max-w-md">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
+        <InputGroup className="max-w-md h-9">
+          <InputGroupAddon>
+            <Search className="size-4 text-muted-foreground" />
+          </InputGroupAddon>
+          <InputGroupInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('keys.searchPlaceholder')}
-            className="ps-9"
           />
-        </div>
+        </InputGroup>
       )}
 
       {/* Loading Skeletons */}
@@ -67,49 +87,57 @@ export function KeysPage() {
 
       {/* Error State */}
       {isError && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center">
-          <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-          <h3 className="font-heading text-base font-semibold text-foreground">
-            {t('common.error', 'An error occurred')}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>{t('common.error', 'An error occurred')}</AlertTitle>
+          <AlertDescription>
             Failed to load your digital keys. Please try again.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="mt-4 gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span>{t('common.retry', 'Try again')}</span>
-          </Button>
-        </div>
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => refetch()}
+              className="gap-1.5"
+            >
+              <RefreshCw className="size-3.5" />
+              <span>{t('common.retry', 'Try again')}</span>
+            </Button>
+          </AlertAction>
+        </Alert>
       )}
 
       {/* Empty Vault State */}
       {!isLoading && !isError && allKeys.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-10 text-center">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <KeyRound className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="font-heading text-base sm:text-lg font-semibold text-foreground">
-            {t('keys.emptyTitle')}
-          </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 max-w-md">
-            {t('keys.emptyDesc')}
-          </p>
-          <Button className="mt-5" render={<Link to={`/${lang}/products`} />}>
-            <span>{t('orders.browseCatalog')}</span>
-          </Button>
-        </div>
+        <Empty className="rounded-xl border border-border bg-card p-10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-full bg-muted mb-4">
+              <KeyRound className="size-8 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle className="text-base sm:text-lg font-semibold">
+              {t('keys.emptyTitle')}
+            </EmptyTitle>
+            <EmptyDescription className="max-w-md text-xs sm:text-sm">
+              {t('keys.emptyDesc')}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="mt-4">
+            <Button render={<Link to={`/${lang}/products`} />}>
+              <span>{t('orders.browseCatalog')}</span>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       {/* Search No Results */}
       {!isLoading && !isError && allKeys.length > 0 && keys.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">{t('keys.noResults')}</p>
-        </div>
+        <Empty className="rounded-xl border border-border bg-card p-8">
+          <EmptyHeader>
+            <EmptyDescription className="text-sm">
+              {t('keys.noResults')}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
 
       {/* Keys List */}
@@ -137,4 +165,3 @@ export function KeysPage() {
     </div>
   )
 }
-

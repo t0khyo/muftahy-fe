@@ -164,6 +164,7 @@ export function ProductRail({
               <CarouselPrevious
                 variant="outline"
                 size="icon"
+                disabled={false}
                 aria-label={t('rails.prev', { ns: 'home', defaultValue: 'Previous products' })}
                 className="static hidden lg:flex shrink-0 size-10 rounded-full border border-border/80 bg-background text-foreground shadow-xs hover:bg-accent hover:border-foreground/30 hover:scale-105 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
@@ -188,6 +189,7 @@ export function ProductRail({
               <CarouselNext
                 variant="outline"
                 size="icon"
+                disabled={false}
                 aria-label={t('rails.next', { ns: 'home', defaultValue: 'Next products' })}
                 className="static hidden lg:flex shrink-0 size-10 rounded-full border border-border/80 bg-background text-foreground shadow-xs hover:bg-accent hover:border-foreground/30 hover:scale-105 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />

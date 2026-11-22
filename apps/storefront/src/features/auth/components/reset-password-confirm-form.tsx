@@ -7,7 +7,6 @@ import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { z } from 'zod'
 import { getAuthService } from '@workspace/api/factory'
 import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
 import {
   Card,
   CardContent,
@@ -23,6 +22,12 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@workspace/ui/components/field'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@workspace/ui/components/input-group'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@workspace/ui/components/input-otp'
 import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 
@@ -181,25 +186,25 @@ export function ResetPasswordConfirmForm({ email, onResetComplete }: ResetPasswo
 
             <Field>
               <FieldLabel htmlFor="new-password">{t('newPassword')}</FieldLabel>
-              <div className="relative">
-                <Input
+              <InputGroup className="h-9">
+                <InputGroupInput
                   id="new-password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   placeholder={t('passwordPlaceholder')}
-                  className="pe-10"
                   {...register('new_password')}
                   disabled={isSubmitting}
                 />
-                <button
-                  type="button"
-                  className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? t('hidePassword') : t('showPassword')}
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
               {errors.new_password && (
                 <FieldError>{errors.new_password.message}</FieldError>
               )}
@@ -207,25 +212,25 @@ export function ResetPasswordConfirmForm({ email, onResetComplete }: ResetPasswo
 
             <Field>
               <FieldLabel htmlFor="confirm-new-password">{t('confirmPassword')}</FieldLabel>
-              <div className="relative">
-                <Input
+              <InputGroup className="h-9">
+                <InputGroupInput
                   id="confirm-new-password"
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   placeholder={t('confirmPasswordPlaceholder')}
-                  className="pe-10"
                   {...register('confirm_password')}
                   disabled={isSubmitting}
                 />
-                <button
-                  type="button"
-                  className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? t('hidePassword') : t('showPassword')}
-                >
-                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? t('hidePassword') : t('showPassword')}
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
               {errors.confirm_password && (
                 <FieldError>{errors.confirm_password.message}</FieldError>
               )}

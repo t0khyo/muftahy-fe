@@ -8,15 +8,19 @@ import {
   Eye,
   RefreshCw,
   Terminal,
+  Copy,
+  Tag,
 } from 'lucide-react'
 import {
   useAuditLogs,
   useExportAuditLogs,
 } from '../features/audit/hooks/use-audit-logs'
 import { type AuditLogResponse } from '@workspace/domain/schemas/audit'
+import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
+import { FieldLabel } from '@workspace/ui/components/field'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
 import {
   Card,
   CardContent,
@@ -41,6 +45,9 @@ import {
 } from '@workspace/ui/components/table'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
+import { DataTableColumnHeader } from '../components/data-table-column-header'
+import { DataTableRowActions } from '../components/data-table-row-actions'
+import { useDataTableSort } from '../hooks/use-data-table-sort'
 
 export function AdminAuditRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
@@ -68,6 +75,11 @@ export function AdminAuditRoute() {
     )
   }, [logsList, searchQuery])
 
+  const { sortedItems, sortConfig, toggleSort } = useDataTableSort<AuditLogResponse>(
+    filteredLogs,
+    { column: 'created_at', direction: 'desc' }
+  )
+
   const handleOpenDetail = (log: AuditLogResponse) => {
     setSelectedLog(log)
     setDetailDialogOpen(true)
@@ -81,8 +93,8 @@ export function AdminAuditRoute() {
     <div className="space-y-6 text-start w-full">
       {/* Header */}
       <AdminPageHeader
-        title={t('admin:audit.title', 'Security & Audit Log')}
-        description={t('admin:audit.subtitle', 'Append-only tamper-evident record of all operator mutations and access events')}
+        title={t('admin:audit.title', 'Audit Log')}
+        description={t('admin:audit.subtitle', 'Track staff actions, inventory changes, and security events')}
       >
         <Button
           variant="outline"
@@ -113,15 +125,17 @@ export function AdminAuditRoute() {
       {/* Streamlined Toolbar */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground pointer-events-none" />
-            <Input
+          <InputGroup className="flex-1 max-w-sm h-9 bg-muted/30 border-border/70 focus-within:bg-background transition-colors">
+            <InputGroupAddon>
+              <Search className="size-4 text-muted-foreground" />
+            </InputGroupAddon>
+            <InputGroupInput
               placeholder={t('admin:audit.searchPlaceholder', 'Filter by action, operator name, or target...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-9 h-9 text-xs sm:text-sm bg-muted/30 border-border/70 focus-visible:bg-background transition-colors"
+              className="text-xs sm:text-sm"
             />
-          </div>
+          </InputGroup>
         </div>
 
         {/* Audit Log Table */}
@@ -130,13 +144,13 @@ export function AdminAuditRoute() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold tracking-tight">
-                  {t('admin:audit.tableTitle', 'Operator Audit Trail')}
+                  {t('admin:audit.tableTitle', 'Activity Log')}
                   <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
                     ({filteredLogs.length} {t('admin:common.records', 'records')})
                   </span>
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                  {t('admin:audit.tableDesc', 'Zero-trust audit events are signed with operator identity and IP address.')}
+                  {t('admin:audit.tableDesc', 'Audit events record user identity, IP address, and timestamp.')}
                 </CardDescription>
               </div>
             </div>
@@ -144,70 +158,122 @@ export function AdminAuditRoute() {
           <CardContent className="p-0">
             {isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
-                {t('admin:common.loading', 'Loading audit trail...')}
+                {t('admin:common.loading', 'Loading activity log...')}
               </div>
             ) : filteredLogs.length === 0 ? (
               <div className="p-8">
                 <EmptyState
                   icon={ShieldAlert}
-                  title={t('admin:audit.emptyTitle', 'No audit logs found')}
+                  title={t('admin:audit.emptyTitle', 'No activity logs found')}
                   description={t(
                     'admin:audit.emptyDesc',
-                    'Security and mutation events will be recorded here.'
+                    'Staff actions and inventory changes will be recorded here.'
                   )}
                 />
               </div>
             ) : (
               <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.action', 'Action')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.operator', 'Operator')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.resource', 'Target')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.ipAddress', 'IP')}</TableHead>
-                    <TableHead className="text-start font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:audit.timestamp', 'Date')}</TableHead>
-                    <TableHead className="text-end font-mono text-[11px] uppercase tracking-wider text-muted-foreground py-3">{t('admin:common.actions', 'Details')}</TableHead>
+                    <TableHead className="ps-4 pe-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="action"
+                        title={t('admin:audit.action', 'Action')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="admin_name"
+                        title={t('admin:audit.operator', 'Staff Member')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="target_type"
+                        title={t('admin:audit.resource', 'Target')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-start">
+                      <DataTableColumnHeader
+                        column="ip_address"
+                        title={t('admin:audit.ipAddress', 'IP')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="px-3 py-3.5 text-end">
+                      <DataTableColumnHeader
+                        column="created_at"
+                        title={t('admin:audit.timestamp', 'Date')}
+                        sortConfig={sortConfig}
+                        onSort={toggleSort}
+                        align="end"
+                      />
+                    </TableHead>
+                    <TableHead className="ps-3 pe-4 py-3.5 text-center w-36 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {t('admin:common.actions', 'Details')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLogs.map((log) => (
+                  {sortedItems.map((log) => (
                     <TableRow key={log.id} className="border-border/40 hover:bg-muted/20 transition-colors">
-                      <TableCell className="font-mono text-xs font-semibold text-start py-3.5">
+                      <TableCell className="ps-4 pe-3 py-3.5 font-mono text-xs font-semibold text-start">
                         <Badge variant="outline" className="text-[10px] font-mono border-border/60 bg-muted/40">
                           {log.action}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-start font-mono text-foreground font-medium py-3.5">
+                      <TableCell className="px-3 py-3.5 text-xs text-start font-mono text-foreground font-medium">
                         {log.admin_name}
                       </TableCell>
-                      <TableCell className="text-xs text-start py-3.5">
+                      <TableCell className="px-3 py-3.5 text-xs text-start">
                         <span className="font-semibold text-foreground">{log.target_type}</span>
                         <span className="ms-1.5 font-mono text-muted-foreground text-[10px]">
                           ({log.target_id.slice(0, 8)})
                         </span>
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-start text-muted-foreground py-3.5">
+                      <TableCell className="px-3 py-3.5 font-mono text-xs text-start text-muted-foreground">
                         {log.ip_address || '—'}
                       </TableCell>
-                      <TableCell className="text-xs text-start text-muted-foreground font-mono py-3.5">
-                        {new Date(log.created_at).toLocaleString(
-                          lang === 'ar' ? 'ar-EG' : 'en-US',
-                          {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          }
-                        )}
+                      <TableCell className="px-3 py-3.5 text-xs text-end text-muted-foreground font-mono tabular-nums">
+                        {formatDate(log.created_at, {
+                          locale: lang,
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })}
                       </TableCell>
-                      <TableCell className="text-end py-3.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDetail(log)}
-                          className="h-7 gap-1 text-xs font-medium cursor-pointer hover:text-foreground"
-                        >
-                          <Eye className="size-3" />
-                          <span>{t('admin:audit.viewPayload', 'Payload')}</span>
-                        </Button>
+                      <TableCell className="ps-3 pe-4 py-3.5 text-center">
+                        <div className="inline-flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDetail(log)}
+                            className="h-7 gap-1 text-xs font-medium cursor-pointer hover:text-foreground"
+                          >
+                            <Eye className="size-3" />
+                            <span>{t('admin:audit.viewPayload', 'Payload')}</span>
+                          </Button>
+                          <DataTableRowActions
+                            items={[
+                              {
+                                label: t('admin:audit.copyTargetId', 'Copy Target ID'),
+                                icon: Tag,
+                                onClick: () => navigator.clipboard.writeText(log.target_id),
+                              },
+                              {
+                                label: t('admin:audit.copyIp', 'Copy IP Address'),
+                                icon: Copy,
+                                onClick: () => navigator.clipboard.writeText(log.ip_address || ''),
+                              },
+                            ]}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -220,7 +286,7 @@ export function AdminAuditRoute() {
 
       {/* Payload JSON Inspector Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-3xl p-6">
           <DialogHeader className="text-start">
             <div className="flex items-center gap-2">
               <Terminal className="size-5 text-primary" />
@@ -236,30 +302,30 @@ export function AdminAuditRoute() {
 
           {selectedLog && (
             <div className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-2 text-xs border border-border rounded-lg p-3 bg-muted/30">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs border border-border rounded-lg p-3.5 bg-muted/30">
                 <div>
-                  <span className="text-muted-foreground">Operator:</span>{' '}
+                  <span className="text-muted-foreground block text-[11px]">Operator:</span>{' '}
                   <span className="font-mono font-medium">{selectedLog.admin_name}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">IP Address:</span>{' '}
+                  <span className="text-muted-foreground block text-[11px]">IP Address:</span>{' '}
                   <span className="font-mono font-medium">{selectedLog.ip_address || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Timestamp:</span>{' '}
+                  <span className="text-muted-foreground block text-[11px]">Timestamp:</span>{' '}
                   <span className="font-mono font-medium">{selectedLog.created_at}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Log ID:</span>{' '}
-                  <span className="font-mono font-medium">{selectedLog.id}</span>
+                  <span className="text-muted-foreground block text-[11px]">Log ID:</span>{' '}
+                  <span className="font-mono font-medium">{selectedLog.id.slice(0, 8)}</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                   {t('admin:audit.detailsPayload', 'Changes (New Value)')}
-                </label>
-                <pre className="rounded-lg border border-border bg-muted/60 p-3 font-mono text-xs overflow-x-auto max-h-64">
+                </FieldLabel>
+                <pre className="rounded-lg border border-border bg-muted/50 p-4 font-mono text-xs leading-relaxed overflow-x-auto max-h-96">
                   {selectedLog.new_value
                     ? JSON.stringify(selectedLog.new_value, null, 2)
                     : '// No mutation payload'}

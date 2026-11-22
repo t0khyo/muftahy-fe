@@ -20,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from '@workspace/ui/components/sidebar'
 import { NavMain, type NavSection } from './nav-main'
 import { NavUser } from './nav-user'
@@ -34,7 +35,14 @@ export function AppSidebar({
   const { lang = 'en' } = useParams<{ lang: string }>()
   const { pathname } = useLocation()
   const { t } = useTranslation(['admin'])
+  const { isMobile, setOpenMobile } = useSidebar()
   const { data: overview } = useDashboardOverview()
+
+  const handleHeaderNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   const isExactDashboard = pathname === `/${lang}` || pathname === `/${lang}/`
 
@@ -44,7 +52,7 @@ export function AppSidebar({
 
   const navSections: NavSection[] = [
     {
-      label: t('admin:nav.workstations', 'Workstations'),
+      label: t('admin:nav.overview', 'Overview'),
       items: [
         {
           title: t('admin:nav.dashboard', 'Dashboard'),
@@ -52,52 +60,57 @@ export function AppSidebar({
           icon: LayoutDashboard,
           isActive: isExactDashboard,
         },
+      ],
+    },
+    {
+      label: t('admin:nav.store', 'Store'),
+      items: [
         {
-          title: t('admin:nav.products', 'Products & SKUs'),
-          url: `/${lang}/products`,
-          icon: PackageCheck,
-          isActive: pathname.startsWith(`/${lang}/products`),
-        },
-        {
-          title: t('admin:nav.orders', 'Orders & Fulfillment'),
+          title: t('admin:nav.orders', 'Orders'),
           url: `/${lang}/orders`,
           icon: ShoppingCart,
           isActive: pathname.startsWith(`/${lang}/orders`),
           badge: pendingOrders && pendingOrders > 0 ? String(pendingOrders) : undefined,
         },
         {
-          title: t('admin:nav.inventory', 'Key Pool Inventory'),
+          title: t('admin:nav.products', 'Products'),
+          url: `/${lang}/products`,
+          icon: PackageCheck,
+          isActive: pathname.startsWith(`/${lang}/products`),
+        },
+        {
+          title: t('admin:nav.inventory', 'Inventory'),
           url: `/${lang}/inventory`,
           icon: KeyRound,
           isActive: pathname.startsWith(`/${lang}/inventory`),
           badge: lowStockCount && lowStockCount > 0 ? t('admin:nav.lowStockBadge', 'Low') : undefined,
         },
         {
-          title: t('admin:nav.tickets', 'Support Tickets'),
+          title: t('admin:nav.discounts', 'Discounts'),
+          url: `/${lang}/promos`,
+          icon: Tag,
+          isActive: pathname.startsWith(`/${lang}/promos`),
+        },
+      ],
+    },
+    {
+      label: t('admin:nav.operations', 'Operations'),
+      items: [
+        {
+          title: t('admin:nav.support', 'Customer Support'),
           url: `/${lang}/tickets`,
           icon: LifeBuoy,
           isActive: pathname.startsWith(`/${lang}/tickets`),
           badge: openTickets && openTickets > 0 ? String(openTickets) : undefined,
         },
         {
-          title: t('admin:nav.promos', 'Promotions'),
-          url: `/${lang}/promos`,
-          icon: Tag,
-          isActive: pathname.startsWith(`/${lang}/promos`),
-        },
-        {
-          title: t('admin:nav.ledger', 'Financial Ledger'),
+          title: t('admin:nav.finance', 'Finance'),
           url: `/${lang}/ledger`,
           icon: BookOpen,
           isActive: pathname.startsWith(`/${lang}/ledger`),
         },
-      ],
-    },
-    {
-      label: t('admin:nav.system', 'System'),
-      items: [
         {
-          title: t('admin:nav.audit', 'Security & Audit Log'),
+          title: t('admin:nav.audit', 'Audit Log'),
           url: `/${lang}/audit`,
           icon: ShieldAlert,
           isActive: pathname.startsWith(`/${lang}/audit`),
@@ -113,7 +126,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              render={<Link to={`/${lang}`} />}
+              render={<Link to={`/${lang}`} onClick={handleHeaderNavClick} />}
               className="gap-3 hover:bg-sidebar-accent/50 cursor-pointer"
             >
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 p-1 shadow-xs">

@@ -89,13 +89,13 @@ describe('Admin Layout & Dashboard Route', () => {
     // Sidebar Branding & Nav Items
     expect(screen.getByText('Muftahy Admin')).toBeInTheDocument()
     expect(screen.getAllByText('Dashboard').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Products & SKUs')).toBeInTheDocument()
-    expect(screen.getAllByText('Orders & Fulfillment').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Key Pool Inventory')).toBeInTheDocument()
-    expect(screen.getByText('Support Tickets')).toBeInTheDocument()
-    expect(screen.getByText('Promotions')).toBeInTheDocument()
-    expect(screen.getByText('Financial Ledger')).toBeInTheDocument()
-    expect(screen.getByText('Security & Audit Log')).toBeInTheDocument()
+    expect(screen.getByText('Products')).toBeInTheDocument()
+    expect(screen.getAllByText('Orders').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Inventory')).toBeInTheDocument()
+    expect(screen.getByText('Customer Support')).toBeInTheDocument()
+    expect(screen.getByText('Discounts')).toBeInTheDocument()
+    expect(screen.getByText('Finance')).toBeInTheDocument()
+    expect(screen.getByText('Audit Log')).toBeInTheDocument()
 
     // Operator Details
     expect(screen.getByText('Lead Admin')).toBeInTheDocument()
@@ -103,8 +103,8 @@ describe('Admin Layout & Dashboard Route', () => {
     // Dashboard Cards & Metric Details
     expect(await screen.findByText("Today's Revenue")).toBeInTheDocument()
     expect(screen.getByText('Orders Created Today')).toBeInTheDocument()
-    expect(screen.getByText('Pending Adjudication')).toBeInTheDocument()
-    expect(screen.getByText('Open Dispute Tickets')).toBeInTheDocument()
+    expect(screen.getByText('Pending Review')).toBeInTheDocument()
+    expect(screen.getByText('Open Support Tickets')).toBeInTheDocument()
   })
 
   it('renders sidebar on the right in Arabic RTL (/ar)', () => {

@@ -148,7 +148,7 @@ describe('ReceiptReviewDialog Component', () => {
     expect(receiptImg).toHaveClass('cursor-zoom-in')
   })
 
-  it('approves order when clicking Approve & Dispatch', async () => {
+  it('approves order when clicking Approve & Deliver Keys', async () => {
     const handleOpenChange = vi.fn()
     render(
       <QueryClientProvider client={testQueryClient}>
@@ -156,7 +156,7 @@ describe('ReceiptReviewDialog Component', () => {
       </QueryClientProvider>,
     )
 
-    const approveBtn = screen.getByRole('button', { name: /approve & dispatch/i })
+    const approveBtn = screen.getByRole('button', { name: /approve & deliver keys/i })
     fireEvent.click(approveBtn)
 
     await waitFor(() => {

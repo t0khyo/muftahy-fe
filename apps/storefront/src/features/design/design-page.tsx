@@ -38,7 +38,7 @@ import { ProductCardSkeleton } from '../products/components/product-card-skeleto
 const SAMPLE_PRODUCTS: ProductResponse[] = [
   {
     id: '00000000-0000-4000-8000-000000000001',
-    name: 'Windows 11 Professional Retail',
+    name: 'Windows 11 Professional',
     description: 'Lifetime activation for 1 PC.',
     category: 'windows',
     variant: 'retail',
@@ -68,7 +68,7 @@ const SAMPLE_PRODUCTS: ProductResponse[] = [
   },
   {
     id: '00000000-0000-4000-8000-000000000003',
-    name: 'Windows 10 Home OEM',
+    name: 'Windows 11 Home',
     description: 'OEM License for new PC installation.',
     category: 'windows',
     variant: 'oem',

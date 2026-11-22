@@ -8,8 +8,17 @@ import {
 } from '@workspace/ui/components/dialog'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
 import { Checkbox } from '@workspace/ui/components/checkbox'
+import { Textarea } from '@workspace/ui/components/textarea'
+import { Field, FieldLabel, FieldGroup } from '@workspace/ui/components/field'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { useTranslation } from 'react-i18next'
 import { useResolveTicket, useTicketDetail } from '../hooks/use-tickets'
 import type { TicketDetail, TicketOutcome } from '@workspace/domain/schemas/ticket'
@@ -33,7 +42,7 @@ export function TicketResolveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-lg p-6">
         {open && ticket && (
           <TicketResolveContent
             key={ticket.id}
@@ -85,64 +94,71 @@ function TicketResolveContent({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t('admin.ticketsModule.resolveTicket', 'Resolve Support Dispute')}</DialogTitle>
+        <DialogTitle>{t('admin.ticketsModule.resolveTicket', 'Resolve Ticket')}</DialogTitle>
         <DialogDescription>
           Ticket #{ticket.id.slice(0, 8)}
         </DialogDescription>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4 mt-3 text-xs">
-        <div className="space-y-1.5">
-          <Label htmlFor="outcome-select">{t('admin.ticketsModule.outcome', 'Resolution Decision')}</Label>
-          <select
-            id="outcome-select"
-            value={outcome}
-            onChange={(e) => setOutcome(e.target.value as TicketOutcome)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="replacement">{t('admin.ticketsModule.outcomeReplacement', 'Provide Replacement Key')}</option>
-            <option value="refund">{t('admin.ticketsModule.outcomeRefund', 'Issue Refund')}</option>
-            <option value="refused">{t('admin.ticketsModule.outcomeRefused', 'Refuse / Invalid Claim')}</option>
-          </select>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4 mt-4 text-xs">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="outcome-select">{t('admin.ticketsModule.outcome', 'Resolution Action')}</FieldLabel>
+            <Select
+              value={outcome}
+              onValueChange={(val) => setOutcome(val as TicketOutcome)}
+            >
+              <SelectTrigger id="outcome-select" className="w-full h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="replacement">{t('admin.ticketsModule.outcomeReplacement', 'Provide Replacement Key')}</SelectItem>
+                  <SelectItem value="refund">{t('admin.ticketsModule.outcomeRefund', 'Issue Refund')}</SelectItem>
+                  <SelectItem value="refused">{t('admin.ticketsModule.outcomeRefused', 'Refuse / Invalid Claim')}</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
 
-        {outcome === 'replacement' && (
-          <div className="space-y-1.5">
-            <Label htmlFor="key-id-input">{t('admin.ticketsModule.replacementKey', 'Replacement Key UUID')}</Label>
-            <Input
-              id="key-id-input"
-              value={replacementKeyId}
-              onChange={(e) => setReplacementKeyId(e.target.value)}
-              placeholder="Optional UUID from replacement pool"
-              className="font-mono text-xs"
+          {outcome === 'replacement' && (
+            <Field>
+              <FieldLabel htmlFor="key-id-input">{t('admin.ticketsModule.replacementKey', 'Replacement Key ID')}</FieldLabel>
+              <Input
+                id="key-id-input"
+                value={replacementKeyId}
+                onChange={(e) => setReplacementKeyId(e.target.value)}
+                placeholder="Optional key ID from replacement pool"
+                className="h-9 font-mono text-xs"
+              />
+            </Field>
+          )}
+
+          <Field orientation="horizontal" className="justify-between rounded-lg border border-border/60 bg-muted/20 p-2.5">
+            <FieldLabel htmlFor="admin-override" className="text-xs font-normal cursor-pointer leading-tight">
+              {t('admin.ticketsModule.adminOverride', 'Override Replacement Policy')}
+            </FieldLabel>
+            <Checkbox
+              id="admin-override"
+              checked={adminOverride}
+              onCheckedChange={(checked) => setAdminOverride(Boolean(checked))}
             />
-          </div>
-        )}
+          </Field>
 
-        <div className="flex items-center gap-2 pt-1">
-          <Checkbox
-            id="admin-override"
-            checked={adminOverride}
-            onCheckedChange={(checked) => setAdminOverride(Boolean(checked))}
-          />
-          <Label htmlFor="admin-override" className="text-xs font-normal cursor-pointer leading-tight">
-            {t('admin.ticketsModule.adminOverride', 'Admin Override Replacement Policy')}
-          </Label>
-        </div>
+          <Field>
+            <FieldLabel htmlFor="cust-msg">{t('admin.ticketsModule.internalNote', 'Message to Customer')}</FieldLabel>
+            <Textarea
+              id="cust-msg"
+              rows={4}
+              value={customerMessage}
+              onChange={(e) => setCustomerMessage(e.target.value)}
+              placeholder="Explain the resolution and details..."
+              className="min-h-24"
+            />
+          </Field>
+        </FieldGroup>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="cust-msg">{t('admin.ticketsModule.internalNote', 'Operator Message to Customer')}</Label>
-          <textarea
-            id="cust-msg"
-            rows={3}
-            value={customerMessage}
-            onChange={(e) => setCustomerMessage(e.target.value)}
-            placeholder="Explain the inspection outcome and resolution details..."
-            className="w-full rounded-md border border-border bg-background p-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-
-        <div className="flex justify-end gap-2 pt-3 border-t border-border">
+        <div className="flex justify-end gap-2.5 pt-4 border-t border-border mt-4">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             {t('admin.common.cancel', 'Cancel')}
           </Button>
