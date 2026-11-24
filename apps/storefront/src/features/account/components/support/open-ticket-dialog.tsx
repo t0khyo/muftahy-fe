@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { AlertCircle, FileCheck, Loader2, Upload, LifeBuoy } from 'lucide-react'
+import { compressImage } from '@workspace/domain/media/image-compression'
 import {
   Dialog,
   DialogContent,
@@ -48,12 +49,21 @@ export function OpenTicketDialog({
   const [orderItemId, setOrderItemId] = useState(initialOrderItemId)
   const [comment, setComment] = useState('')
   const [files, setFiles] = useState<File[]>([])
+  const [isCompressing, setIsCompressing] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const handleFilesChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+  const handleFilesChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
       const selected = Array.from(e.target.files).slice(0, 3)
-      setFiles(selected)
+      setIsCompressing(true)
+      try {
+        const compressedFiles = await Promise.all(selected.map((f) => compressImage(f)))
+        setFiles(compressedFiles)
+      } catch {
+        setFiles(selected)
+      } finally {
+        setIsCompressing(false)
+      }
     }
   }
 
@@ -155,7 +165,12 @@ export function OpenTicketDialog({
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
                 <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                {files.length > 0 ? (
+                {isCompressing ? (
+                  <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{t('support.dialog.compressing', 'Optimizing screenshots (WebP)...')}</span>
+                  </div>
+                ) : files.length > 0 ? (
                   <div className="flex flex-wrap gap-2 text-xs text-primary font-medium">
                     {files.map((f) => (
                       <span key={f.name} className="inline-flex items-center gap-1">
@@ -177,12 +192,12 @@ export function OpenTicketDialog({
             <Button
               type="button"
               variant="outline"
-              disabled={isPending}
+              disabled={isPending || isCompressing}
               onClick={() => onOpenChange(false)}
             >
               {t('profile.cancel')}
             </Button>
-            <Button type="submit" disabled={isPending || comment.trim().length < 10}>
+            <Button type="submit" disabled={isPending || isCompressing || comment.trim().length < 10}>
               {isPending && <Loader2 className="h-4 w-4 animate-spin me-2" />}
               {isPending ? t('support.dialog.submitting') : t('support.dialog.submitTicket')}
             </Button>

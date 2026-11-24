@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, AlertCircle, FileCheck, Loader2 } from 'lucide-react'
+import { compressImage } from '@workspace/domain/media/image-compression'
 import {
   Dialog,
   DialogContent,
@@ -45,19 +46,28 @@ export function UploadReceiptDialog({
   const [paymentMethod, setPaymentMethod] = useState<'vodafone_cash' | 'instapay'>('vodafone_cash')
   const [amountClaimed, setAmountClaimed] = useState<string>(suggestedAmount ? String(suggestedAmount) : '')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isCompressing, setIsCompressing] = useState(false)
+  const [fileStats, setFileStats] = useState<{ originalSize: number; compressedSize: number } | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMsg('File size exceeds 5MB limit')
-        setSelectedFile(null)
-        return
-      }
-      setSelectedFile(file)
       setErrorMsg(null)
+      setIsCompressing(true)
+      try {
+        const compressed = await compressImage(file)
+        setSelectedFile(compressed)
+        setFileStats({
+          originalSize: file.size,
+          compressedSize: compressed.size,
+        })
+      } catch {
+        setSelectedFile(file)
+      } finally {
+        setIsCompressing(false)
+      }
     }
   }
 
@@ -169,10 +179,22 @@ export function UploadReceiptDialog({
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
                 <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                {selectedFile ? (
+                {isCompressing ? (
                   <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
-                    <FileCheck className="h-4 w-4" />
-                    <span>{selectedFile.name}</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{t('orders.detail.compressingReceipt', 'Optimizing receipt (WebP)...')}</span>
+                  </div>
+                ) : selectedFile ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                      <FileCheck className="h-4 w-4" />
+                      <span>{selectedFile.name}</span>
+                    </div>
+                    {fileStats && fileStats.originalSize > fileStats.compressedSize && (
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {(fileStats.originalSize / (1024 * 1024)).toFixed(1)} MB → {(fileStats.compressedSize / 1024).toFixed(0)} KB (WebP)
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -187,12 +209,12 @@ export function UploadReceiptDialog({
             <Button
               type="button"
               variant="outline"
-              disabled={isPending}
+              disabled={isPending || isCompressing}
               onClick={() => onOpenChange(false)}
             >
               {t('profile.cancel')}
             </Button>
-            <Button type="submit" disabled={isPending || !selectedFile}>
+            <Button type="submit" disabled={isPending || isCompressing || !selectedFile}>
               {isPending && <Loader2 className="h-4 w-4 animate-spin me-2" />}
               {isPending ? t('orders.detail.submitting') : t('orders.detail.submitReceipt')}
             </Button>

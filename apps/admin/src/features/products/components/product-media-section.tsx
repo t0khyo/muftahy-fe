@@ -15,7 +15,7 @@ import { Badge } from '@workspace/ui/components/badge'
 import { toast } from '@workspace/ui/components/sonner'
 import { resolveStorageUrl } from '@workspace/api/factory'
 import type { ProductImageResponse } from '@workspace/domain/schemas/product'
-import { compressProductImage } from '../../../lib/image-compression'
+import { compressImage as compressProductImage } from '@workspace/domain/media/image-compression'
 import {
   useUploadProductImage,
   useDeleteProductImage,
