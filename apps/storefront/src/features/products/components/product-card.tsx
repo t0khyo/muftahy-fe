@@ -154,14 +154,15 @@ export function ProductCard({
       )}
     >
       {/* 1 ── Header / Thumbnail */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-secondary/40 mb-3 sm:mb-3.5 flex items-center justify-center">
+      <div className="relative aspect-4/3 w-full overflow-hidden rounded-xl bg-secondary/40 mb-3 sm:mb-3.5 flex items-center justify-center">
         <Link to={productUrl} tabIndex={-1} className="block size-full">
           {coverImageUrl && !imageFailed ? (
             <img
               src={coverImageUrl}
               alt={product.name}
-              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="size-full object-cover"
               loading="lazy"
+              decoding="async"
               onError={() => coverImageUrl && setFailedUrl(coverImageUrl)}
             />
           ) : (
