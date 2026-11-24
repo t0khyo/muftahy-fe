@@ -6,7 +6,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatNumber } from '@workspace/domain/formatters/number'
 import type { CategoryResponse, ProductResponse } from '@workspace/domain/schemas/product'
-import { getProductMainImageUrl } from '@workspace/api/factory'
+import { getProductThumbnailUrl } from '@workspace/api/factory'
 import { useAddToCart } from '../../cart/hooks/use-cart'
 import { AddToCartButton } from './add-to-cart-button'
 
@@ -69,6 +69,7 @@ export function ProductCard({
         preorder_enabled: true,
         description: typeof c.trustNote === 'string' ? c.trustNote : null,
         is_active: true,
+        thumbnail_url: null,
         primary_image_url: null,
         images: [],
       }
@@ -89,6 +90,7 @@ export function ProductCard({
       preorder_enabled: true,
       description: null,
       is_active: true,
+      thumbnail_url: null,
       primary_image_url: null,
       images: [],
     } as ProductResponse
@@ -109,7 +111,7 @@ export function ProductCard({
       })
     : null
 
-  const coverImageUrl = getProductMainImageUrl(product)
+  const coverImageUrl = getProductThumbnailUrl(product)
   const imageFailed = Boolean(coverImageUrl && failedUrl === coverImageUrl)
 
   const { mutate: addToCart } = useAddToCart()
@@ -160,7 +162,7 @@ export function ProductCard({
             <img
               src={coverImageUrl}
               alt={product.name}
-              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="size-full object-cover"
               loading="lazy"
               onError={() => coverImageUrl && setFailedUrl(coverImageUrl)}
             />

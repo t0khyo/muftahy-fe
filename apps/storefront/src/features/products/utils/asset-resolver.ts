@@ -1,7 +1,7 @@
-import { resolveStorageUrl, getProductMainImageUrl } from '@workspace/api/factory'
+import { resolveStorageUrl, getProductMainImageUrl, getProductThumbnailUrl } from '@workspace/api/factory'
 import type { ProductImageResponse, ProductResponse, ProductVariant } from '@workspace/domain/schemas/product'
 
-export { resolveStorageUrl, getProductMainImageUrl }
+export { resolveStorageUrl, getProductMainImageUrl, getProductThumbnailUrl }
 
 export function resolveProductImage(category?: string | null, variant?: ProductVariant | null): string {
   const cat = category?.toLowerCase() || ''

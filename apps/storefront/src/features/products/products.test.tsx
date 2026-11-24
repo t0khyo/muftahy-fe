@@ -242,6 +242,18 @@ describe("ProductCard", () => {
     expect(screen.getByText('-30%')).toBeInTheDocument()
     expect(screen.queryByText('-30.00%')).not.toBeInTheDocument()
   })
+
+  it('prefers thumbnail_url over primary_image_url on ProductCard', () => {
+    const productWithThumb: ProductResponse = {
+      ...mockProduct,
+      thumbnail_url: 'https://cdn.example.com/thumb-600.webp',
+      primary_image_url: 'https://cdn.example.com/full-1600.webp',
+    }
+    const { container } = renderWithProviders(<ProductCard product={productWithThumb} />, { lang: 'en' })
+
+    const img = container.querySelector('img')
+    expect(img).toHaveAttribute('src', 'https://cdn.example.com/thumb-600.webp')
+  })
 })
 
 describe("ProductGrid", () => {

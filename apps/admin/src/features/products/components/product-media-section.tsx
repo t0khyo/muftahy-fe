@@ -15,12 +15,17 @@ import { Badge } from '@workspace/ui/components/badge'
 import { toast } from '@workspace/ui/components/sonner'
 import { resolveStorageUrl } from '@workspace/api/factory'
 import type { ProductImageResponse } from '@workspace/domain/schemas/product'
-import { compressImage as compressProductImage } from '@workspace/domain/media/image-compression'
+import {
+  compressImage as compressProductImage,
+  compressThumbnail,
+} from '@workspace/domain/media/image-compression'
 import {
   useUploadProductImage,
   useDeleteProductImage,
   useSetPrimaryProductImage,
   useReorderProductImages,
+  useUploadProductThumbnail,
+  useDeleteProductThumbnail,
 } from '../hooks/use-admin-products'
 
 export interface StagedImage {
@@ -30,11 +35,19 @@ export interface StagedImage {
   is_primary: boolean
 }
 
+export interface StagedThumbnail {
+  file: File
+  previewUrl: string
+}
+
 export interface ProductMediaSectionProps {
   productId?: string
+  thumbnailUrl?: string | null
   liveImages?: ProductImageResponse[]
   stagedImages?: StagedImage[]
   onStagedImagesChange?: (images: StagedImage[]) => void
+  stagedThumbnail?: StagedThumbnail | null
+  onStagedThumbnailChange?: (thumbnail: StagedThumbnail | null) => void
 }
 
 const MAX_IMAGES = 10
@@ -45,13 +58,17 @@ const EMPTY_STAGED_IMAGES: StagedImage[] = []
 
 export function ProductMediaSection({
   productId,
+  thumbnailUrl = null,
   liveImages = EMPTY_LIVE_IMAGES,
   stagedImages = EMPTY_STAGED_IMAGES,
   onStagedImagesChange,
+  stagedThumbnail = null,
+  onStagedThumbnailChange,
 }: ProductMediaSectionProps) {
   const { t, i18n } = useTranslation(['admin'])
   const isRtl = i18n.language === 'ar'
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
+  const thumbnailInputRef = React.useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = React.useState(false)
   const [isProcessing, setIsProcessing] = React.useState(false)
 
@@ -60,6 +77,8 @@ export function ProductMediaSection({
   const deleteMutation = useDeleteProductImage()
   const setPrimaryMutation = useSetPrimaryProductImage()
   const reorderMutation = useReorderProductImages()
+  const uploadThumbnailMutation = useUploadProductThumbnail()
+  const deleteThumbnailMutation = useDeleteProductThumbnail()
 
   const isLive = Boolean(productId)
 
@@ -117,6 +136,13 @@ export function ProductMediaSection({
               file: compressedFile,
               isPrimary,
             })
+            if (isPrimary) {
+              const compressedThumb = await compressThumbnail(rawFile)
+              await uploadThumbnailMutation.mutateAsync({
+                productId,
+                file: compressedThumb,
+              })
+            }
           } catch {
             // Handled by hook error toast
           }
@@ -127,12 +153,20 @@ export function ProductMediaSection({
         for (let idx = 0; idx < validFiles.length; idx++) {
           const rawFile = validFiles[idx]
           const compressedFile = await compressProductImage(rawFile)
+          const isPrimary = stagedImages.length === 0 && idx === 0 && newStaged.length === 0
           newStaged.push({
             id: `staged-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
             file: compressedFile,
             previewUrl: URL.createObjectURL(compressedFile),
-            is_primary: stagedImages.length === 0 && idx === 0 && newStaged.length === 0,
+            is_primary: isPrimary,
           })
+          if (isPrimary) {
+            const compressedThumb = await compressThumbnail(rawFile)
+            onStagedThumbnailChange?.({
+              file: compressedThumb,
+              previewUrl: URL.createObjectURL(compressedThumb),
+            })
+          }
         }
         onStagedImagesChange?.([...stagedImages, ...newStaged])
       }
@@ -192,17 +226,45 @@ export function ProductMediaSection({
   }
 
   // --- Set Primary Helpers ---
-  const handleSetPrimaryLive = (imageId: string) => {
+  const handleSetPrimaryLive = async (imageId: string) => {
     if (!productId) return
-    setPrimaryMutation.mutate({ productId, imageId })
+    await setPrimaryMutation.mutateAsync({ productId, imageId })
+
+    const targetImg = optimisticLiveImages.find((img) => img.id === imageId)
+    const targetUrl = targetImg
+      ? resolveStorageUrl(targetImg.url) || resolveStorageUrl(targetImg.file_path)
+      : null
+    if (!targetUrl) return
+
+    try {
+      const response = await fetch(targetUrl)
+      if (!response.ok) return
+      const blob = await response.blob()
+      const sourceFile = new File([blob], 'primary-image.webp', {
+        type: blob.type || 'image/webp',
+      })
+      const compressedThumb = await compressThumbnail(sourceFile)
+      await uploadThumbnailMutation.mutateAsync({ productId, file: compressedThumb })
+    } catch {
+      // Non-fatal: primary image was still switched even if auto-thumbnail fetch failed
+    }
   }
 
-  const handleSetPrimaryStaged = (id: string) => {
+  const handleSetPrimaryStaged = async (id: string) => {
     const updated = stagedImages.map((img) => ({
       ...img,
       is_primary: img.id === id,
     }))
     onStagedImagesChange?.(updated)
+
+    const target = updated.find((img) => img.id === id)
+    if (target) {
+      const compressedThumb = await compressThumbnail(target.file)
+      onStagedThumbnailChange?.({
+        file: compressedThumb,
+        previewUrl: URL.createObjectURL(compressedThumb),
+      })
+    }
   }
 
   // --- Delete Helpers ---
@@ -223,8 +285,124 @@ export function ProductMediaSection({
     onStagedImagesChange?.(remaining)
   }
 
+  const handleThumbnailSelected = async (files: FileList | null) => {
+    const file = files?.[0]
+    if (!file) return
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error(t('admin:errors.INVALID_IMAGE_FORMAT', 'Unsupported image format. Please upload JPEG, PNG, or WebP.'))
+      return
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(t('admin:errors.FILE_TOO_LARGE', 'Image file exceeds the 5MB size limit.'))
+      return
+    }
+
+    const compressedThumb = await compressThumbnail(file)
+
+    if (isLive && productId) {
+      await uploadThumbnailMutation.mutateAsync({ productId, file: compressedThumb })
+    } else {
+      onStagedThumbnailChange?.({
+        file: compressedThumb,
+        previewUrl: URL.createObjectURL(compressedThumb),
+      })
+    }
+  }
+
+  const handleDeleteThumbnail = async () => {
+    if (isLive && productId) {
+      await deleteThumbnailMutation.mutateAsync({ productId })
+    } else {
+      if (stagedThumbnail?.previewUrl) {
+        URL.revokeObjectURL(stagedThumbnail.previewUrl)
+      }
+      onStagedThumbnailChange?.(null)
+    }
+  }
+
+  const resolvedThumbnailUrl = isLive
+    ? resolveStorageUrl(thumbnailUrl)
+    : stagedThumbnail?.previewUrl ?? null
+
   return (
-    <div className="space-y-4 text-start">
+    <div className="space-y-5 text-start">
+      {/* Catalog Card Thumbnail */}
+      <div className="rounded-xl border border-border/60 bg-secondary/20 p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              {t('admin:productEditor.thumbnailTitle', 'Catalog Card Thumbnail')}
+            </h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t(
+                'admin:productEditor.thumbnailDesc',
+                'Optimized 600×600 WebP thumbnail for catalog grids. Falls back to primary gallery image if unset.',
+              )}
+            </p>
+          </div>
+
+          <input
+            ref={thumbnailInputRef}
+            type="file"
+            accept={ALLOWED_TYPES.join(',')}
+            className="hidden"
+            onChange={(e) => {
+              handleThumbnailSelected(e.target.files)
+              e.target.value = ''
+            }}
+          />
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploadThumbnailMutation.isPending || deleteThumbnailMutation.isPending}
+              onClick={() => thumbnailInputRef.current?.click()}
+              className="gap-1.5 text-xs cursor-pointer"
+            >
+              {uploadThumbnailMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <UploadCloud className="size-3.5" />
+              )}
+              <span>
+                {resolvedThumbnailUrl
+                  ? t('admin:productEditor.replaceThumbnail', 'Replace Thumbnail')
+                  : t('admin:productEditor.uploadThumbnail', 'Upload Thumbnail')}
+              </span>
+            </Button>
+
+            {resolvedThumbnailUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={uploadThumbnailMutation.isPending || deleteThumbnailMutation.isPending}
+                onClick={handleDeleteThumbnail}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive cursor-pointer"
+              >
+                <Trash2 className="size-3.5" />
+                <span>{t('admin:productEditor.removeThumbnail', 'Remove')}</span>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {resolvedThumbnailUrl && (
+          <div className="flex items-center gap-3 pt-1">
+            <img
+              src={resolvedThumbnailUrl}
+              alt={t('admin:productEditor.thumbnailTitle', 'Catalog Card Thumbnail')}
+              className="size-16 rounded-lg object-cover border border-border/60 bg-background shrink-0"
+            />
+            <span className="text-xs text-muted-foreground">
+              {t('admin:productEditor.thumbnailActiveHint', 'Active thumbnail preview')}
+            </span>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-foreground">

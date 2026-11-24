@@ -194,9 +194,17 @@ export const productResponseSchema = z.object({
   description: z.string().nullable(),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().optional(),
+  thumbnail_url: z.string().nullable().optional(),
   primary_image_url: z.string().nullable().optional(),
   images: z.array(productImageResponseSchema).default([]),
 })
+
+export const productThumbnailResponseSchema = z.object({
+  product_id: z.string().uuid(),
+  thumbnail_url: z.string(),
+})
+
+export type ProductThumbnailResponse = z.infer<typeof productThumbnailResponseSchema>
 
 export type ProductResponse = z.infer<typeof productResponseSchema>
 export const productSchema = productResponseSchema

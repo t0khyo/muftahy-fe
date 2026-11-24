@@ -1,5 +1,6 @@
 import {
   productResponseSchema,
+  productThumbnailResponseSchema,
   type CategoryCreateInput,
   type CategoryDetailResponse,
   type CategoryResponse,
@@ -8,6 +9,7 @@ import {
   type ProductCreateInput,
   type ProductImageResponse,
   type ProductResponse,
+  type ProductThumbnailResponse,
   type ProductUpdateInput,
 } from '@workspace/domain/schemas/product'
 import type {
@@ -167,6 +169,22 @@ export class HttpProductAdapter implements ProductService {
     return this.client.request<ProductImageResponse[]>(`/products/${productId}/images/reorder`, {
       method: 'PATCH',
       body: data,
+    })
+  }
+
+  async uploadProductThumbnail(productId: string, file: File | Blob): Promise<ProductThumbnailResponse> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const raw = await this.client.request<unknown>(`/products/${productId}/thumbnail`, {
+      method: 'POST',
+      body: formData,
+    })
+    return productThumbnailResponseSchema.parse(raw)
+  }
+
+  async deleteProductThumbnail(productId: string): Promise<void> {
+    await this.client.request<void>(`/products/${productId}/thumbnail`, {
+      method: 'DELETE',
     })
   }
 

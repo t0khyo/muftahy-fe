@@ -36,7 +36,7 @@ import {
   useUpdateProduct,
 } from '../hooks/use-admin-products'
 import { useAdminCategories } from '../../categories/hooks/use-admin-categories'
-import { ProductMediaSection, type StagedImage } from './product-media-section'
+import { ProductMediaSection, type StagedImage, type StagedThumbnail } from './product-media-section'
 
 const EMPTY_PRODUCT_IMAGES: ProductResponse['images'] = []
 
@@ -106,6 +106,7 @@ function ProductEditorForm({
 
   // Staged Media for creation
   const [stagedImages, setStagedImages] = React.useState<StagedImage[]>([])
+  const [stagedThumbnail, setStagedThumbnail] = React.useState<StagedThumbnail | null>(null)
   const [isUploadingStaged, setIsUploadingStaged] = React.useState(false)
 
   // Effective category resolution: use explicitly selected category or fall back to first category
@@ -231,11 +232,19 @@ function ProductEditorForm({
           preorder_enabled: preorderEnabled,
         })
 
-        // Upload staged images to the new product if any
-        if (stagedImages.length > 0) {
+        // Upload staged images and thumbnail to the new product if any
+        if (stagedImages.length > 0 || stagedThumbnail) {
           setIsUploadingStaged(true)
           const service = getProductService('admin')
           let hasPartialFailure = false
+
+          if (stagedThumbnail) {
+            try {
+              await service.uploadProductThumbnail(newProduct.id, stagedThumbnail.file)
+            } catch {
+              hasPartialFailure = true
+            }
+          }
 
           for (const staged of stagedImages) {
             try {
@@ -409,9 +418,12 @@ function ProductEditorForm({
             <CardContent className="pt-6">
               <ProductMediaSection
                 productId={isEditing ? product?.id : undefined}
+                thumbnailUrl={isEditing ? (product?.thumbnail_url ?? null) : null}
                 liveImages={product?.images ?? EMPTY_PRODUCT_IMAGES}
                 stagedImages={stagedImages}
                 onStagedImagesChange={setStagedImages}
+                stagedThumbnail={stagedThumbnail}
+                onStagedThumbnailChange={setStagedThumbnail}
               />
             </CardContent>
           </Card>

@@ -94,4 +94,19 @@ describe('ProductMediaSection', () => {
     expect(renderedImgs).toHaveLength(1)
     expect(renderedImgs[0]).toHaveAttribute('src', 'blob:http://localhost:5174/preview-uuid-1')
   })
+
+  it('renders dedicated catalog thumbnail preview when thumbnailUrl is provided', () => {
+    const { container } = renderMediaSection({
+      productId: 'prod-123',
+      thumbnailUrl: '/storage/products/thumbnails/prod-123_abc.webp',
+      liveImages: [],
+    })
+
+    const renderedImgs = container.querySelectorAll('img')
+    expect(renderedImgs).toHaveLength(1)
+    expect(renderedImgs[0]).toHaveAttribute(
+      'src',
+      'http://localhost:8000/storage/products/thumbnails/prod-123_abc.webp',
+    )
+  })
 })

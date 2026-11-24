@@ -208,3 +208,47 @@ export function useReorderProductImages() {
     },
   })
 }
+
+export function useUploadProductThumbnail() {
+  const queryClient = useQueryClient()
+  const { t } = useTranslation(['admin'])
+  const service = getProductService('admin')
+
+  return useMutation({
+    mutationFn: ({ productId, file }: { productId: string; file: File }) =>
+      service.uploadProductThumbnail(productId, file),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(variables.productId) })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
+      toast.success(
+        t('admin:productEditor.thumbnailUploaded', { defaultValue: 'Thumbnail updated' }),
+      )
+    },
+    onError: (err) => {
+      showApiErrorToast(err, 'admin:errors.INVALID_IMAGE_FORMAT')
+    },
+  })
+}
+
+export function useDeleteProductThumbnail() {
+  const queryClient = useQueryClient()
+  const { t } = useTranslation(['admin'])
+  const service = getProductService('admin')
+
+  return useMutation({
+    mutationFn: ({ productId }: { productId: string }) =>
+      service.deleteProductThumbnail(productId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(variables.productId) })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
+      toast.success(
+        t('admin:productEditor.thumbnailDeleted', {
+          defaultValue: 'Thumbnail removed (reverted to primary image)',
+        }),
+      )
+    },
+    onError: (err) => {
+      showApiErrorToast(err, 'admin:errors.GENERIC_ERROR')
+    },
+  })
+}

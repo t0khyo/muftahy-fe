@@ -7,6 +7,7 @@ import type {
   ProductCreateInput,
   ProductImageResponse,
   ProductResponse,
+  ProductThumbnailResponse,
   ProductUpdateInput,
 } from '@workspace/domain/schemas/product'
 
@@ -39,5 +40,7 @@ export interface ProductService {
   deleteProductImage(productId: string, imageId: string): Promise<{ message: string }>
   setPrimaryProductImage(productId: string, imageId: string): Promise<ProductImageResponse>
   reorderProductImages(productId: string, data: ImageReorderRequest): Promise<ProductImageResponse[]>
+  uploadProductThumbnail(productId: string, file: File | Blob): Promise<ProductThumbnailResponse>
+  deleteProductThumbnail(productId: string): Promise<void>
   getSampleLicenseKey(productId: string): Promise<string>
 }

@@ -394,3 +394,17 @@ export function getProductMainImageUrl(
     null
   return resolveStorageUrl(candidate, baseURL)
 }
+
+/**
+ * Extracts the dedicated card thumbnail URL if available, falling back to the primary gallery image.
+ */
+export function getProductThumbnailUrl(
+  product: Pick<ProductResponse, 'thumbnail_url' | 'primary_image_url' | 'images'> | null | undefined,
+  baseURL?: string,
+): string | null {
+  if (!product) return null
+  if (product.thumbnail_url) {
+    return resolveStorageUrl(product.thumbnail_url, baseURL)
+  }
+  return getProductMainImageUrl(product, baseURL)
+}

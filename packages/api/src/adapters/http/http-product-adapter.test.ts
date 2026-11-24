@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { NativeFetchClient } from './fetch-client'
 import { HttpProductAdapter } from './http-product-adapter'
-import { getProductMainImageUrl, resolveStorageUrl } from '../../factory'
+import { getProductMainImageUrl, getProductThumbnailUrl, resolveStorageUrl } from '../../factory'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
 
 describe('HttpProductAdapter', () => {
@@ -318,6 +318,59 @@ describe('resolveStorageUrl & getProductMainImageUrl', () => {
 
     expect(getProductMainImageUrl(noPrimaryProduct, 'http://localhost:8000/api/v1')).toBe(
       'http://localhost:8000/storage/products/other.webp',
+    )
+  })
+
+  it('prefers thumbnail_url in getProductThumbnailUrl with fallback to primary image', () => {
+    const base = 'http://localhost:8000/api/v1'
+    expect(
+      getProductThumbnailUrl(
+        {
+          thumbnail_url: '/storage/products/thumbnails/thumb.webp',
+          primary_image_url: '/storage/products/primary.webp',
+          images: [],
+        },
+        base,
+      ),
+    ).toBe('http://localhost:8000/storage/products/thumbnails/thumb.webp')
+
+    expect(
+      getProductThumbnailUrl(
+        {
+          thumbnail_url: null,
+          primary_image_url: '/storage/products/primary.webp',
+          images: [],
+        },
+        base,
+      ),
+    ).toBe('http://localhost:8000/storage/products/primary.webp')
+  })
+
+  it('uploads and deletes product thumbnail via HttpProductAdapter', async () => {
+    const mockRequest = vi
+      .fn()
+      .mockResolvedValueOnce({
+        product_id: '550e8400-e29b-41d4-a716-446655440000',
+        thumbnail_url: '/storage/products/thumbnails/thumb.webp',
+      })
+      .mockResolvedValueOnce(undefined)
+
+    const adapter = new HttpProductAdapter({ request: mockRequest } as unknown as NativeFetchClient)
+    const file = new File(['img'], 'thumb.webp', { type: 'image/webp' })
+
+    const res = await adapter.uploadProductThumbnail('550e8400-e29b-41d4-a716-446655440000', file)
+    expect(mockRequest).toHaveBeenNthCalledWith(
+      1,
+      '/products/550e8400-e29b-41d4-a716-446655440000/thumbnail',
+      expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
+    )
+    expect(res.thumbnail_url).toBe('/storage/products/thumbnails/thumb.webp')
+
+    await adapter.deleteProductThumbnail('550e8400-e29b-41d4-a716-446655440000')
+    expect(mockRequest).toHaveBeenNthCalledWith(
+      2,
+      '/products/550e8400-e29b-41d4-a716-446655440000/thumbnail',
+      { method: 'DELETE' },
     )
   })
 })

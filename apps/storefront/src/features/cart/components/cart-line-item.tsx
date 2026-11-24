@@ -6,7 +6,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import type { CartItem } from '../stores/cart-store'
 import { resolveLocalizedName } from '../lib/cart-selectors'
-import { resolveProductImage, resolveStorageUrl, getProductMainImageUrl } from '../../products/utils/asset-resolver'
+import { resolveProductImage, resolveStorageUrl, getProductThumbnailUrl } from '../../products/utils/asset-resolver'
 import { useProduct } from '../../products/hooks/use-products'
 import { QuantityStepper } from './quantity-stepper'
 
@@ -72,7 +72,7 @@ export function CartLineItem({
   const coverImage =
     resolveStorageUrl(item.coverImage) ||
     item.coverImage ||
-    getProductMainImageUrl(product) ||
+    getProductThumbnailUrl(product) ||
     resolveProductImage(category, variant)
 
   return (

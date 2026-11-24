@@ -20,7 +20,7 @@ import {
 } from '../features/products/hooks/use-admin-products'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { formatMoney } from '@workspace/domain/formatters/money'
-import { getProductMainImageUrl } from '@workspace/api/factory'
+import { getProductThumbnailUrl } from '@workspace/api/factory'
 import { getStorefrontUrl } from '../lib/storefront-url'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -583,7 +583,7 @@ export function AdminProductsRoute() {
                               className="shrink-0 group block"
                             >
                               {(() => {
-                                const coverUrl = getProductMainImageUrl(product)
+                                const coverUrl = getProductThumbnailUrl(product)
                                 return coverUrl ? (
                                   <img
                                     src={coverUrl}
