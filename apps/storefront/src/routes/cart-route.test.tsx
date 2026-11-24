@@ -93,7 +93,18 @@ describe("CartRoute (Shopping Cart Page)", () => {
       screen.getByRole("button", { name: /proceed to checkout/i })
     ).toBeInTheDocument()
 
-    // Verify quantity badge
+    // Verify quantity badge and interactive stepper controls
+    expect(screen.getByLabelText(/quantity: 1/i)).toBeInTheDocument()
+
+    const decreaseBtn = screen.getByRole("button", { name: /decrease quantity/i })
+    const increaseBtn = screen.getByRole("button", { name: /increase quantity/i })
+    expect(decreaseBtn).toBeDisabled()
+
+    fireEvent.click(increaseBtn)
+    expect(screen.getByLabelText(/quantity: 2/i)).toBeInTheDocument()
+    expect(decreaseBtn).not.toBeDisabled()
+
+    fireEvent.click(decreaseBtn)
     expect(screen.getByLabelText(/quantity: 1/i)).toBeInTheDocument()
 
     // Test item removal

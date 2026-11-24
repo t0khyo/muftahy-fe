@@ -25,8 +25,9 @@ import {
   SheetTitle,
 } from '@workspace/ui/components/sheet'
 import { CART_CONFIG } from '../../features/cart/cart.config'
+import { QuantityStepper } from '../../features/cart/components/quantity-stepper'
 import { resolveLocalizedName } from '../../features/cart/lib/cart-selectors'
-import { useCart, useRemoveCartItem } from '../../features/cart/hooks/use-cart'
+import { useCart, useRemoveCartItem, useUpdateCartItemQuantity } from '../../features/cart/hooks/use-cart'
 
 export interface CartButtonProps {
   className?: string
@@ -71,6 +72,7 @@ export function CartButton({
   // Unified Cart hooks
   const cart = useCart()
   const { mutate: removeItemMutation } = useRemoveCartItem()
+  const { mutate: updateQuantityMutation } = useUpdateCartItemQuantity()
   const items = cart.items
   const count = cart.item_count
 
@@ -127,6 +129,13 @@ export function CartButton({
     removeItemMutation(id)
     setLiveAnnouncement(
       t('itemRemoved', { ns: 'header', defaultValue: 'Item removed' }),
+    )
+  }
+
+  const handleUpdateQuantity = (id: string, quantity: number) => {
+    updateQuantityMutation({ itemId: id, quantity })
+    setLiveAnnouncement(
+      t('quantityUpdated', { ns: 'header', defaultValue: 'Quantity updated' }),
     )
   }
 
@@ -358,19 +367,24 @@ export function CartButton({
                         )}
                       </div>
 
-                      {/* Static Quantity Badge + Remove Link */}
+                      {/* Interactive Quantity Stepper + Remove Link */}
                       <div className="pt-2 flex items-center justify-between gap-3">
-                        <div className="inline-flex items-center px-2.5 py-1 rounded-lg border border-border/60 bg-secondary/30 text-xs">
-                          <span className="text-muted-foreground me-1">
-                            {t('quantity', { ns: 'header', defaultValue: 'Qty' })}:
-                          </span>
-                          <span
-                            aria-label={`${t('quantity', { ns: 'header', defaultValue: 'Quantity' })}: ${item.quantity}`}
-                            className="font-semibold text-foreground tabular-nums select-none"
-                          >
-                            {item.quantity}
-                          </span>
-                        </div>
+                        <QuantityStepper
+                          size="sm"
+                          quantity={item.quantity}
+                          min={1}
+                          decreaseLabel={t('decreaseQuantity', {
+                            ns: 'header',
+                            defaultValue: 'Decrease quantity',
+                          })}
+                          increaseLabel={t('increaseQuantity', {
+                            ns: 'header',
+                            defaultValue: 'Increase quantity',
+                          })}
+                          quantityLabel={`${t('quantity', { ns: 'header', defaultValue: 'Quantity' })}: ${item.quantity}`}
+                          onDecrease={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          onIncrease={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                        />
 
                         {/* Separate Remove Link */}
                         <button

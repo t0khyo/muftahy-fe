@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAdminOrderService } from '@workspace/api/factory'
 import type {
+  AdminOrdersQueryParams,
   OrderItemRefundRequest,
   OrderResponse,
   OrderReviewRequest,
@@ -10,6 +11,7 @@ import { dashboardKeys } from '../../dashboard/hooks/use-admin-dashboard'
 
 export const adminOrderKeys = {
   all: ['admin', 'orders'] as const,
+  list: (params?: AdminOrdersQueryParams) => [...adminOrderKeys.all, 'list', params ?? {}] as const,
   pending: () => [...adminOrderKeys.all, 'pending'] as const,
   detail: (id: string) => [...adminOrderKeys.all, 'detail', id] as const,
   receipts: (id: string) => [...adminOrderKeys.all, 'receipts', id] as const,
@@ -25,14 +27,25 @@ export function usePendingOrders() {
   })
 }
 
-// Alias for general admin order listing with normalized items array
-export function useAdminOrders(params?: { status?: string; limit?: number }) {
-  void params
-  const query = usePendingOrders()
-  return {
-    ...query,
-    data: query.data ? { items: query.data, total: query.data.length } : undefined,
-  }
+export function useAdminOrders(params?: AdminOrdersQueryParams) {
+  const service = getAdminOrderService()
+  const query = useQuery({
+    queryKey: adminOrderKeys.list(params),
+    queryFn: async () => {
+      if (typeof service.getOrders === 'function') {
+        const res = await service.getOrders(params)
+        if (Array.isArray(res)) {
+          return { items: res, total: res.length }
+        }
+        const maybeObj = res as unknown as { items?: OrderResponse[]; total?: number }
+        const items = Array.isArray(maybeObj?.items) ? maybeObj.items : []
+        return { items, total: maybeObj?.total ?? items.length }
+      }
+      const pending = await service.getPendingOrders()
+      return { items: pending, total: pending.length }
+    },
+  })
+  return query
 }
 
 export function useAdminOrderDetail(orderId: string) {
@@ -88,6 +101,7 @@ export function useStartOrderReview() {
         return prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
       })
       queryClient.setQueryData(adminOrderKeys.detail(updatedOrder.id), updatedOrder)
+      queryClient.invalidateQueries({ queryKey: adminOrderKeys.all })
     },
   })
 }
@@ -106,6 +120,7 @@ export function useReviewOrder() {
         return prev.filter((o) => o.id !== adjudicatedOrder.id)
       })
       queryClient.setQueryData(adminOrderKeys.detail(adjudicatedOrder.id), adjudicatedOrder)
+      queryClient.invalidateQueries({ queryKey: adminOrderKeys.all })
 
       // Optimistically decrement pending orders count in dashboard overview
       queryClient.setQueryData<DashboardOverviewResponse>(dashboardKeys.overview(), (prev) => {
@@ -142,6 +157,7 @@ export function useRefundOrderItem() {
           items: prev.items.map((it) => (it.id === itemId ? { ...it, is_refunded: true } : it)),
         }
       })
+      queryClient.invalidateQueries({ queryKey: adminOrderKeys.all })
     },
   })
 }

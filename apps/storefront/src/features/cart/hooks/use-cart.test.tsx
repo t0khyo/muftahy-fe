@@ -12,6 +12,7 @@ import {
   useCart,
   useCheckout,
   useRemoveCartItem,
+  useUpdateCartItemQuantity,
 } from './use-cart'
 
 vi.mock('@workspace/api/factory', () => ({
@@ -62,6 +63,7 @@ describe('useCart hooks', () => {
   const mockCartService = {
     getCart: vi.fn(),
     addItem: vi.fn(),
+    updateItemQuantity: vi.fn(),
     removeItem: vi.fn(),
     validatePromo: vi.fn(),
     checkout: vi.fn(),
@@ -182,6 +184,55 @@ describe('useCart hooks', () => {
     })
 
     expect(mockCartService.removeItem).toHaveBeenCalledWith('line-item-123')
+  })
+
+  it('useUpdateCartItemQuantity updates guest store when unauthenticated', async () => {
+    useCartStore.getState().addItem({
+      id: 'guest-item-1',
+      product_id: 'guest-p1',
+      product_name: 'Windows 11',
+      unit_price: 300,
+      quantity: 1,
+    })
+
+    const { result } = renderHook(() => useUpdateCartItemQuantity(), {
+      wrapper: createWrapper(false),
+    })
+
+    await act(async () => {
+      await result.current.mutateAsync({ itemId: 'guest-item-1', quantity: 3 })
+    })
+
+    expect(mockCartService.updateItemQuantity).not.toHaveBeenCalled()
+    expect(useCartStore.getState().items[0].quantity).toBe(3)
+  })
+
+  it('useUpdateCartItemQuantity calls cartService.updateItemQuantity when authenticated', async () => {
+    mockCartService.updateItemQuantity.mockResolvedValue({
+      id: 'server-cart-1',
+      items: [
+        {
+          id: 'line-item-123',
+          product_id: 'prod-1',
+          product_name: 'Office 2021',
+          quantity: 2,
+          is_preorder: false,
+          unit_price: 499.99,
+        },
+      ],
+      subtotal_egp: 999.98,
+      item_count: 2,
+    })
+
+    const { result } = renderHook(() => useUpdateCartItemQuantity(), {
+      wrapper: createWrapper(true),
+    })
+
+    await act(async () => {
+      await result.current.mutateAsync({ itemId: 'line-item-123', quantity: 2 })
+    })
+
+    expect(mockCartService.updateItemQuantity).toHaveBeenCalledWith('line-item-123', 2)
   })
 
   it('useApplyPromoCode calls cartService.validatePromo', async () => {

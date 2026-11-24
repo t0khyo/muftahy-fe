@@ -33,7 +33,7 @@ export const orderItemDetailSchema = z.object({
   product_name: z.string().min(1),
   is_preorder: z.boolean(),
   unit_price_egp: z.coerce.number().nonnegative(),
-  discount_amount_egp: z.coerce.number().nonnegative(),
+  discount_amount_egp: z.coerce.number().nonnegative().default(0),
   final_price_egp: z.coerce.number().nonnegative(),
   key_serial: z.string().nullable().optional(),
   exchange_rate_at_sale: z.coerce.number().nullable().optional(),
@@ -72,7 +72,11 @@ export const orderResponseSchema = z.object({
   discount_total_egp: z.coerce.number().nonnegative(),
   total_egp: z.coerce.number().nonnegative(),
   payment_method: z.string().nullable().optional(),
-  payment_instructions: paymentInstructionsSchema,
+  payment_instructions: paymentInstructionsSchema.default({
+    vodafone_cash_number: '',
+    instapay_ipa: '',
+    reference_code: '',
+  }),
   payment_deadline: z.string().nullable().optional(),
   review_deadline: z.string().nullable().optional(),
   wrong_amount_attempts: z.number().int().default(0),
@@ -119,5 +123,11 @@ export const refundItemResponseSchema = z.object({
   message: z.string(),
 })
 export type RefundItemResponse = z.infer<typeof refundItemResponseSchema>
+
+export interface AdminOrdersQueryParams {
+  status?: OrderStatus | 'all' | string
+  limit?: number
+  offset?: number
+}
 
 

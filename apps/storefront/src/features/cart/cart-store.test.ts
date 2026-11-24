@@ -141,6 +141,7 @@ describe('Cart Store & Selectors', () => {
         item_count: 3,
       }),
       removeItem: vi.fn(),
+      updateItemQuantity: vi.fn(),
       validatePromo: vi.fn(),
       checkout: vi.fn(),
     }
@@ -175,6 +176,7 @@ describe('Cart Store & Selectors', () => {
         }
       }),
       removeItem: vi.fn(),
+      updateItemQuantity: vi.fn(),
       validatePromo: vi.fn(),
       checkout: vi.fn(),
     }

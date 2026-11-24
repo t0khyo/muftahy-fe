@@ -32,6 +32,7 @@ export function ProductRail({
   titleKey,
   viewAllHref,
   category,
+  collection,
   products: directProducts,
   className = '',
 }: ProductRailProps) {
@@ -47,7 +48,15 @@ export function ProductRail({
     refetch,
   } = useProducts(directProducts ? undefined : { category })
 
-  const products = directProducts ?? fetchedProducts
+  const products = React.useMemo(() => {
+    const list = directProducts ?? fetchedProducts
+    if (!list) return undefined
+    if (collection === 'bestsellers' || collection === 'featured') {
+      const featuredOnly = list.filter((p) => p.is_featured === true)
+      if (featuredOnly.length > 0) return featuredOnly
+    }
+    return list
+  }, [directProducts, fetchedProducts, collection])
 
   const headingId = `${id}-heading`
 

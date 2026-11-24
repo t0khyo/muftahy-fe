@@ -10,12 +10,14 @@ import { KeysPage } from './keys-page'
 const mockKeys = [
   {
     key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    order_item_id: 'e4f5a6b7-c8d9-0123-4567-89abcdef0123',
     product_name: 'Microsoft Office 2024 Home & Business',
     serial: 'X229N-48FGX-YVC9B-4J6C9-AAAAA',
     sold_at: '2026-11-20T04:00:00Z',
   },
   {
     key_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
+    order_item_id: 'f5a6b7c8-d9e0-1234-5678-9abcdef01234',
     product_name: 'Windows 11 Professional',
     serial: 'VK7JG-NPHTM-C97JM-9MPGT-3V66T',
     sold_at: '2026-11-18T12:00:00Z',
@@ -123,6 +125,20 @@ describe('KeysPage', () => {
       expect(screen.getByText('خزينة المفاتيح الرقمية')).toBeInTheDocument()
       expect(screen.getByText('Microsoft Office 2024 Home & Business')).toBeInTheDocument()
     })
+  })
+
+  it('passes order_item_id directly to OpenTicketDialog when reporting an issue', async () => {
+    renderKeysView('/en/account/keys')
+
+    await waitFor(() => {
+      expect(screen.getByText('Microsoft Office 2024 Home & Business')).toBeInTheDocument()
+    })
+
+    const reportButtons = screen.getAllByRole('button', { name: /report/i })
+    fireEvent.click(reportButtons[0])
+
+    // Manual Order Item ID input should not be shown since order_item_id is linked
+    expect(screen.queryByLabelText(/Order Item ID \(UUID\)/i)).not.toBeInTheDocument()
   })
 })
 

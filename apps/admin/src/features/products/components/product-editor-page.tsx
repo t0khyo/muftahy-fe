@@ -101,6 +101,7 @@ function ProductEditorForm({
   const [variant, setVariant] = React.useState<ProductVariant | 'none'>(product?.variant || 'none')
   const [sku, setSku] = React.useState(product?.sku || '')
   const [isActive, setIsActive] = React.useState(product ? (product.is_active ?? true) : true)
+  const [isFeatured, setIsFeatured] = React.useState(product ? (product.is_featured ?? false) : false)
   const [preorderEnabled, setPreorderEnabled] = React.useState(product ? product.preorder_enabled : true)
 
   // Staged Media for creation
@@ -211,6 +212,7 @@ function ProductEditorForm({
             variant: variant !== 'none' ? variant : undefined,
             sku: sku.trim() || undefined,
             is_active: isActive,
+            is_featured: isFeatured,
             preorder_enabled: preorderEnabled,
           },
         })
@@ -225,6 +227,7 @@ function ProductEditorForm({
           variant: variant !== 'none' ? variant : undefined,
           sku: sku.trim(),
           is_active: isActive,
+          is_featured: isFeatured,
           preorder_enabled: preorderEnabled,
         })
 
@@ -524,6 +527,25 @@ function ProductEditorForm({
                   checked={isActive}
                   onCheckedChange={setIsActive}
                 />
+              </div>
+
+              <div className="border-t border-border/30 pt-4">
+                {/* Featured Toggle */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <label htmlFor="is-featured" className="text-sm font-medium text-foreground cursor-pointer">
+                      {t('admin:productEditor.isFeatured', 'Featured on Homepage')}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {t('admin:productEditor.isFeaturedHint', 'Highlight in homepage featured and best-seller showcases.')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="is-featured"
+                    checked={isFeatured}
+                    onCheckedChange={setIsFeatured}
+                  />
+                </div>
               </div>
 
               <div className="border-t border-border/30 pt-4">

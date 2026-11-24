@@ -1,4 +1,5 @@
 import type {
+  AdminOrdersQueryParams,
   OrderItemRefundRequest,
   OrderResponse,
   OrderReviewRequest,
@@ -11,6 +12,7 @@ export interface RefundItemResponse {
 }
 
 export interface AdminOrderService {
+  getOrders(params?: AdminOrdersQueryParams): Promise<OrderResponse[]>
   getPendingOrders(): Promise<OrderResponse[]>
   getOrder(orderId: string): Promise<OrderResponse>
   startReview(orderId: string): Promise<OrderResponse>

@@ -211,13 +211,13 @@ export function CheckoutRoute() {
                   {isRtl ? 'بيانات الحساب والتسليم' : 'Customer & Delivery Account'}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs text-muted-foreground">{isRtl ? 'الاسم' : 'Full Name'}</Label>
-                    <p className="font-semibold text-foreground mt-0.5">{user?.full_name || 'Customer'}</p>
+                    <p className="font-semibold text-foreground mt-0.5 break-words">{user?.full_name || 'Customer'}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs text-muted-foreground">{isRtl ? 'البريد الإلكتروني' : 'Email Address'}</Label>
-                    <p className="font-semibold text-foreground mt-0.5">{user?.email}</p>
+                    <p className="font-semibold text-foreground mt-0.5 break-all">{user?.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2 text-xs text-primary font-medium">

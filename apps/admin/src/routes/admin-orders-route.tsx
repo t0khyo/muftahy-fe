@@ -45,14 +45,12 @@ import { DataTablePagination } from '../components/data-table/data-table-paginat
 import { useDataTableSort } from '../hooks/use-data-table-sort'
 import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
-const STATUS_FILTERS: { label: string; value: OrderStatus | 'all' }[] = [
+const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: 'All Orders', value: 'all' },
+  { label: 'Review Queue', value: 'payment_uploaded,under_review' },
   { label: 'Pending Payment', value: 'pending_payment' },
-  { label: 'Payment Uploaded', value: 'payment_uploaded' },
-  { label: 'Under Review', value: 'under_review' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Refunded', value: 'refunded' },
-  { label: 'Cancelled', value: 'cancelled' },
+  { label: 'Approved', value: 'approved' },
+  { label: 'Cancelled / Rejected', value: 'auto_cancelled,rejected_refund' },
 ]
 
 export function AdminOrdersRoute() {
@@ -60,7 +58,7 @@ export function AdminOrdersRoute() {
   const navigate = useNavigate()
   const { t } = useTranslation(['admin'])
 
-  const [selectedStatus, setSelectedStatus] = React.useState<OrderStatus | 'all'>('all')
+  const [selectedStatus, setSelectedStatus] = React.useState<string>('all')
   const [searchQuery, setSearchQuery] = React.useState('')
   const [activeReviewOrder, setActiveReviewOrder] = React.useState<OrderResponse | null>(null)
   const [reviewDialogOpen, setReviewDialogOpen] = React.useState(false)
@@ -172,7 +170,7 @@ export function AdminOrdersRoute() {
           <Tabs
             value={selectedStatus}
             onValueChange={(val) => {
-              if (val) setSelectedStatus(val as OrderStatus | 'all')
+              if (val) setSelectedStatus(val)
             }}
           >
             <TabsList className="h-8">

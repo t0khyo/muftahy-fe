@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const userKeySchema = z.object({
   key_id: z.string().uuid(),
+  order_item_id: z.string().uuid().nullable().optional(),
   product_name: z.string().min(1),
   serial: z.string().min(1),
   sold_at: z.string().nullable().optional(),

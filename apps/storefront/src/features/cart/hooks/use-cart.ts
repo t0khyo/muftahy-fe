@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCartService } from '@workspace/api/factory'
-import type { CartCheckoutRequest } from '@workspace/domain/schemas/cart'
+import type { CartCheckoutRequest, CartResponse } from '@workspace/domain/schemas/cart'
 import type { ProductVariant } from '@workspace/domain/schemas/product'
 import { useAuth } from '../../auth/hooks/use-auth'
 import { useCartStore } from '../stores/cart-store'
@@ -151,6 +151,80 @@ export function useAddToCart() {
     },
     onSuccess: () => {
       if (isAuthenticated) {
+        queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+      }
+    },
+  })
+}
+
+export function useUpdateCartItemQuantity() {
+  const { isAuthenticated } = useAuth()
+  const queryClient = useQueryClient()
+  const cartService = getCartService('storefront')
+  const updateGuestQuantity = useCartStore((s) => s.updateQuantity)
+
+  return useMutation({
+    onMutate: async ({
+      itemId,
+      quantity,
+      maxStock,
+    }: {
+      itemId: string
+      quantity: number
+      maxStock?: number
+    }) => {
+      const nextQty = Math.max(1, quantity)
+      if (!isAuthenticated) {
+        updateGuestQuantity(itemId, nextQty, maxStock)
+        return { previousCart: undefined }
+      }
+
+      await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY })
+      const previousCart = queryClient.getQueryData<CartResponse>(CART_QUERY_KEY)
+
+      if (previousCart) {
+        const nextItems = previousCart.items.map((item) =>
+          item.id === itemId ? { ...item, quantity: nextQty } : item,
+        )
+        const nextSubtotal = nextItems.reduce(
+          (acc, item) => acc + Number(item.unit_price) * item.quantity,
+          0,
+        )
+        const nextCount = nextItems.reduce((acc, item) => acc + item.quantity, 0)
+
+        queryClient.setQueryData<CartResponse>(CART_QUERY_KEY, {
+          ...previousCart,
+          items: nextItems,
+          subtotal_egp: nextSubtotal,
+          item_count: nextCount,
+        })
+      }
+
+      return { previousCart }
+    },
+    mutationFn: async ({
+      itemId,
+      quantity,
+    }: {
+      itemId: string
+      quantity: number
+      maxStock?: number
+    }) => {
+      if (isAuthenticated) {
+        return cartService.updateItemQuantity(itemId, Math.max(1, quantity))
+      }
+      return null
+    },
+    onSuccess: (updatedCart) => {
+      if (isAuthenticated && updatedCart) {
+        queryClient.setQueryData(CART_QUERY_KEY, updatedCart)
+      }
+    },
+    onError: (_err, _vars, context) => {
+      if (isAuthenticated) {
+        if (context?.previousCart) {
+          queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
+        }
         queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
       }
     },

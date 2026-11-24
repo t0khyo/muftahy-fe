@@ -13,6 +13,7 @@ import type {
 export interface ProductFilterParams {
   category?: string
   only_active?: boolean
+  is_featured?: boolean
 }
 
 export interface ProductImageUploadInput {

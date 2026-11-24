@@ -1,11 +1,13 @@
 import {
   type CartCheckoutRequest,
   type CartItemAddRequest,
+  type CartItemUpdateRequest,
   type CartResponse,
   type PromoCheckRequest,
   type PromoCheckResponse,
   cartCheckoutRequestSchema,
   cartItemAddRequestSchema,
+  cartItemUpdateRequestSchema,
   cartResponseSchema,
   promoCheckRequestSchema,
   promoCheckResponseSchema,
@@ -38,6 +40,17 @@ export class HttpCartAdapter implements CartService {
     })
     const raw = await this.client.request<unknown>('/cart/items', {
       method: 'POST',
+      body: payload,
+    })
+    return cartResponseSchema.parse(raw)
+  }
+
+  async updateItemQuantity(itemId: string, quantity: number): Promise<CartResponse> {
+    const payload: CartItemUpdateRequest = cartItemUpdateRequestSchema.parse({
+      quantity,
+    })
+    const raw = await this.client.request<unknown>(`/cart/items/${itemId}`, {
+      method: 'PATCH',
       body: payload,
     })
     return cartResponseSchema.parse(raw)

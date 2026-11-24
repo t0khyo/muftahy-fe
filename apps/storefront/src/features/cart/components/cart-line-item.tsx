@@ -8,19 +8,23 @@ import type { CartItem } from '../stores/cart-store'
 import { resolveLocalizedName } from '../lib/cart-selectors'
 import { resolveProductImage, resolveStorageUrl, getProductMainImageUrl } from '../../products/utils/asset-resolver'
 import { useProduct } from '../../products/hooks/use-products'
+import { QuantityStepper } from './quantity-stepper'
 
 export interface CartLineItemProps {
   item: CartItem
   lang: string
   onUpdateQuantity?: (id: string, qty: number, maxStock?: number) => void
   onRemove: (id: string) => void
+  isUpdating?: boolean
   removeButtonRef?: (el: HTMLButtonElement | null) => void
 }
 
 export function CartLineItem({
   item,
   lang,
+  onUpdateQuantity,
   onRemove,
+  isUpdating = false,
   removeButtonRef,
 }: CartLineItemProps) {
   const { t } = useTranslation(['cart', 'products', 'common'])
@@ -45,6 +49,23 @@ export function CartLineItem({
     product: productName,
     plan: productName,
   })
+
+  const decreaseLabel = t('decreaseQuantityFor', {
+    product: productName,
+    plan: productName,
+    defaultValue: `Decrease quantity for ${productName}`,
+  })
+
+  const increaseLabel = t('increaseQuantityFor', {
+    product: productName,
+    plan: productName,
+    defaultValue: `Increase quantity for ${productName}`,
+  })
+
+  const maxStock =
+    product && product.stock_status === 'in_stock' && !item.is_preorder
+      ? product.available_count
+      : undefined
 
   const category = item.category ?? product?.category?.slug ?? 'windows'
   const variant = item.variant ?? product?.variant ?? null
@@ -128,19 +149,20 @@ export function CartLineItem({
         </div>
       </div>
 
-      {/* 2 ── End Side: Static Quantity Badge, Line Price, Remove Action */}
+      {/* 2 ── End Side: Interactive Quantity Stepper, Line Price, Remove Action */}
       <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/20 sm:border-t-0 shrink-0">
-        <div className="inline-flex items-center px-3 py-1.5 rounded-lg border border-border/60 bg-secondary/30 text-sm">
-          <span className="text-xs text-muted-foreground me-1.5">
-            {t('quantity', { defaultValue: 'Qty' })}:
-          </span>
-          <span
-            className="font-semibold tabular-nums text-foreground select-none"
-            aria-label={`${t('quantity', { defaultValue: 'Quantity' })}: ${item.quantity}`}
-          >
-            {item.quantity}
-          </span>
-        </div>
+        <QuantityStepper
+          size="md"
+          quantity={item.quantity}
+          min={1}
+          max={maxStock}
+          disabled={isUpdating}
+          decreaseLabel={decreaseLabel}
+          increaseLabel={increaseLabel}
+          quantityLabel={`${t('quantity', { defaultValue: 'Quantity' })}: ${item.quantity}`}
+          onDecrease={() => onUpdateQuantity?.(item.id, item.quantity - 1, maxStock)}
+          onIncrease={() => onUpdateQuantity?.(item.id, item.quantity + 1, maxStock)}
+        />
 
         {/* Line Total */}
         <div className="text-end min-w-[5.5rem]">

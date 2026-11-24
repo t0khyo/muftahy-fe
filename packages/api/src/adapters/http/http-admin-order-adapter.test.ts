@@ -31,6 +31,18 @@ describe('HttpAdminOrderAdapter', () => {
     created_at: '2026-11-21T06:00:00Z',
   }
 
+  it('fetches orders collection with optional status, limit, and offset filters', async () => {
+    const client = createMockClient([{ ...sampleOrder, status: 'approved' }])
+    const adapter = new HttpAdminOrderAdapter(client)
+
+    const result = await adapter.getOrders({ status: 'approved', limit: 25, offset: 0 })
+    expect(client.request).toHaveBeenCalledWith('/orders?status=approved&limit=25&offset=0', {
+      method: 'GET',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].status).toBe('approved')
+  })
+
   it('fetches pending orders queue', async () => {
     const client = createMockClient([sampleOrder])
     const adapter = new HttpAdminOrderAdapter(client)

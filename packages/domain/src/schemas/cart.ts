@@ -7,6 +7,12 @@ export const cartItemAddRequestSchema = z.object({
 
 export type CartItemAddRequest = z.infer<typeof cartItemAddRequestSchema>
 
+export const cartItemUpdateRequestSchema = z.object({
+  quantity: z.number().int().positive(),
+})
+
+export type CartItemUpdateRequest = z.infer<typeof cartItemUpdateRequestSchema>
+
 export const cartItemResponseSchema = z.object({
   id: z.string().uuid(),
   product_id: z.string().uuid(),

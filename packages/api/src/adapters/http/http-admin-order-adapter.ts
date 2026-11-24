@@ -1,4 +1,5 @@
 import {
+  type AdminOrdersQueryParams,
   type OrderItemRefundRequest,
   type OrderResponse,
   type OrderReviewRequest,
@@ -17,6 +18,25 @@ export class HttpAdminOrderAdapter implements AdminOrderService {
 
   constructor(client: NativeFetchClient) {
     this.client = client
+  }
+
+  async getOrders(params?: AdminOrdersQueryParams): Promise<OrderResponse[]> {
+    const searchParams = new URLSearchParams()
+    if (params?.status && params.status !== 'all') {
+      searchParams.set('status', params.status)
+    }
+    if (params?.limit !== undefined) {
+      searchParams.set('limit', String(params.limit))
+    }
+    if (params?.offset !== undefined) {
+      searchParams.set('offset', String(params.offset))
+    }
+    const qs = searchParams.toString()
+    const path = qs ? `/orders?${qs}` : '/orders'
+    const raw = await this.client.request<unknown>(path, {
+      method: 'GET',
+    })
+    return orderListResponseSchema.parse(raw)
   }
 
   async getPendingOrders(): Promise<OrderResponse[]> {

@@ -193,6 +193,7 @@ export const productResponseSchema = z.object({
   preorder_enabled: z.boolean(),
   description: z.string().nullable(),
   is_active: z.boolean().default(true),
+  is_featured: z.boolean().optional(),
   primary_image_url: z.string().nullable().optional(),
   images: z.array(productImageResponseSchema).default([]),
 })
@@ -237,6 +238,7 @@ export const productCreateSchema = z
     ),
     preorder_enabled: z.boolean().optional().default(true),
     is_active: z.boolean().optional().default(true),
+    is_featured: z.boolean().optional().default(false),
     description: z.preprocess(
       (val) => (val === '' ? null : val),
       z.string().trim().nullable().optional(),
@@ -293,6 +295,7 @@ export const productUpdateSchema = z
       z.string().regex(DECIMAL_PRICE_REGEX).nullable().optional(),
     ),
     is_active: z.boolean().optional(),
+    is_featured: z.boolean().optional(),
     preorder_enabled: z.boolean().optional(),
     description: z.preprocess(
       (val) => (val === '' ? null : val),

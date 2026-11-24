@@ -189,7 +189,17 @@ describe('SiteHeader Component', () => {
     expect(screen.getByRole('button', { name: /checkout/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /view full bag/i })).toBeInTheDocument()
 
-    // Verify quantity badge
+    // Verify quantity badge and stepper controls
+    expect(screen.getByLabelText(/quantity: 1/i)).toBeInTheDocument()
+    const increaseBtn = screen.getByRole('button', { name: /increase quantity/i })
+    const decreaseBtn = screen.getByRole('button', { name: /decrease quantity/i })
+    expect(decreaseBtn).toBeDisabled()
+
+    fireEvent.click(increaseBtn)
+    expect(screen.getByLabelText(/quantity: 2/i)).toBeInTheDocument()
+    expect(decreaseBtn).not.toBeDisabled()
+
+    fireEvent.click(decreaseBtn)
     expect(screen.getByLabelText(/quantity: 1/i)).toBeInTheDocument()
 
     // Test remove item

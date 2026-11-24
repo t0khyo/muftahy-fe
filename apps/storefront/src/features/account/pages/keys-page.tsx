@@ -156,8 +156,10 @@ export function KeysPage() {
       {/* Dialog for Reporting Key Issue */}
       {selectedKeyForTicket && (
         <OpenTicketDialog
+          key={selectedKeyForTicket.key_id}
           open={ticketDialogOpen}
           onOpenChange={setTicketDialogOpen}
+          orderItemId={selectedKeyForTicket.order_item_id ?? undefined}
           keySerial={selectedKeyForTicket.serial}
           productName={selectedKeyForTicket.product_name}
         />

@@ -32,6 +32,9 @@ export class HttpProductAdapter implements ProductService {
     if (params?.only_active !== undefined) {
       searchParams.set('only_active', String(params.only_active))
     }
+    if (params?.is_featured !== undefined) {
+      searchParams.set('is_featured', String(params.is_featured))
+    }
 
     const query = searchParams.toString()
     const path = query ? `/products?${query}` : '/products'

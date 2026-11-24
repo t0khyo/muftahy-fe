@@ -108,6 +108,38 @@ describe('HttpCartAdapter', () => {
     expect(cart.item_count).toBe(1)
   })
 
+  it('calls PATCH /cart/items/:id with quantity payload and returns updated CartResponse', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({
+        ...mockCartResponse,
+        items: [{ ...mockCartResponse.items[0], quantity: 3 }],
+        subtotal_egp: 899.97,
+        item_count: 3,
+      }),
+    })
+
+    const client = new NativeFetchClient({
+      baseURL: 'http://localhost:8000/api/v1',
+      fetchFn: mockFetch as unknown as typeof fetch,
+    })
+    const adapter = new HttpCartAdapter(client)
+
+    const cart = await adapter.updateItemQuantity('440e8400-e29b-41d4-a716-446655440001', 3)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:8000/api/v1/cart/items/440e8400-e29b-41d4-a716-446655440001',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ quantity: 3 }),
+      }),
+    )
+    expect(cart.item_count).toBe(3)
+    expect(cart.subtotal_egp).toBe(899.97)
+  })
+
   it('calls DELETE /cart/items/:id and returns updated CartResponse', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

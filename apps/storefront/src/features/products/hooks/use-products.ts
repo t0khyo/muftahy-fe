@@ -13,6 +13,7 @@ export interface ProductCatalogFilters {
   variant?: 'retail' | 'oem'
   stock_status?: StockStatus
   inStockOnly?: boolean
+  is_featured?: boolean
   search?: string
   sort?: 'featured' | 'price-asc' | 'price-desc' | 'newest'
 }
@@ -21,8 +22,15 @@ export function useProducts(filters?: ProductCatalogFilters) {
   const productService = getProductService()
 
   return useQuery<ProductResponse[]>({
-    queryKey: ['products', filters?.category],
-    queryFn: () => productService.getProducts({ category: filters?.category }),
+    queryKey:
+      filters?.is_featured !== undefined
+        ? ['products', filters?.category, filters.is_featured]
+        : ['products', filters?.category],
+    queryFn: () =>
+      productService.getProducts({
+        category: filters?.category,
+        is_featured: filters?.is_featured,
+      }),
     staleTime: 5 * 60 * 1000,
     select: (products) => {
       let filtered = [...products]

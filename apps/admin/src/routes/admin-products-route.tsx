@@ -11,9 +11,11 @@ import {
   Eye,
   EyeOff,
   Check,
+  Star,
 } from 'lucide-react'
 import {
   useAdminProducts,
+  useUpdateProduct,
   useUpdateProductStatus,
 } from '../features/products/hooks/use-admin-products'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
@@ -78,6 +80,7 @@ export function AdminProductsRoute() {
   const { data: products, isLoading } = useAdminProducts()
   const { data: categories = [] } = useAdminCategories()
   const statusMutation = useUpdateProductStatus()
+  const updateProductMutation = useUpdateProduct()
 
   // Status metrics for tabs
   const statusCounts = React.useMemo(() => {
@@ -232,6 +235,13 @@ export function AdminProductsRoute() {
         ? t('admin:products.publishSuccess', 'Product published to storefront')
         : t('admin:products.unpublishSuccess', 'Product moved to draft'),
     )
+  }
+
+  const handleToggleFeatured = async (id: string, currentFeatured: boolean) => {
+    await updateProductMutation.mutateAsync({
+      id,
+      data: { is_featured: !currentFeatured },
+    })
   }
 
   const handleCopySku = (sku: string) => {
@@ -589,12 +599,23 @@ export function AdminProductsRoute() {
                             </Link>
 
                             <div className="grid gap-0.5 min-w-0">
-                              <Link
-                                to={`/${lang}/products/${product.id}`}
-                                className="font-medium text-sm text-foreground hover:underline truncate"
-                              >
-                                {product.name}
-                              </Link>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <Link
+                                  to={`/${lang}/products/${product.id}`}
+                                  className="font-medium text-sm text-foreground hover:underline truncate"
+                                >
+                                  {product.name}
+                                </Link>
+                                {product.is_featured && (
+                                  <Badge
+                                    variant="outline"
+                                    className="gap-1 text-[10px] px-1.5 py-0 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 shrink-0"
+                                  >
+                                    <Star className="size-2.5 fill-current" />
+                                    <span>{t('admin:products.featuredBadge', 'Featured')}</span>
+                                  </Badge>
+                                )}
+                              </div>
                               <div className="flex items-center gap-1.5">
                                 {product.sku ? (
                                   <button
@@ -765,13 +786,21 @@ export function AdminProductsRoute() {
                                   onClick: () => handleCopySku(product.sku || product.id),
                                 },
                                 {
+                                  label: product.is_featured
+                                    ? t('admin:products.unfeature', 'Remove from Featured')
+                                    : t('admin:products.feature', 'Feature on Homepage'),
+                                  icon: Star,
+                                  onClick: () =>
+                                    handleToggleFeatured(product.id, Boolean(product.is_featured)),
+                                  separatorBefore: true,
+                                },
+                                {
                                   label: product.is_active
                                     ? t('admin:products.bulk.unpublish', 'Set as Draft')
                                     : t('admin:products.bulk.publish', 'Set as Active'),
                                   icon: product.is_active ? EyeOff : Eye,
                                   onClick: () =>
                                     handleToggleStatus(product.id, product.is_active),
-                                  separatorBefore: true,
                                 },
                               ]}
                             />

@@ -30,6 +30,7 @@ import {
   useApplyPromoCode,
   useCart,
   useRemoveCartItem,
+  useUpdateCartItemQuantity,
 } from '../features/cart/hooks/use-cart'
 import { useCartStore } from '../features/cart/stores/cart-store'
 
@@ -40,6 +41,7 @@ export function CartRoute() {
 
   const cart = useCart()
   const { mutate: removeItemMutation } = useRemoveCartItem()
+  const { mutate: updateQuantityMutation } = useUpdateCartItemQuantity()
   const { mutateAsync: validatePromoMutation, isPending: isCheckingPromo } = useApplyPromoCode()
   const clearLocalCart = useCartStore((s) => s.clear)
 
@@ -75,6 +77,15 @@ export function CartRoute() {
     }
   }
 
+  const handleUpdateQuantity = React.useCallback(
+    (id: string, quantity: number, maxStock?: number) => {
+      updateQuantityMutation({ itemId: id, quantity, maxStock })
+      setPromoDiscount(null)
+      setFinalTotal(null)
+    },
+    [updateQuantityMutation],
+  )
+
   const handleRemove = React.useCallback(
     (id: string) => {
       const index = itemIds.indexOf(id)
@@ -82,6 +93,8 @@ export function CartRoute() {
       const prevId = itemIds[index - 1]
 
       removeItemMutation(id)
+      setPromoDiscount(null)
+      setFinalTotal(null)
 
       requestAnimationFrame(() => {
         if (nextId && removeRefs.current.get(nextId)) {
@@ -233,6 +246,7 @@ export function CartRoute() {
                       key={item.id}
                       item={item as unknown as Parameters<typeof CartLineItem>[0]['item']}
                       lang={lang}
+                      onUpdateQuantity={handleUpdateQuantity}
                       onRemove={handleRemove}
                       removeButtonRef={(el) => {
                         if (el) {
