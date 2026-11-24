@@ -19,6 +19,7 @@ import { Field, FieldLabel } from '@workspace/ui/components/field'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -28,6 +29,7 @@ import { formatMoney } from '@workspace/domain/formatters/money'
 import { slugify, validateSkuForCategory } from '@workspace/domain/schemas/product'
 import type { CategoryResponse, ProductResponse, ProductVariant } from '@workspace/domain/schemas/product'
 import { getProductService } from '@workspace/api/factory'
+import { getStorefrontUrl } from '../../../lib/storefront-url'
 import {
   useAdminProductDetail,
   useCreateProduct,
@@ -98,7 +100,7 @@ function ProductEditorForm({
   const [categoryId, setCategoryId] = React.useState(product?.category?.id || '')
   const [variant, setVariant] = React.useState<ProductVariant | 'none'>(product?.variant || 'none')
   const [sku, setSku] = React.useState(product?.sku || '')
-  const [isActive, setIsActive] = React.useState(product ? product.is_active : true)
+  const [isActive, setIsActive] = React.useState(product ? (product.is_active ?? true) : true)
   const [preorderEnabled, setPreorderEnabled] = React.useState(product ? product.preorder_enabled : true)
 
   // Staged Media for creation
@@ -113,6 +115,22 @@ function ProductEditorForm({
   }, [categories, effectiveCategoryId])
 
   const previewSlug = slug.trim() || slugify(name)
+
+  const categoryItems = React.useMemo(() => {
+    return categories.map((cat) => ({
+      value: cat.id,
+      label: `${cat.name} (${cat.code})`,
+    }))
+  }, [categories])
+
+  const variantItems = React.useMemo(
+    () => [
+      { value: 'none', label: t('admin:productEditor.variantNone', 'None (Standard)') },
+      { value: 'retail', label: t('admin:productEditor.variantRetail', 'Retail') },
+      { value: 'oem', label: t('admin:productEditor.variantOem', 'OEM') },
+    ],
+    [t],
+  )
 
   // Validate SKU against selected category code (derived synchronously)
   const skuError = React.useMemo(() => {
@@ -270,6 +288,19 @@ function ProductEditorForm({
         </div>
 
         <div className="flex items-center gap-2.5 self-end sm:self-auto">
+          {isEditing && product && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.open(getStorefrontUrl(`/${lang}/products/${product.slug || product.id}`), '_blank')}
+              className="gap-1.5 cursor-pointer"
+              title={t('admin:products.viewStorefront', 'View in Store')}
+            >
+              <ExternalLink className="size-3.5" />
+              <span>{t('admin:products.viewStorefront', 'View in Store')}</span>
+            </Button>
+          )}
+
           <Button
             type="button"
             variant="outline"
@@ -333,9 +364,22 @@ function ProductEditorForm({
                   dir="ltr"
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Preview: <span className="font-mono text-foreground/80">/products/{previewSlug}</span>
-                </p>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                  <span>
+                    Preview: <span className="font-mono text-foreground/80">/products/{previewSlug}</span>
+                  </span>
+                  {isEditing && product && (
+                    <a
+                      href={getStorefrontUrl(`/${lang}/products/${previewSlug || product.id}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-primary hover:underline gap-0.5 ms-1"
+                      title={t('admin:products.viewStorefront', 'View in Store')}
+                    >
+                      <ExternalLink className="size-3" />
+                    </a>
+                  )}
+                </div>
               </Field>
 
               {/* Description */}
@@ -544,16 +588,22 @@ function ProductEditorForm({
                 {isLoadingCategories ? (
                   <div className="h-10 bg-secondary/50 rounded-lg animate-pulse" />
                 ) : (
-                  <Select value={effectiveCategoryId} onValueChange={(val) => setCategoryId(val ?? '')}>
+                  <Select
+                    items={categoryItems}
+                    value={effectiveCategoryId}
+                    onValueChange={(val) => setCategoryId(val ?? '')}
+                  >
                     <SelectTrigger id="category-select" className="w-full">
                       <SelectValue placeholder={t('admin:productEditor.selectCategory', 'Select a category')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name} ({cat.code})
-                        </SelectItem>
-                      ))}
+                      <SelectGroup>
+                        {categoryItems.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                 )}
@@ -564,14 +614,22 @@ function ProductEditorForm({
                 <FieldLabel htmlFor="variant-select">
                   {t('admin:productEditor.variant', 'Edition Variant')}
                 </FieldLabel>
-                <Select value={variant} onValueChange={(val) => setVariant(val as ProductVariant | 'none')}>
+                <Select
+                  items={variantItems}
+                  value={variant}
+                  onValueChange={(val) => setVariant(val as ProductVariant | 'none')}
+                >
                   <SelectTrigger id="variant-select" className="w-full">
                     <SelectValue placeholder={t('admin:productEditor.selectVariant', 'Select variant')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None (Standard)</SelectItem>
-                    <SelectItem value="retail">Retail</SelectItem>
-                    <SelectItem value="oem">OEM</SelectItem>
+                    <SelectGroup>
+                      {variantItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>

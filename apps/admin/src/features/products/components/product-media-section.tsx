@@ -15,6 +15,7 @@ import { Badge } from '@workspace/ui/components/badge'
 import { toast } from '@workspace/ui/components/sonner'
 import { resolveStorageUrl } from '@workspace/api/factory'
 import type { ProductImageResponse } from '@workspace/domain/schemas/product'
+import { compressProductImage } from '../../../lib/image-compression'
 import {
   useUploadProductImage,
   useDeleteProductImage,
@@ -52,6 +53,7 @@ export function ProductMediaSection({
   const isRtl = i18n.language === 'ar'
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = React.useState(false)
+  const [isProcessing, setIsProcessing] = React.useState(false)
 
   // Live mutation hooks
   const uploadMutation = useUploadProductImage()
@@ -102,29 +104,40 @@ export function ProductMediaSection({
     const validFiles = validateFiles(files)
     if (validFiles.length === 0) return
 
-    if (isLive && productId) {
-      for (let i = 0; i < validFiles.length; i++) {
-        const file = validFiles[i]
-        const isPrimary = optimisticLiveImages.length === 0 && i === 0
-        try {
-          await uploadMutation.mutateAsync({
-            productId,
-            file,
-            isPrimary,
-          })
-        } catch {
-          // Handled by hook error toast
+    setIsProcessing(true)
+    try {
+      if (isLive && productId) {
+        for (let i = 0; i < validFiles.length; i++) {
+          const rawFile = validFiles[i]
+          const compressedFile = await compressProductImage(rawFile)
+          const isPrimary = optimisticLiveImages.length === 0 && i === 0
+          try {
+            await uploadMutation.mutateAsync({
+              productId,
+              file: compressedFile,
+              isPrimary,
+            })
+          } catch {
+            // Handled by hook error toast
+          }
         }
+      } else {
+        // Staged mode: compress before generating preview
+        const newStaged: StagedImage[] = []
+        for (let idx = 0; idx < validFiles.length; idx++) {
+          const rawFile = validFiles[idx]
+          const compressedFile = await compressProductImage(rawFile)
+          newStaged.push({
+            id: `staged-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+            file: compressedFile,
+            previewUrl: URL.createObjectURL(compressedFile),
+            is_primary: stagedImages.length === 0 && idx === 0 && newStaged.length === 0,
+          })
+        }
+        onStagedImagesChange?.([...stagedImages, ...newStaged])
       }
-    } else {
-      // Staged mode
-      const newStaged: StagedImage[] = validFiles.map((file, idx) => ({
-        id: `staged-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
-        file,
-        previewUrl: URL.createObjectURL(file),
-        is_primary: stagedImages.length === 0 && idx === 0,
-      }))
-      onStagedImagesChange?.([...stagedImages, ...newStaged])
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -259,14 +272,16 @@ export function ProductMediaSection({
             isDragging
               ? 'border-primary bg-primary/5 scale-[1.01]'
               : 'border-border/60 hover:border-border hover:bg-secondary/20',
-            uploadMutation.isPending && 'opacity-60 pointer-events-none',
+            (uploadMutation.isPending || isProcessing) && 'opacity-60 pointer-events-none',
           )}
         >
-          {uploadMutation.isPending ? (
+          {uploadMutation.isPending || isProcessing ? (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <Loader2 className="size-8 animate-spin text-primary" />
               <span className="text-sm font-medium">
-                {t('admin:productEditor.uploading', 'Uploading media...')}
+                {uploadMutation.isPending
+                  ? t('admin:productEditor.uploading', 'Uploading media...')
+                  : t('admin:productEditor.compressing', 'Compressing media...')}
               </span>
             </div>
           ) : (
@@ -292,7 +307,7 @@ export function ProductMediaSection({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-2">
           {isLive
             ? optimisticLiveImages.map((img, index) => {
-                const imageUrl = img.url || resolveStorageUrl(img.file_path)
+                const imageUrl = resolveStorageUrl(img.url) || resolveStorageUrl(img.file_path)
                 const isFirst = index === 0
                 const isLast = index === optimisticLiveImages.length - 1
 

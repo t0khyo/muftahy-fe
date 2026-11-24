@@ -31,7 +31,7 @@ export function DetailMedia({
   const safeIndex = selectedIndex >= sortedImages.length && sortedImages.length > 0 ? 0 : selectedIndex
   const currentImage = sortedImages[safeIndex]
   const currentImageUrl = currentImage
-    ? currentImage.url || resolveStorageUrl(currentImage.file_path)
+    ? resolveStorageUrl(currentImage.url) || resolveStorageUrl(currentImage.file_path)
     : coverImage
 
   const isCurrentFailed = !currentImageUrl || failedUrls.has(currentImageUrl)
@@ -73,7 +73,7 @@ export function DetailMedia({
           className="flex items-center gap-2 overflow-x-auto pb-1"
         >
           {sortedImages.map((img, idx) => {
-            const thumbUrl = img.url || resolveStorageUrl(img.file_path)
+            const thumbUrl = resolveStorageUrl(img.url) || resolveStorageUrl(img.file_path)
             const isSelected = idx === selectedIndex
             const isFailed = !thumbUrl || failedUrls.has(thumbUrl)
 

@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getProductService } from '@workspace/api/factory'
@@ -13,16 +14,22 @@ import { showApiErrorToast } from '../../../lib/api-error-toast'
 
 export const adminProductKeys = {
   all: ['admin', 'products'] as const,
-  list: (params?: ProductFilterParams) => [...adminProductKeys.all, 'list', params] as const,
+  lists: () => [...adminProductKeys.all, 'list'] as const,
+  list: (params?: ProductFilterParams) => [...adminProductKeys.lists(), params] as const,
   categories: () => [...adminProductKeys.all, 'categories'] as const,
   detail: (id: string) => [...adminProductKeys.all, 'detail', id] as const,
 }
 
 export function useAdminProducts(params?: ProductFilterParams) {
   const service = getProductService('admin')
+  const mergedParams = React.useMemo(() => ({
+    only_active: false,
+    ...params,
+  }), [params])
+
   return useQuery({
-    queryKey: adminProductKeys.list(params),
-    queryFn: () => service.getProducts(params),
+    queryKey: adminProductKeys.list(mergedParams),
+    queryFn: () => service.getProducts(mergedParams),
   })
 }
 
@@ -71,7 +78,12 @@ export function useUpdateProduct() {
       service.updateProduct(id, data),
     onSuccess: (updatedProduct) => {
       queryClient.setQueryData(adminProductKeys.detail(updatedProduct.id), updatedProduct)
-      queryClient.invalidateQueries({ queryKey: adminProductKeys.list() })
+      // Optimistically update existing list queries so UI responds immediately
+      queryClient.setQueriesData<ProductResponse[]>({ queryKey: adminProductKeys.lists() }, (prev) => {
+        if (!prev) return prev
+        return prev.map((p) => (p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p))
+      })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
       toast.success(t('productEditor.savedSuccess', { defaultValue: 'Product saved successfully' }))
     },
     onError: (err) => {
@@ -123,7 +135,7 @@ export function useUploadProductImage() {
     }) => service.uploadProductImage(productId, { file, is_primary: isPrimary }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(variables.productId) })
-      queryClient.invalidateQueries({ queryKey: adminProductKeys.list() })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
     },
     onError: (err) => {
       showApiErrorToast(err, 'admin:errors.INVALID_IMAGE_FORMAT')
@@ -145,7 +157,7 @@ export function useDeleteProductImage() {
     }) => service.deleteProductImage(productId, imageId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(variables.productId) })
-      queryClient.invalidateQueries({ queryKey: adminProductKeys.list() })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
     },
     onError: (err) => {
       showApiErrorToast(err, 'admin:errors.PRIMARY_IMAGE_CANNOT_BE_DELETED')
@@ -167,7 +179,7 @@ export function useSetPrimaryProductImage() {
     }) => service.setPrimaryProductImage(productId, imageId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(variables.productId) })
-      queryClient.invalidateQueries({ queryKey: adminProductKeys.list() })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
     },
     onError: (err) => {
       showApiErrorToast(err, 'admin:errors.GENERIC_ERROR')
@@ -189,7 +201,7 @@ export function useReorderProductImages() {
     }) => service.reorderProductImages(productId, { items: images }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(variables.productId) })
-      queryClient.invalidateQueries({ queryKey: adminProductKeys.list() })
+      queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
     },
     onError: (err) => {
       showApiErrorToast(err, 'admin:errors.GENERIC_ERROR')

@@ -5,6 +5,7 @@ import { Badge } from '@workspace/ui/components/badge'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -44,6 +45,13 @@ export function ListingToolbar({
   const { t } = useTranslation(['products', 'common'])
 
   const sortLabel = t('listing.sort', { defaultValue: 'Sort' })
+
+  const sortItems = [
+    { value: 'featured', label: t('listing.sortFeatured', { defaultValue: 'Featured' }) },
+    { value: 'price-asc', label: t('listing.sortPriceLow', { defaultValue: 'Price: low to high' }) },
+    { value: 'price-desc', label: t('listing.sortPriceHigh', { defaultValue: 'Price: high to low' }) },
+    { value: 'newest', label: t('listing.sortNewest', { defaultValue: 'Newest' }) },
+  ]
 
   const chips: ActiveFilterChip[] = []
   if (state.variant) {
@@ -111,6 +119,7 @@ export function ListingToolbar({
             {sortLabel}:
           </span>
           <Select
+            items={sortItems}
             value={state.sort}
             onValueChange={(val) => onSortChange(val as SortOption)}
           >
@@ -121,18 +130,13 @@ export function ListingToolbar({
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="featured">
-                {t('listing.sortFeatured', { defaultValue: 'Featured' })}
-              </SelectItem>
-              <SelectItem value="price-asc">
-                {t('listing.sortPriceLow', { defaultValue: 'Price: low to high' })}
-              </SelectItem>
-              <SelectItem value="price-desc">
-                {t('listing.sortPriceHigh', { defaultValue: 'Price: high to low' })}
-              </SelectItem>
-              <SelectItem value="newest">
-                {t('listing.sortNewest', { defaultValue: 'Newest' })}
-              </SelectItem>
+              <SelectGroup>
+                {sortItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>

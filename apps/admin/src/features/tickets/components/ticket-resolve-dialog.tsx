@@ -73,6 +73,24 @@ function TicketResolveContent({
   const [adminOverride, setAdminOverride] = React.useState(false)
   const [customerMessage, setCustomerMessage] = React.useState('')
 
+  const outcomeItems = React.useMemo(
+    () => [
+      {
+        value: 'replacement',
+        label: t('admin.ticketsModule.outcomeReplacement', 'Provide Replacement Key'),
+      },
+      {
+        value: 'refund',
+        label: t('admin.ticketsModule.outcomeRefund', 'Issue Refund'),
+      },
+      {
+        value: 'refused',
+        label: t('admin.ticketsModule.outcomeRefused', 'Refuse / Invalid Claim'),
+      },
+    ],
+    [t],
+  )
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -105,6 +123,7 @@ function TicketResolveContent({
           <Field>
             <FieldLabel htmlFor="outcome-select">{t('admin.ticketsModule.outcome', 'Resolution Action')}</FieldLabel>
             <Select
+              items={outcomeItems}
               value={outcome}
               onValueChange={(val) => setOutcome(val as TicketOutcome)}
             >
@@ -113,9 +132,11 @@ function TicketResolveContent({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="replacement">{t('admin.ticketsModule.outcomeReplacement', 'Provide Replacement Key')}</SelectItem>
-                  <SelectItem value="refund">{t('admin.ticketsModule.outcomeRefund', 'Issue Refund')}</SelectItem>
-                  <SelectItem value="refused">{t('admin.ticketsModule.outcomeRefused', 'Refuse / Invalid Claim')}</SelectItem>
+                  {outcomeItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </Select>

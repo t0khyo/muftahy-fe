@@ -109,6 +109,13 @@ function KeyBatchImportForm({
   const activeProductId = selectedProductId || (products && products.length > 0 ? products[0].id : '')
   const selectedProduct = products?.find((p) => p.id === activeProductId)
 
+  const productItems = React.useMemo(() => {
+    return (products || []).map((p) => ({
+      value: p.id,
+      label: `${p.name}${p.category?.name ? ` (${p.category.name})` : ''}`,
+    }))
+  }, [products])
+
   const batchAnalysis = React.useMemo(() => {
     return parseKeyBatchInput(serialsText)
   }, [serialsText])
@@ -226,6 +233,7 @@ function KeyBatchImportForm({
                   {t('admin:inventory.targetProduct', 'Target Product SKU')}
                 </FieldLabel>
                 <Select
+                  items={productItems}
                   value={activeProductId}
                   onValueChange={(val) => setSelectedProductId(val ?? '')}
                   disabled={productsLoading || !products || products.length === 0}
@@ -235,10 +243,9 @@ function KeyBatchImportForm({
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectGroup>
-                      {products?.map((p) => (
-                        <SelectItem key={p.id} value={p.id} className="text-xs font-mono">
-                          <span className="font-semibold text-foreground">{p.name}</span>
-                          <span className="ms-1.5 text-[10px] text-muted-foreground">({p.category?.name || ''})</span>
+                      {productItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value} className="text-xs font-mono">
+                          {item.label}
                         </SelectItem>
                       ))}
                     </SelectGroup>

@@ -29,11 +29,11 @@ export function SiteHeader() {
 
   // Derive current page label
   const getPageTitle = () => {
-    if (pathname.includes('/products')) return t('admin:nav.products', 'Products & SKUs')
-    if (pathname.includes('/orders')) return t('admin:nav.orders', 'Orders & Fulfillment')
-    if (pathname.includes('/inventory')) return t('admin:nav.inventory', 'Key Pool Inventory')
+    if (pathname.includes('/products')) return t('admin:nav.products', 'Products')
+    if (pathname.includes('/orders')) return t('admin:nav.orders', 'Orders')
+    if (pathname.includes('/inventory')) return t('admin:nav.inventory', 'Inventory')
     if (pathname.includes('/customers')) return t('admin:nav.customers', 'Customer Accounts')
-    if (pathname.includes('/audit')) return t('admin:nav.audit', 'Security & Audit Log')
+    if (pathname.includes('/audit')) return t('admin:nav.audit', 'Audit Log')
     if (pathname.includes('/profile')) return t('admin:nav.profile', 'Profile')
     return t('admin:nav.dashboard', 'Dashboard')
   }
@@ -48,27 +48,30 @@ export function SiteHeader() {
 
         <Breadcrumb>
           <BreadcrumbList className="text-xs sm:text-sm font-medium">
-            <BreadcrumbItem className="hidden sm:inline-flex">
-              <BreadcrumbLink render={<Link to={`/${lang}`} />} className="hover:text-foreground transition-colors text-muted-foreground">
-                Muftahy
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            {isSubPage && (
+            {isSubPage ? (
               <>
-                <BreadcrumbSeparator className="hidden sm:inline-flex text-muted-foreground/40" />
                 <BreadcrumbItem className="hidden sm:inline-flex">
-                  <BreadcrumbLink render={<Link to={`/${lang}`} />} className="hover:text-foreground transition-colors text-muted-foreground">
+                  <BreadcrumbLink
+                    render={<Link to={`/${lang}`} />}
+                    className="hover:text-foreground transition-colors text-muted-foreground"
+                  >
                     {t('admin:nav.dashboard', 'Dashboard')}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:inline-flex text-muted-foreground/40" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-semibold text-foreground tracking-tight">
+                    {getPageTitle()}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
               </>
+            ) : (
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-semibold text-foreground tracking-tight">
+                  {t('admin:nav.dashboard', 'Dashboard')}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
             )}
-            <BreadcrumbSeparator className="hidden sm:inline-flex text-muted-foreground/40" />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-semibold text-foreground tracking-tight">
-                {getPageTitle()}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 

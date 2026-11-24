@@ -785,7 +785,53 @@
     "adminRole": "مدير النظام",
     "logoutConfirm": "إنهاء الجلسة",
     "logout": "تسجيل الخروج",
-    "products": "إدارة المنتجات",
+    "products": {
+      "title": "المنتجات",
+      "subtitle": "إدارة المنتجات الرقمية، والأسعار، والفئات، والظهور في المتجر",
+      "addProduct": "إضافة منتج",
+      "searchPlaceholder": "البحث باسم المنتج، أو رمز SKU، أو الفئة...",
+      "catalogTitle": "المنتجات",
+      "catalogDesc": "المنتجات النشطة تظهر للمشترين في واجهة المتجر.",
+      "product": "المنتج",
+      "category": "الفئة",
+      "price": "السعر",
+      "stock": "المخزون",
+      "status": "الحالة",
+      "statusActive": "نشط",
+      "statusDraft": "مسودة",
+      "tabs": {
+        "all": "الكل",
+        "active": "نشط",
+        "draft": "مسودة"
+      },
+      "inventory": {
+        "inStock": "{{count}} متوفر",
+        "lowStock": "متبقي {{count}} فقط",
+        "outOfStock": "نفد المخزون",
+        "preorder": "طلب مسبق"
+      },
+      "filters": {
+        "allCategories": "جميع الفئات",
+        "allStock": "جميع حالات المخزون",
+        "inStockOnly": "المتوفر فقط",
+        "lowStockOnly": "مخزون منخفض (≤5)",
+        "outOfStockOnly": "نفد المخزون",
+        "preorderOnly": "الطلب المسبق مفعل"
+      },
+      "bulk": {
+        "selected": "تم تحديد {{count}}",
+        "publish": "تعيين كنشط",
+        "unpublish": "تعيين كمسودة"
+      },
+      "viewStorefront": "عرض في المتجر",
+      "actions": "الإجراءات",
+      "viewInventory": "إدارة المفاتيح",
+      "copyId": "نسخ معرف المنتج",
+      "copySku": "نسخ رمز SKU",
+      "copiedSku": "تم نسخ رمز SKU!",
+      "emptyTitle": "لم يتم العثور على أي منتجات",
+      "emptyDesc": "أضف منتجات رقمية أو تراخيص برامج لبدء استقبال الطلبات."
+    },
     "orders": "الطلبات والتنفيذ",
     "inventory": "مخزون المفاتيح",
     "nav": {
@@ -1031,6 +1077,9 @@
       "selectCategory": "اختر تصنيفاً",
       "variant": "نوع الإصدار",
       "selectVariant": "اختر الإصدار",
+      "variantNone": "بدون (قياسي)",
+      "variantRetail": "تجزئة (Retail)",
+      "variantOem": "مُصنّع (OEM)",
       "sku": "رمز المنتج (SKU)",
       "skuPlaceholder": "مثال: OS-WIN11-PRO-RET",
       "skuHint": "صيغة من 4 أجزاء بأحرف كبيرة. يجب أن تبدأ برمز التصنيف.",
@@ -1046,6 +1095,7 @@
       "deleteImage": "حذف الصورة",
       "retryUpload": "إعادة محاولة الرفع",
       "uploading": "جاري رفع الوسائط...",
+      "compressing": "جاري ضغط وتحسين الوسائط...",
       "stagedStatus": "في انتظار الرفع",
       "save": "حفظ المنتج",
       "saving": "جاري الحفظ...",

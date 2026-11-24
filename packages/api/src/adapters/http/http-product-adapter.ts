@@ -1,13 +1,14 @@
-import type {
-  CategoryCreateInput,
-  CategoryDetailResponse,
-  CategoryResponse,
-  CategoryUpdateInput,
-  ImageReorderRequest,
-  ProductCreateInput,
-  ProductImageResponse,
-  ProductResponse,
-  ProductUpdateInput,
+import {
+  productResponseSchema,
+  type CategoryCreateInput,
+  type CategoryDetailResponse,
+  type CategoryResponse,
+  type CategoryUpdateInput,
+  type ImageReorderRequest,
+  type ProductCreateInput,
+  type ProductImageResponse,
+  type ProductResponse,
+  type ProductUpdateInput,
 } from '@workspace/domain/schemas/product'
 import type {
   ProductFilterParams,
@@ -35,9 +36,17 @@ export class HttpProductAdapter implements ProductService {
     const query = searchParams.toString()
     const path = query ? `/products?${query}` : '/products'
 
-    return this.client.request<ProductResponse[]>(path, {
+    const raw = await this.client.request<ProductResponse[]>(path, {
       method: 'GET',
       skipAuth: true,
+    })
+    return raw.map((item) => {
+      const parsed = productResponseSchema.safeParse(item)
+      if (parsed.success) return parsed.data
+      return {
+        ...item,
+        is_active: item.is_active ?? true,
+      } as ProductResponse
     })
   }
 
@@ -56,10 +65,12 @@ export class HttpProductAdapter implements ProductService {
   }
 
   async getProductBySlug(slug: string): Promise<ProductResponse> {
-    return this.client.request<ProductResponse>(`/products/slug/${encodeURIComponent(slug)}`, {
+    const raw = await this.client.request<ProductResponse>(`/products/slug/${encodeURIComponent(slug)}`, {
       method: 'GET',
       skipAuth: true,
     })
+    const parsed = productResponseSchema.safeParse(raw)
+    return parsed.success ? parsed.data : ({ ...raw, is_active: raw.is_active ?? true } as ProductResponse)
   }
 
   async getAdminCategories(): Promise<CategoryResponse[]> {
@@ -89,24 +100,30 @@ export class HttpProductAdapter implements ProductService {
   }
 
   async getProductById(id: string): Promise<ProductResponse> {
-    return this.client.request<ProductResponse>(`/products/${id}`, {
+    const raw = await this.client.request<ProductResponse>(`/products/${id}`, {
       method: 'GET',
       skipAuth: true,
     })
+    const parsed = productResponseSchema.safeParse(raw)
+    return parsed.success ? parsed.data : ({ ...raw, is_active: raw.is_active ?? true } as ProductResponse)
   }
 
   async createProduct(data: ProductCreateInput): Promise<ProductResponse> {
-    return this.client.request<ProductResponse>('/products', {
+    const raw = await this.client.request<ProductResponse>('/products', {
       method: 'POST',
       body: data,
     })
+    const parsed = productResponseSchema.safeParse(raw)
+    return parsed.success ? parsed.data : ({ ...raw, is_active: raw.is_active ?? true } as ProductResponse)
   }
 
   async updateProduct(id: string, data: ProductUpdateInput): Promise<ProductResponse> {
-    return this.client.request<ProductResponse>(`/products/${id}`, {
+    const raw = await this.client.request<ProductResponse>(`/products/${id}`, {
       method: 'PATCH',
       body: data,
     })
+    const parsed = productResponseSchema.safeParse(raw)
+    return parsed.success ? parsed.data : ({ ...raw, is_active: raw.is_active ?? true } as ProductResponse)
   }
 
   async deleteProduct(id: string): Promise<{ message: string }> {

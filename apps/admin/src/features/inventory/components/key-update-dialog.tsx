@@ -92,7 +92,14 @@ function KeyUpdateForm({
   const [successMessage, setSuccessMessage] = React.useState<boolean>(false)
 
   const isTerminal = keyRecord.status === 'cancelled' || keyRecord.status === 'replaced'
-  const allowedStatusOptions = ALLOWED_TRANSITIONS[keyRecord.status] ?? [keyRecord.status]
+
+  const statusItems = React.useMemo(() => {
+    const allowed = ALLOWED_TRANSITIONS[keyRecord.status] ?? [keyRecord.status]
+    return allowed.map((opt) => ({
+      value: opt,
+      label: opt.charAt(0).toUpperCase() + opt.slice(1),
+    }))
+  }, [keyRecord.status])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -224,6 +231,7 @@ function KeyUpdateForm({
               </Alert>
             ) : (
               <Select
+                items={statusItems}
                 value={status}
                 onValueChange={(val) => setStatus(val ?? keyRecord.status)}
                 disabled={keyUpdateMutation.isPending}
@@ -233,9 +241,9 @@ function KeyUpdateForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {allowedStatusOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt} className="text-xs font-mono capitalize">
-                        {opt}
+                    {statusItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="text-xs font-mono capitalize">
+                        {item.label}
                       </SelectItem>
                     ))}
                   </SelectGroup>

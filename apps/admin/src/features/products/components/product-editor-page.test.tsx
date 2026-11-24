@@ -117,6 +117,15 @@ describe('ProductEditorPage', () => {
     // Shows stock info and link to inventory
     expect(screen.getByText(/Stock Available: 15/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Manage Keys in Inventory/i })).toBeInTheDocument()
+
+    // Select triggers should display human-readable labels rather than raw UUIDs or lowercase keys
+    const categoryTrigger = screen.getByRole('combobox', { name: /Category/i })
+    expect(categoryTrigger).toHaveTextContent('Operating Systems (OS)')
+    expect(categoryTrigger).not.toHaveTextContent('cat-1')
+
+    const variantTrigger = screen.getByRole('combobox', { name: /Edition Variant/i })
+    expect(variantTrigger).toHaveTextContent('Retail')
+    expect(variantTrigger).not.toHaveTextContent('retail')
   })
 })
 

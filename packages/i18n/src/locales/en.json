@@ -781,7 +781,53 @@
     "adminRole": "System Administrator",
     "logoutConfirm": "End Session",
     "logout": "Logout",
-    "products": "Products Management",
+    "products": {
+      "title": "Products",
+      "subtitle": "Manage digital products, pricing, categories, and visibility",
+      "addProduct": "Add Product",
+      "searchPlaceholder": "Search by product name, SKU, or category...",
+      "catalogTitle": "Products",
+      "catalogDesc": "Active products are visible to buyers on the storefront.",
+      "product": "Product",
+      "category": "Category",
+      "price": "Price",
+      "stock": "Inventory",
+      "status": "Status",
+      "statusActive": "Active",
+      "statusDraft": "Draft",
+      "tabs": {
+        "all": "All",
+        "active": "Active",
+        "draft": "Draft"
+      },
+      "inventory": {
+        "inStock": "{{count}} in stock",
+        "lowStock": "{{count}} left",
+        "outOfStock": "Out of stock",
+        "preorder": "Pre-order"
+      },
+      "filters": {
+        "allCategories": "All Categories",
+        "allStock": "All Inventory",
+        "inStockOnly": "In Stock",
+        "lowStockOnly": "Low Stock (≤5)",
+        "outOfStockOnly": "Out of Stock",
+        "preorderOnly": "Pre-orders Enabled"
+      },
+      "bulk": {
+        "selected": "{{count}} selected",
+        "publish": "Set as Active",
+        "unpublish": "Set as Draft"
+      },
+      "viewStorefront": "View in Store",
+      "actions": "Actions",
+      "viewInventory": "Manage Keys",
+      "copyId": "Copy Product ID",
+      "copySku": "Copy SKU",
+      "copiedSku": "SKU copied to clipboard",
+      "emptyTitle": "No products found",
+      "emptyDesc": "Create digital products or game licenses to start accepting orders."
+    },
     "orders": "Orders",
     "inventory": "Key Inventory",
     "nav": {
@@ -1027,6 +1073,9 @@
       "selectCategory": "Select a category",
       "variant": "Edition Variant",
       "selectVariant": "Select variant",
+      "variantNone": "None (Standard)",
+      "variantRetail": "Retail",
+      "variantOem": "OEM",
       "sku": "SKU",
       "skuPlaceholder": "e.g. OS-WIN11-PRO-RET",
       "skuHint": "4-segment uppercase format. Must start with the category code.",
@@ -1042,6 +1091,7 @@
       "deleteImage": "Remove image",
       "retryUpload": "Retry upload",
       "uploading": "Uploading media...",
+      "compressing": "Compressing media...",
       "stagedStatus": "Pending upload",
       "save": "Save Product",
       "saving": "Saving...",

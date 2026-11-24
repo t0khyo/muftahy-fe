@@ -321,7 +321,19 @@ export function DesignPage() {
             >
               {t('selectLabel', { ns: 'design' })}
             </label>
-            <Select defaultValue="global">
+            <Select
+              defaultValue="windows"
+              items={[
+                {
+                  value: 'windows',
+                  label: t('categories.windows', { ns: 'products', defaultValue: 'Windows' }),
+                },
+                {
+                  value: 'office',
+                  label: t('categories.office', { ns: 'products', defaultValue: 'Office' }),
+                },
+              ]}
+            >
               <SelectTrigger id="region-select" className="w-full">
                 <SelectValue
                   placeholder={t('selectPlaceholder', { ns: 'design' })}
