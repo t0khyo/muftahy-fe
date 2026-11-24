@@ -21,12 +21,12 @@ const mockProducts: ProductResponse[] = [
     sku: 'OS-WIN11-PRO-RET',
     category: {
       id: 'cat-1',
-      name: 'Windows',
-      slug: 'windows',
+      name: 'Operating Systems',
+      slug: 'operating-systems',
       code: 'OS',
-      display_order: 0,
+      display_order: 1,
       is_active: true,
-      product_count: 2,
+      product_count: 3,
     },
     variant: 'retail',
     base_price: '499.00',
@@ -46,13 +46,13 @@ const mockProducts: ProductResponse[] = [
     slug: 'office-2021-professional-plus',
     sku: 'OFF-OFF21-PRO-RET',
     category: {
-      id: 'cat-2',
-      name: 'Office',
-      slug: 'office',
+      id: 'cat-3',
+      name: 'Office Suites',
+      slug: 'office-suites',
       code: 'OFF',
-      display_order: 1,
+      display_order: 3,
       is_active: true,
-      product_count: 1,
+      product_count: 2,
     },
     variant: 'retail',
     base_price: '599.00',
@@ -73,12 +73,12 @@ const mockProducts: ProductResponse[] = [
     sku: 'OS-WIN11-HOM-OEM',
     category: {
       id: 'cat-1',
-      name: 'Windows',
-      slug: 'windows',
+      name: 'Operating Systems',
+      slug: 'operating-systems',
       code: 'OS',
-      display_order: 0,
+      display_order: 1,
       is_active: true,
-      product_count: 2,
+      product_count: 3,
     },
     variant: 'oem',
     base_price: '249.00',
@@ -99,12 +99,12 @@ const mockProducts: ProductResponse[] = [
     sku: 'OS-WIN10-PRO-RET',
     category: {
       id: 'cat-1',
-      name: 'Windows',
-      slug: 'windows',
+      name: 'Operating Systems',
+      slug: 'operating-systems',
       code: 'OS',
-      display_order: 0,
+      display_order: 1,
       is_active: true,
-      product_count: 2,
+      product_count: 3,
     },
     variant: 'retail',
     base_price: '299.00',
@@ -168,16 +168,17 @@ describe('Home Page Skeleton', () => {
     vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
       getProducts: vi.fn().mockResolvedValue(mockProducts),
       getPublicCategories: vi.fn().mockResolvedValue([
-        { id: 'cat-1', name: 'Windows', slug: 'windows', code: 'OS', display_order: 0, is_active: true, product_count: 2 },
-        { id: 'cat-2', name: 'Office', slug: 'office', code: 'OFF', display_order: 1, is_active: true, product_count: 1 },
+        { id: 'cat-1', name: 'Operating Systems', slug: 'operating-systems', code: 'OS', display_order: 1, is_active: true, product_count: 3 },
+        { id: 'cat-2', name: 'Security & Antivirus', slug: 'security-antivirus', code: 'SEC', display_order: 2, is_active: true, product_count: 0 },
+        { id: 'cat-3', name: 'Office Suites', slug: 'office-suites', code: 'OFF', display_order: 3, is_active: true, product_count: 2 },
       ]),
       getCategoryBySlug: vi.fn().mockImplementation((slug) =>
         Promise.resolve({
-          id: slug === 'windows' ? 'cat-1' : 'cat-2',
-          name: slug === 'windows' ? 'Windows' : 'Office',
+          id: slug === 'operating-systems' ? 'cat-1' : slug === 'security-antivirus' ? 'cat-2' : 'cat-3',
+          name: slug === 'operating-systems' ? 'Operating Systems' : slug === 'security-antivirus' ? 'Security & Antivirus' : 'Office Suites',
           slug,
-          code: slug === 'windows' ? 'OS' : 'OFF',
-          display_order: 0,
+          code: slug === 'operating-systems' ? 'OS' : slug === 'security-antivirus' ? 'SEC' : 'OFF',
+          display_order: 1,
           is_active: true,
           products: mockProducts.filter((p) => p.category.slug === slug),
         }),
@@ -276,13 +277,14 @@ describe('Home Page Skeleton', () => {
     expect(within(browseSection).getByText(/browse catalog/i)).toBeInTheDocument()
     expect(within(browseSection).getByText(/explore keys, licenses, and subscriptions/i)).toBeInTheDocument()
 
-    // 2 Category tiles: Windows and Office
+    // 3 Category tiles: Operating Systems, Security & Antivirus, Office Suites
     const categoryLinks = within(browseSection)
       .getAllByRole('link')
       .filter((l) => l.getAttribute('href')?.includes('categories/') || l.getAttribute('href')?.includes('category='))
     expect(categoryLinks.map((l) => l.getAttribute('href'))).toEqual([
-      '/en/categories/windows',
-      '/en/categories/office',
+      '/en/categories/operating-systems',
+      '/en/categories/security-antivirus',
+      '/en/categories/office-suites',
     ])
   })
 
@@ -292,8 +294,9 @@ describe('Home Page Skeleton', () => {
     expect(browseSection).toBeInTheDocument()
 
     expect(within(browseSection).getByRole('heading', { name: /تصفح المنتجات/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /ويندوز/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /أوفيس/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /أنظمة التشغيل/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /الأمان ومكافحة الفيروسات/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /حزم أوفيس المكتبية/i })).toBeInTheDocument()
     expect(document.documentElement.dir).toBe('rtl')
   })
 
@@ -589,8 +592,9 @@ describe('Home Page Skeleton', () => {
     // Arabic browse block
     const browseSection = container.querySelector<HTMLElement>('#browse')!
     expect(within(browseSection).getByRole('heading', { name: /تصفح المنتجات/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /ويندوز/i })).toBeInTheDocument()
-    expect(within(browseSection).getByRole('link', { name: /أوفيس/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /أنظمة التشغيل/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /الأمان ومكافحة الفيروسات/i })).toBeInTheDocument()
+    expect(within(browseSection).getByRole('link', { name: /حزم أوفيس المكتبية/i })).toBeInTheDocument()
 
     // Arabic How It Works section
     const howItWorks = container.querySelector<HTMLElement>('#how-it-works')!

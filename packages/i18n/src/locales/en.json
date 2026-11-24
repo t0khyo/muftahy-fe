@@ -225,7 +225,10 @@
     "subtitle": "Instant digital delivery for genuine Microsoft Windows and Office licenses",
     "categories": {
       "windows": "Windows",
-      "office": "Office"
+      "office": "Office",
+      "operating-systems": "Operating Systems",
+      "security-antivirus": "Security & Antivirus",
+      "office-suites": "Office Suites"
     },
     "variants": {
       "retail": "Retail",
@@ -366,14 +369,35 @@
       "trustInstant": "Instant Delivery",
       "trustVerified": "Verified Licenses",
       "trustSupport": "Activation Support",
-      "seasonalBadge": "Ramadan Deals • Up to 50% Off"
+      "seasonalBadge": "Ramadan Deals • Up to 50% Off",
+      "scrollCta": "Scroll to explore"
     },
     "browse": {
+      "sectionBadge": "Catalog",
       "title": "Browse Catalog",
       "subtitle": "Explore keys, licenses, and subscriptions across your favorite platforms.",
       "allPlatforms": "All Platforms",
       "itemCount_one": "{{count}} item",
       "itemCount_other": "{{count}} items",
+      "comingSoon": "Coming soon",
+      "exploreCategory": "Explore category",
+      "specs": {
+        "operating-systems": [
+          "Windows 11 & 10",
+          "Lifetime License",
+          "Retail & OEM"
+        ],
+        "security-antivirus": [
+          "Real-Time Shield",
+          "Multi-Device",
+          "VPN Included"
+        ],
+        "office-suites": [
+          "Word, Excel & PPT",
+          "Lifetime Activation",
+          "1 PC / Mac"
+        ]
+      },
       "categories": {
         "games": "Games",
         "gamesDesc": "PC & console activation keys",
@@ -382,7 +406,13 @@
         "subscriptions": "Subscriptions",
         "subscriptionsDesc": "Monthly passes & cloud gaming",
         "giftCards": "Gift Cards",
-        "giftCardsDesc": "Store credit & wallet top-ups"
+        "giftCardsDesc": "Store credit & wallet top-ups",
+        "operating-systems": "Operating Systems",
+        "operating-systemsDesc": "Microsoft Windows operating system licenses",
+        "security-antivirus": "Security & Antivirus",
+        "security-antivirusDesc": "Antivirus, internet security, and VPN software licenses",
+        "office-suites": "Office Suites",
+        "office-suitesDesc": "Productivity and office suite software licenses"
       }
     },
     "categories": {

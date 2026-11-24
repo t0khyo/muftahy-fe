@@ -229,7 +229,10 @@
     "subtitle": "تسليم فوري للمفاتيح والتراخيص الأصلية لويندوز وأوفيس",
     "categories": {
       "windows": "ويندوز",
-      "office": "أوفيس"
+      "office": "أوفيس",
+      "operating-systems": "أنظمة التشغيل",
+      "security-antivirus": "الأمان ومكافحة الفيروسات",
+      "office-suites": "حزم أوفيس المكتبية"
     },
     "variants": {
       "retail": "تجزئة (Retail)",
@@ -370,14 +373,35 @@
       "trustInstant": "تسليم فوري",
       "trustVerified": "تراخيص أصلية معتمدة",
       "trustSupport": "دعم فني سريع",
-      "seasonalBadge": "عروض رمضان • خصومات تصل إلى 50%"
+      "seasonalBadge": "عروض رمضان • خصومات تصل إلى 50%",
+      "scrollCta": "مرر للاستكشاف"
     },
     "browse": {
+      "sectionBadge": "الكتالوج",
       "title": "تصفح المنتجات",
       "subtitle": "استكشف المفاتيح والتراخيص والاشتراكات عبر منصاتك المفضلة.",
       "allPlatforms": "جميع المنصات",
-      "itemCount_one": "عنصر واحد",
+      "itemCount_one": "{{count}} عنصر",
       "itemCount_other": "{{count}} عناصر",
+      "comingSoon": "قريباً",
+      "exploreCategory": "استكشف القسم",
+      "specs": {
+        "operating-systems": [
+          "ويندوز 11 و10",
+          "تفعيل مدى الحياة",
+          "نسخ Retail وOEM"
+        ],
+        "security-antivirus": [
+          "حماية فورية",
+          "أجهزة متعددة",
+          "VPN مدمج"
+        ],
+        "office-suites": [
+          "وورد، إكسل، باوربوينت",
+          "تفعيل دائم",
+          "جهاز واحد"
+        ]
+      },
       "categories": {
         "games": "ألعاب",
         "gamesDesc": "مفاتيح تفعيل للحاسوب والمنصات",
@@ -386,7 +410,13 @@
         "subscriptions": "اشتراكات",
         "subscriptionsDesc": "اشتراكات شهرية وألعاب سحابية",
         "giftCards": "بطاقات الهدايا",
-        "giftCardsDesc": "رصيد المتاجر وشحن المحافظ"
+        "giftCardsDesc": "رصيد المتاجر وشحن المحافظ",
+        "operating-systems": "أنظمة التشغيل",
+        "operating-systemsDesc": "تراخيص أنظمة تشغيل مايكروسوفت ويندوز الأصلية",
+        "security-antivirus": "الأمان ومكافحة الفيروسات",
+        "security-antivirusDesc": "تراخيص برامج الحماية من الفيروسات وأمان الإنترنت والـ VPN",
+        "office-suites": "حزم أوفيس المكتبية",
+        "office-suitesDesc": "تراخيص حزم البرامج المكتبية وتطبيقات الإنتاجية مدى الحياة"
       }
     },
     "categories": {

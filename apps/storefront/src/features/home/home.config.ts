@@ -40,10 +40,13 @@ export interface HeroSectionConfig extends BaseSectionConfig {
 
 export interface BrowseCategoryTile {
   id: string
-  labelKey: string
-  descKey: string
+  slug?: string
+  code?: string
+  labelKey?: string
+  descKey?: string
   href: string
-  icon: 'monitor' | 'file-spreadsheet'
+  icon?: 'monitor' | 'file-spreadsheet' | 'shield-check' | string
+  productCount?: number
 }
 
 export interface BrowseSectionConfig extends BaseSectionConfig {
@@ -164,9 +167,9 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       id: 'best-sellers',
       type: 'product-rail',
       enabled: true,
-      category: 'windows',
+      category: 'operating-systems',
       titleKey: 'bestSellers',
-      viewAllHref: '/:lang/categories/windows',
+      viewAllHref: '/:lang/categories/operating-systems',
     },
     {
       id: 'bundles',
