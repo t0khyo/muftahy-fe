@@ -3,7 +3,6 @@ import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   ShieldAlert,
-  Search,
   Download,
   Eye,
   RefreshCw,
@@ -20,7 +19,14 @@ import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { FieldLabel } from '@workspace/ui/components/field'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import {
   Card,
   CardContent,
@@ -47,13 +53,22 @@ import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
 export function AdminAuditRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
   const { t } = useTranslation(['admin'])
 
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [targetFilter, setTargetFilter] = React.useState<string>('all')
   const [selectedLog, setSelectedLog] = React.useState<AuditLogResponse | null>(null)
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
 
@@ -62,23 +77,70 @@ export function AdminAuditRoute() {
 
   const logsList = logs?.items
 
+  const targetFilterItems = React.useMemo(() => {
+    const types = Array.from(new Set((logsList || []).map((l) => l.target_type).filter(Boolean)))
+    return [
+      { value: 'all', label: t('admin:audit.allTargetTypes', 'All Target Types') },
+      ...types.map((type) => ({
+        value: type,
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+      })),
+    ]
+  }, [logsList, t])
+
   const filteredLogs = React.useMemo(() => {
-    const items = logsList || []
-    if (!searchQuery.trim()) return items
-    const query = searchQuery.toLowerCase().trim()
-    return items.filter(
-      (l) =>
-        l.action.toLowerCase().includes(query) ||
-        l.admin_name.toLowerCase().includes(query) ||
-        l.target_type.toLowerCase().includes(query) ||
-        l.target_id.toLowerCase().includes(query)
-    )
-  }, [logsList, searchQuery])
+    let items = logsList || []
+    if (targetFilter !== 'all') {
+      items = items.filter((l) => l.target_type.toLowerCase() === targetFilter.toLowerCase())
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      items = items.filter(
+        (l) =>
+          l.action.toLowerCase().includes(query) ||
+          l.admin_name.toLowerCase().includes(query) ||
+          l.target_type.toLowerCase().includes(query) ||
+          l.target_id.toLowerCase().includes(query)
+      )
+    }
+    return items
+  }, [logsList, targetFilter, searchQuery])
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (targetFilter !== 'all') {
+      chips.push({
+        id: 'target',
+        label: targetFilter.charAt(0).toUpperCase() + targetFilter.slice(1),
+        onRemove: () => setTargetFilter('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, targetFilter])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setTargetFilter('all')
+  }
 
   const { sortedItems, sortConfig, toggleSort } = useDataTableSort<AuditLogResponse>(
     filteredLogs,
     { column: 'created_at', direction: 'desc' }
   )
+
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 10 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, targetFilter, resetPage])
 
   const handleOpenDetail = (log: AuditLogResponse) => {
     setSelectedLog(log)
@@ -122,21 +184,45 @@ export function AdminAuditRoute() {
         </Button>
       </AdminPageHeader>
 
-      {/* Streamlined Toolbar */}
+      {/* Streamlined Toolbar & Audit Log Table */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <InputGroup className="flex-1 max-w-sm h-9 bg-muted/30 border-border/70 focus-within:bg-background transition-colors">
-            <InputGroupAddon>
-              <Search className="size-4 text-muted-foreground" />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder={t('admin:audit.searchPlaceholder', 'Filter by action, operator name, or target...')}
+        <DataTableToolbar
+          search={
+            <DataTableSearch
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-xs sm:text-sm"
+              onChange={setSearchQuery}
+              placeholder={t('admin:audit.searchPlaceholder', 'Filter by action, operator name, or target...')}
             />
-          </InputGroup>
-        </div>
+          }
+          filters={
+            <Select
+              items={targetFilterItems}
+              value={targetFilter}
+              onValueChange={(val) => setTargetFilter(val ?? 'all')}
+            >
+              <SelectTrigger className="h-8 text-xs min-w-[150px] max-w-[200px] cursor-pointer bg-background border-border/70">
+                <SelectValue
+                  placeholder={t('admin:audit.allTargetTypes', 'All Target Types')}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {targetFilterItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          }
+          activeFilters={
+            <DataTableActiveFilters
+              chips={activeFilterChips}
+              onClearAll={handleResetAllFilters}
+            />
+          }
+        />
 
         {/* Audit Log Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -161,18 +247,25 @@ export function AdminAuditRoute() {
                 {t('admin:common.loading', 'Loading activity log...')}
               </div>
             ) : filteredLogs.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  icon={ShieldAlert}
-                  title={t('admin:audit.emptyTitle', 'No activity logs found')}
-                  description={t(
-                    'admin:audit.emptyDesc',
-                    'Staff actions and inventory changes will be recorded here.'
-                  )}
-                />
-              </div>
+              (logsList?.length || 0) === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={ShieldAlert}
+                    title={t('admin:audit.emptyTitle', 'No activity logs found')}
+                    description={t(
+                      'admin:audit.emptyDesc',
+                      'Staff actions and inventory changes will be recorded here.'
+                    )}
+                  />
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  {t('admin:common.noFilteredResults', 'No records match your active filters')}
+                </div>
+              )
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="ps-4 pe-3 py-3.5 text-start">
@@ -222,7 +315,7 @@ export function AdminAuditRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((log) => (
+                  {pagination.paginatedItems.map((log) => (
                     <TableRow key={log.id} className="border-border/40 hover:bg-muted/20 transition-colors">
                       <TableCell className="ps-4 pe-3 py-3.5 font-mono text-xs font-semibold text-start">
                         <Badge variant="outline" className="text-[10px] font-mono border-border/60 bg-muted/40">
@@ -279,6 +372,16 @@ export function AdminAuditRoute() {
                   ))}
                 </TableBody>
               </Table>
+              {filteredLogs.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+              </>
             )}
           </CardContent>
         </Card>

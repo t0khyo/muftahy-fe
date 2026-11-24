@@ -986,6 +986,17 @@
       "save": "حفظ",
       "loading": "جاري التحميل...",
       "search": "بحث...",
+      "clearSearch": "مسح البحث",
+      "activeFilters": "الفلاتر النشطة",
+      "clearAllFilters": "مسح الفلاتر",
+      "resetFilters": "إعادة ضبط الفلترة",
+      "showingResults": "عرض {{count}} من {{total}}",
+      "noFilteredResults": "لا توجد سجلات تطابق الفلاتر المحددة",
+      "paginationSummary": "عرض {{start}}–{{end}} من أصل {{total}} نتيجة",
+      "rowsPerPage": "صفوف لكل صفحة",
+      "previous": "السابق",
+      "next": "التالي",
+      "pageOf": "صفحة {{page}} من {{total}}",
       "rateLimitExceeded": "تم تجاوز حد الطلبات. إعادة المحاولة تلقائياً خلال {{seconds}} ثانية."
     },
     "emptyState": {

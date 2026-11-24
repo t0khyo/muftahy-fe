@@ -3,7 +3,6 @@ import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   LifeBuoy,
-  Search,
   Clock,
   ShieldCheck,
   MessageSquare,
@@ -16,7 +15,6 @@ import { type TicketStatus, type TicketDetail } from '@workspace/domain/schemas/
 import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import {
   Card,
@@ -39,7 +37,15 @@ import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
 const STATUS_FILTERS: { label: string; value: TicketStatus | 'all' }[] = [
   { label: 'All Tickets', value: 'all' },
@@ -84,6 +90,13 @@ export function AdminTicketsRoute() {
     }
   )
 
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 10 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, selectedStatus, resetPage])
+
   const handleOpenResolve = (id: string) => {
     setActiveTicketId(id)
     setResolveDialogOpen(true)
@@ -92,6 +105,31 @@ export function AdminTicketsRoute() {
   const handleOpenChat = (id: string) => {
     setActiveChatTicketId(id)
     setChatSheetOpen(true)
+  }
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (selectedStatus !== 'all') {
+      const statusItem = STATUS_FILTERS.find((s) => s.value === selectedStatus)
+      chips.push({
+        id: 'status',
+        label: statusItem ? statusItem.label : selectedStatus,
+        onRemove: () => setSelectedStatus('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, selectedStatus])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setSelectedStatus('all')
   }
 
   const getStatusBadgeVariant = (status: TicketStatus) => {
@@ -116,35 +154,39 @@ export function AdminTicketsRoute() {
         description={t('admin:tickets.subtitle', 'Manage customer tickets, issue replacement keys, and process refunds')}
       />
 
-      {/* Streamlined Toolbar */}
+      {/* Streamlined Toolbar & Tickets Table */}
       <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder={t('admin:tickets.searchPlaceholder', 'Search ticket ID, serial, or item ID...')}
+        <DataTableToolbar
+          search={
+            <DataTableSearch
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-9 h-9 text-xs sm:text-sm bg-muted/30 border-border/70 focus-visible:bg-background transition-colors"
+              onChange={setSearchQuery}
+              placeholder={t('admin:tickets.searchPlaceholder', 'Search ticket ID, serial, or item ID...')}
             />
-          </div>
-
-          {/* Segmented Status Rail */}
-          <Tabs
-            value={selectedStatus}
-            onValueChange={(val) => {
-              if (val) setSelectedStatus(val as TicketStatus | 'all')
-            }}
-          >
-            <TabsList className="h-8">
-              {STATUS_FILTERS.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+          }
+          views={
+            <Tabs
+              value={selectedStatus}
+              onValueChange={(val) => {
+                if (val) setSelectedStatus(val as TicketStatus | 'all')
+              }}
+            >
+              <TabsList className="h-8">
+                {STATUS_FILTERS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          }
+          activeFilters={
+            <DataTableActiveFilters
+              chips={activeFilterChips}
+              onClearAll={handleResetAllFilters}
+            />
+          }
+        />
 
         {/* Tickets Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -180,7 +222,8 @@ export function AdminTicketsRoute() {
                 />
               </div>
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="ps-4 pe-3 py-3.5 text-start">
@@ -240,7 +283,7 @@ export function AdminTicketsRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((ticket) => {
+                  {pagination.paginatedItems.map((ticket) => {
                     const isClosed = ticket.status === 'closed' || ticket.status === 'resolved'
 
                     return (
@@ -338,6 +381,16 @@ export function AdminTicketsRoute() {
                   })}
                 </TableBody>
               </Table>
+              {filteredTickets.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+              </>
             )}
           </CardContent>
         </Card>

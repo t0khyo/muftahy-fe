@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   PackageCheck,
   Plus,
-  Search,
   Edit,
   KeyRound,
   Copy,
@@ -24,7 +23,14 @@ import { getStorefrontUrl } from '../lib/storefront-url'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 import {
   Select,
   SelectContent,
@@ -132,6 +138,13 @@ export function AdminProductsRoute() {
     },
   )
 
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 10 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, statusFilter, categoryFilter, stockFilter, resetPage])
+
   const categoryFilterItems = React.useMemo(() => {
     return [
       {
@@ -169,6 +182,40 @@ export function AdminProductsRoute() {
       },
     ]
   }, [t])
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (categoryFilter !== 'all') {
+      const cat = categories.find((c) => c.slug === categoryFilter || c.id === categoryFilter)
+      chips.push({
+        id: 'category',
+        label: cat ? cat.name : categoryFilter,
+        onRemove: () => setCategoryFilter('all'),
+      })
+    }
+    if (stockFilter !== 'all') {
+      const stockItem = stockFilterItems.find((s) => s.value === stockFilter)
+      chips.push({
+        id: 'stock',
+        label: stockItem ? stockItem.label : stockFilter,
+        onRemove: () => setStockFilter('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, categoryFilter, stockFilter, categories, stockFilterItems])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setCategoryFilter('all')
+    setStockFilter('all')
+  }
 
   const handleOpenCreate = () => {
     navigate(`/${lang}/products/new`)
@@ -253,98 +300,101 @@ export function AdminProductsRoute() {
 
       {/* Integrated Control Strip & Catalog Table */}
       <div className="space-y-3">
-        {/* Shopify-Style Filter Bar: Status Segmented Tabs + Search + Dropdown Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-3">
-          <Tabs
-            value={statusFilter}
-            onValueChange={(val) => {
-              if (val) setStatusFilter(val as 'all' | 'active' | 'draft')
-            }}
-          >
-            <TabsList className="h-8 bg-muted/40 p-0.5 border border-border/50">
-              <TabsTrigger value="all" className="text-xs px-3 gap-1.5 cursor-pointer">
-                <span>{t('admin:products.tabs.all', 'All')}</span>
-                <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
-                  {statusCounts.all}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="active" className="text-xs px-3 gap-1.5 cursor-pointer">
-                <span>{t('admin:products.tabs.active', 'Active')}</span>
-                <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
-                  {statusCounts.active}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="draft" className="text-xs px-3 gap-1.5 cursor-pointer">
-                <span>{t('admin:products.tabs.draft', 'Draft')}</span>
-                <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
-                  {statusCounts.draft}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        {/* Unified Data Table Toolbar: Search at start, dropdowns adjacent, tabs at end */}
+        <DataTableToolbar
+          search={
+            <DataTableSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t(
+                'admin:products.searchPlaceholder',
+                'Search by product name, SKU, or category...',
+              )}
+            />
+          }
+          filters={
+            <>
+              {/* Category Dropdown */}
+              <Select
+                items={categoryFilterItems}
+                value={categoryFilter}
+                onValueChange={(val) => setCategoryFilter(val ?? 'all')}
+              >
+                <SelectTrigger className="h-8 text-xs min-w-[130px] cursor-pointer bg-background border-border/70">
+                  <SelectValue
+                    placeholder={t('admin:products.filters.allCategories', 'All Categories')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {categoryFilterItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
 
-          {/* Search & Dropdown Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <InputGroup className="w-full sm:w-60 h-8 bg-background border-border/70 focus-within:ring-1 focus-within:ring-ring">
-              <InputGroupAddon>
-                <Search className="size-3.5 text-muted-foreground" />
-              </InputGroupAddon>
-              <InputGroupInput
-                placeholder={t(
-                  'admin:products.searchPlaceholder',
-                  'Search by product name, SKU, or category...',
-                )}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-xs h-7"
-              />
-            </InputGroup>
-
-            {/* Category Dropdown */}
-            <Select
-              items={categoryFilterItems}
-              value={categoryFilter}
-              onValueChange={(val) => setCategoryFilter(val ?? 'all')}
+              {/* Stock Health Dropdown */}
+              <Select
+                items={stockFilterItems}
+                value={stockFilter}
+                onValueChange={(val) => setStockFilter(val ?? 'all')}
+              >
+                <SelectTrigger className="h-8 text-xs min-w-[130px] cursor-pointer bg-background border-border/70">
+                  <SelectValue
+                    placeholder={t('admin:products.filters.allStock', 'All Inventory')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {stockFilterItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </>
+          }
+          views={
+            <Tabs
+              value={statusFilter}
+              onValueChange={(val) => {
+                if (val) setStatusFilter(val as 'all' | 'active' | 'draft')
+              }}
             >
-              <SelectTrigger className="h-8 text-xs min-w-[130px] cursor-pointer bg-background border-border/70">
-                <SelectValue
-                  placeholder={t('admin:products.filters.allCategories', 'All Categories')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {categoryFilterItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-
-            {/* Stock Health Dropdown */}
-            <Select
-              items={stockFilterItems}
-              value={stockFilter}
-              onValueChange={(val) => setStockFilter(val ?? 'all')}
-            >
-              <SelectTrigger className="h-8 text-xs min-w-[130px] cursor-pointer bg-background border-border/70">
-                <SelectValue
-                  placeholder={t('admin:products.filters.allStock', 'All Inventory')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {stockFilterItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+              <TabsList className="h-8 bg-muted/40 p-0.5 border border-border/50">
+                <TabsTrigger value="all" className="text-xs px-3 gap-1.5 cursor-pointer">
+                  <span>{t('admin:products.tabs.all', 'All')}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+                    {statusCounts.all}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="active" className="text-xs px-3 gap-1.5 cursor-pointer">
+                  <span>{t('admin:products.tabs.active', 'Active')}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+                    {statusCounts.active}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="draft" className="text-xs px-3 gap-1.5 cursor-pointer">
+                  <span>{t('admin:products.tabs.draft', 'Draft')}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+                    {statusCounts.draft}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          }
+          activeFilters={
+            <DataTableActiveFilters
+              chips={activeFilterChips}
+              onClearAll={handleResetAllFilters}
+            />
+          }
+        />
 
         {/* Multi-Select Contextual Bulk Action Bar */}
         {selectedIds.size > 0 && (
@@ -431,7 +481,8 @@ export function AdminProductsRoute() {
                 />
               </div>
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="w-10 ps-4 pe-0 py-3 text-start">
@@ -490,7 +541,7 @@ export function AdminProductsRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((product) => {
+                  {pagination.paginatedItems.map((product) => {
                     const priceNum = Number(product.base_price)
                     const saleNum = product.sale_price ? Number(product.sale_price) : null
                     const hasDiscount = saleNum !== null && saleNum > 0 && saleNum < priceNum
@@ -731,7 +782,17 @@ export function AdminProductsRoute() {
                   })}
                 </TableBody>
               </Table>
-            )}
+              {filteredProducts.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+            </>
+          )}
           </CardContent>
         </Card>
       </div>

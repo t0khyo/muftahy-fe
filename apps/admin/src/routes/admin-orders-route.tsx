@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   ShoppingCart,
-  Search,
   Clock,
   Eye,
   Copy,
@@ -15,7 +14,6 @@ import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import {
   Card,
@@ -37,7 +35,15 @@ import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
 const STATUS_FILTERS: { label: string; value: OrderStatus | 'all' }[] = [
   { label: 'All Orders', value: 'all' },
@@ -87,9 +93,41 @@ export function AdminOrdersRoute() {
     }
   )
 
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 10 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, selectedStatus, resetPage])
+
   const handleOpenReview = (order: NonNullable<typeof orders>[number]) => {
     setActiveReviewOrder(order)
     setReviewDialogOpen(true)
+  }
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (selectedStatus !== 'all') {
+      const statusItem = STATUS_FILTERS.find((s) => s.value === selectedStatus)
+      chips.push({
+        id: 'status',
+        label: statusItem ? statusItem.label : selectedStatus,
+        onRemove: () => setSelectedStatus('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, selectedStatus])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setSelectedStatus('all')
   }
 
   const getStatusBadgeVariant = (status: OrderStatus) => {
@@ -120,22 +158,17 @@ export function AdminOrdersRoute() {
         description={t('admin:orders.subtitle', 'Review payment receipts, deliver digital keys, and process refunds')}
       />
 
-      {/* Streamlined Toolbar */}
+      {/* Streamlined Toolbar & Orders Table */}
       <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <InputGroup className="flex-1 max-w-sm h-9 bg-muted/30 border-border/70 focus-within:bg-background transition-colors">
-            <InputGroupAddon>
-              <Search className="size-4 text-muted-foreground" />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder={t('admin:orders.searchPlaceholder', 'Search order ID or reference code...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-xs sm:text-sm"
-            />
-          </InputGroup>
-
-          {/* Segmented Status Rail */}
+        <DataTableToolbar
+        search={
+          <DataTableSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('admin:orders.searchPlaceholder', 'Search order ID or reference code...')}
+          />
+        }
+        views={
           <Tabs
             value={selectedStatus}
             onValueChange={(val) => {
@@ -150,7 +183,14 @@ export function AdminOrdersRoute() {
               ))}
             </TabsList>
           </Tabs>
-        </div>
+        }
+        activeFilters={
+          <DataTableActiveFilters
+            chips={activeFilterChips}
+            onClearAll={handleResetAllFilters}
+          />
+        }
+      />
 
         {/* Orders Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -186,7 +226,8 @@ export function AdminOrdersRoute() {
                 />
               </div>
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="ps-4 pe-3 py-3.5 text-start">
@@ -247,7 +288,7 @@ export function AdminOrdersRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((order) => {
+                  {pagination.paginatedItems.map((order) => {
                     const totalNum = order.total_egp
                     const isNeedsReview =
                       order.status === 'payment_uploaded' || order.status === 'under_review'
@@ -335,7 +376,17 @@ export function AdminOrdersRoute() {
                   })}
                 </TableBody>
               </Table>
-            )}
+              {filteredOrders.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+            </>
+          )}
           </CardContent>
         </Card>
       </div>

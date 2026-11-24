@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import {
   FolderTree,
   Plus,
-  Search,
   Edit,
   Trash2,
   AlertTriangle,
@@ -11,7 +10,7 @@ import {
 import type { CategoryResponse } from '@workspace/domain/schemas/product'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Switch } from '@workspace/ui/components/switch'
 import {
   Table,
@@ -31,6 +30,16 @@ import {
 } from '@workspace/ui/components/dialog'
 import { AdminPageHeader } from '../../../components/admin-page-header'
 import { EmptyState } from '../../dashboard/components/empty-state'
+import { DataTableColumnHeader } from '../../../components/data-table-column-header'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../../../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../../../components/data-table/data-table-pagination'
+import { useDataTableSort } from '../../../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../../../hooks/use-data-table-pagination'
 import {
   useAdminCategories,
   useUpdateCategory,
@@ -45,22 +54,78 @@ export function AdminCategoriesPage() {
   const deleteMutation = useDeleteCategory()
 
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'inactive'>('all')
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingCategory, setEditingCategory] = React.useState<CategoryResponse | null>(null)
 
   // Delete modal state
   const [categoryToDelete, setCategoryToDelete] = React.useState<CategoryResponse | null>(null)
 
+  const statusCounts = React.useMemo(() => {
+    const all = categories.length
+    const active = categories.filter((c) => c.is_active).length
+    const inactive = all - active
+    return { all, active, inactive }
+  }, [categories])
+
   const filteredCategories = React.useMemo(() => {
-    if (!searchQuery.trim()) return categories
-    const q = searchQuery.toLowerCase().trim()
-    return categories.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.code.toLowerCase().includes(q) ||
-        c.slug.toLowerCase().includes(q),
-    )
-  }, [categories, searchQuery])
+    let items = categories
+    if (statusFilter === 'active') {
+      items = items.filter((c) => c.is_active)
+    } else if (statusFilter === 'inactive') {
+      items = items.filter((c) => !c.is_active)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      items = items.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.code.toLowerCase().includes(q) ||
+          c.slug.toLowerCase().includes(q),
+      )
+    }
+    return items
+  }, [categories, statusFilter, searchQuery])
+
+  const { sortedItems, sortConfig, toggleSort } = useDataTableSort<CategoryResponse>(
+    filteredCategories,
+    { column: 'display_order', direction: 'asc' },
+    {
+      product_count: (c) => Number(c.product_count),
+      display_order: (c) => Number(c.display_order),
+    }
+  )
+
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 10 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, statusFilter, resetPage])
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (statusFilter !== 'all') {
+      chips.push({
+        id: 'status',
+        label: statusFilter === 'active' ? t('admin:categories.active', 'Active') : t('admin:categories.inactive', 'Inactive'),
+        onRemove: () => setStatusFilter('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, statusFilter, t])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setStatusFilter('all')
+  }
 
   const handleOpenCreate = () => {
     setEditingCategory(null)
@@ -104,22 +169,45 @@ export function AdminCategoriesPage() {
         </Button>
       </AdminPageHeader>
 
-      {/* Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <InputGroup className="w-full sm:max-w-md">
-          <InputGroupAddon>
-            <Search className="size-4 text-muted-foreground" />
-          </InputGroupAddon>
-          <InputGroupInput
+      {/* Streamlined Toolbar */}
+      <DataTableToolbar
+        search={
+          <DataTableSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
             placeholder={t(
               'admin:categories.searchPlaceholder',
               'Search categories by name, code, or slug...',
             )}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </InputGroup>
-      </div>
+        }
+        views={
+          <Tabs
+            value={statusFilter}
+            onValueChange={(val) => {
+              if (val) setStatusFilter(val as 'all' | 'active' | 'inactive')
+            }}
+          >
+            <TabsList className="h-8">
+              <TabsTrigger value="all" className="text-xs whitespace-nowrap">
+                {t('admin:products.tabs.all', 'All')} ({statusCounts.all})
+              </TabsTrigger>
+              <TabsTrigger value="active" className="text-xs whitespace-nowrap">
+                {t('admin:categories.active', 'Active')} ({statusCounts.active})
+              </TabsTrigger>
+              <TabsTrigger value="inactive" className="text-xs whitespace-nowrap">
+                {t('admin:categories.inactive', 'Inactive')} ({statusCounts.inactive})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        }
+        activeFilters={
+          <DataTableActiveFilters
+            chips={activeFilterChips}
+            onClearAll={handleResetAllFilters}
+          />
+        }
+      />
 
       {/* Table / Empty State */}
       {isLoading ? (
@@ -140,33 +228,66 @@ export function AdminCategoriesPage() {
           />
         ) : (
           <div className="p-12 text-center text-sm text-muted-foreground border border-dashed rounded-xl">
-            {t('admin:common.noResultsFound', 'No categories match your search.')}
+            {t('admin:common.noFilteredResults', 'No records match your active filters')}
           </div>
         )
       ) : (
         <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('admin:categories.name', 'Name')}</TableHead>
-                <TableHead>{t('admin:categories.code', 'Code')}</TableHead>
-                <TableHead>{t('admin:categories.slug', 'Slug')}</TableHead>
-                <TableHead className="text-center">
-                  {t('admin:categories.productCount', 'Products')}
+            <TableHeader className="bg-muted/40">
+              <TableRow className="border-border/60 hover:bg-transparent">
+                <TableHead className="ps-4 pe-3 py-3.5 text-start">
+                  <DataTableColumnHeader
+                    column="name"
+                    title={t('admin:categories.name', 'Name')}
+                    sortConfig={sortConfig}
+                    onSort={toggleSort}
+                  />
                 </TableHead>
-                <TableHead className="text-center">
-                  {t('admin:categories.displayOrder', 'Order')}
+                <TableHead className="px-3 py-3.5 text-start">
+                  <DataTableColumnHeader
+                    column="code"
+                    title={t('admin:categories.code', 'Code')}
+                    sortConfig={sortConfig}
+                    onSort={toggleSort}
+                  />
                 </TableHead>
-                <TableHead className="text-center">
+                <TableHead className="px-3 py-3.5 text-start">
+                  <DataTableColumnHeader
+                    column="slug"
+                    title={t('admin:categories.slug', 'Slug')}
+                    sortConfig={sortConfig}
+                    onSort={toggleSort}
+                  />
+                </TableHead>
+                <TableHead className="px-3 py-3.5 text-center">
+                  <DataTableColumnHeader
+                    column="product_count"
+                    title={t('admin:categories.productCount', 'Products')}
+                    sortConfig={sortConfig}
+                    onSort={toggleSort}
+                    align="center"
+                  />
+                </TableHead>
+                <TableHead className="px-3 py-3.5 text-center">
+                  <DataTableColumnHeader
+                    column="display_order"
+                    title={t('admin:categories.displayOrder', 'Order')}
+                    sortConfig={sortConfig}
+                    onSort={toggleSort}
+                    align="center"
+                  />
+                </TableHead>
+                <TableHead className="px-3 py-3.5 text-center">
                   {t('admin:categories.status', 'Status')}
                 </TableHead>
-                <TableHead className="text-end">
+                <TableHead className="ps-3 pe-4 py-3.5 text-end">
                   {t('admin:categories.actions', 'Actions')}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCategories.map((category) => {
+              {pagination.paginatedItems.map((category) => {
                 const hasProducts = category.product_count > 0
 
                 return (
@@ -249,6 +370,15 @@ export function AdminCategoriesPage() {
               })}
             </TableBody>
           </Table>
+          {filteredCategories.length > 0 && (
+            <DataTablePagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              totalItems={pagination.totalItems}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+            />
+          )}
         </div>
       )}
 

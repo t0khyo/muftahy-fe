@@ -982,6 +982,17 @@
       "save": "Save",
       "loading": "Loading...",
       "search": "Search...",
+      "clearSearch": "Clear search",
+      "activeFilters": "Active filters",
+      "clearAllFilters": "Clear all",
+      "resetFilters": "Reset filters",
+      "showingResults": "Showing {{count}} of {{total}}",
+      "noFilteredResults": "No records match your active filters",
+      "paginationSummary": "Showing {{start}}–{{end}} of {{total}} results",
+      "rowsPerPage": "Rows per page",
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{page}} of {{total}}",
       "rateLimitExceeded": "Rate limit exceeded. Automatic retry in {{seconds}}s."
     },
     "emptyState": {

@@ -15,11 +15,20 @@ import {
   useInventoryKeys,
   useProductStockSummary,
 } from '../features/inventory/hooks/use-inventory'
+import { useAdminProducts } from '../features/products/hooks/use-admin-products'
 import type { KeyResponse } from '@workspace/domain/schemas/inventory'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import {
   Card,
   CardContent,
@@ -42,7 +51,15 @@ import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
 const STATUS_FILTERS = [
   { label: 'All Keys', value: 'all' },
@@ -57,20 +74,91 @@ export function AdminInventoryRoute() {
   const { t } = useTranslation(['admin'])
 
   const [selectedStatus, setSelectedStatus] = React.useState<string>('all')
+  const [productFilter, setProductFilter] = React.useState<string>('all')
+  const [searchQuery, setSearchQuery] = React.useState('')
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
   const [selectedKeyForEdit, setSelectedKeyForEdit] = React.useState<KeyResponse | null>(null)
 
   const { data: stockSummary } = useProductStockSummary()
+  const { data: products } = useAdminProducts()
   const { data: keyData, isLoading } = useInventoryKeys({
     status: selectedStatus === 'all' ? undefined : selectedStatus,
   })
 
-  const keys = keyData || []
+  const keys = React.useMemo(() => keyData || [], [keyData])
+
+  const productFilterItems = React.useMemo(() => {
+    return [
+      { value: 'all', label: t('admin:inventory.allProducts', 'All Products') },
+      ...(products || []).map((p) => ({
+        value: p.id,
+        label: p.name,
+      })),
+    ]
+  }, [products, t])
+
+  const filteredKeys = React.useMemo(() => {
+    let items = keys
+    if (productFilter !== 'all') {
+      items = items.filter((k) => k.product_id === productFilter)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      items = items.filter(
+        (k) =>
+          k.id.toLowerCase().includes(q) ||
+          k.serial.toLowerCase().includes(q) ||
+          (k.product_name && k.product_name.toLowerCase().includes(q))
+      )
+    }
+    return items
+  }, [keys, productFilter, searchQuery])
 
   const { sortedItems, sortConfig, toggleSort } = useDataTableSort<KeyResponse>(
-    keys,
+    filteredKeys,
     { column: 'created_at', direction: 'desc' }
   )
+
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 20 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, productFilter, selectedStatus, resetPage])
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (productFilter !== 'all') {
+      const product = products?.find((p) => p.id === productFilter)
+      chips.push({
+        id: 'product',
+        label: product ? product.name : productFilter,
+        onRemove: () => setProductFilter('all'),
+      })
+    }
+    if (selectedStatus !== 'all') {
+      const statusItem = STATUS_FILTERS.find((s) => s.value === selectedStatus)
+      chips.push({
+        id: 'status',
+        label: statusItem ? statusItem.label : selectedStatus,
+        onRemove: () => setSelectedStatus('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, productFilter, selectedStatus, products])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setProductFilter('all')
+    setSelectedStatus('all')
+  }
 
   // Calculate aggregated stats across products
   const stats = React.useMemo(() => {
@@ -195,21 +283,59 @@ export function AdminInventoryRoute() {
 
       {/* Streamlined Toolbar & Keys Table */}
       <div className="space-y-4">
-        {/* Status Filter Rail */}
-        <Tabs
-          value={selectedStatus}
-          onValueChange={(val) => {
-            if (val) setSelectedStatus(val)
-          }}
-        >
-          <TabsList className="h-8">
-            {STATUS_FILTERS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <DataTableToolbar
+          search={
+            <DataTableSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('admin:inventory.searchPlaceholder', 'Search by serial, key ID, or product...')}
+            />
+          }
+          filters={
+            <Select
+              items={productFilterItems}
+              value={productFilter}
+              onValueChange={(val) => setProductFilter(val ?? 'all')}
+            >
+              <SelectTrigger className="h-8 text-xs min-w-[150px] max-w-[200px] cursor-pointer bg-background border-border/70">
+                <SelectValue
+                  placeholder={t('admin:inventory.allProducts', 'All Products')}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {productFilterItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          }
+          views={
+            <Tabs
+              value={selectedStatus}
+              onValueChange={(val) => {
+                if (val) setSelectedStatus(val)
+              }}
+            >
+              <TabsList className="h-8">
+                {STATUS_FILTERS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          }
+          activeFilters={
+            <DataTableActiveFilters
+              chips={activeFilterChips}
+              onClearAll={handleResetAllFilters}
+            />
+          }
+        />
 
         {/* Keys Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -219,7 +345,7 @@ export function AdminInventoryRoute() {
                 <CardTitle className="text-base font-bold tracking-tight">
                   {t('admin:inventory.keysTableTitle', 'Inventory Keys')}
                   <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
-                    ({keys.length} {t('admin:common.records', 'records')})
+                    ({filteredKeys.length} {t('admin:common.records', 'records')})
                   </span>
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
@@ -233,21 +359,28 @@ export function AdminInventoryRoute() {
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading keys...')}
               </div>
-            ) : keys.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  icon={KeyRound}
-                  title={t('admin:inventory.emptyTitle', 'No keys found')}
-                  description={t(
-                    'admin:inventory.emptyDesc',
-                    'No keys match the chosen filter. Use Import Keys to stock your catalog.'
-                  )}
-                  actionLabel={t('admin:inventory.importKeys', 'Import Keys')}
-                  onAction={() => setImportSheetOpen(true)}
-                />
-              </div>
+            ) : filteredKeys.length === 0 ? (
+              keys.length === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={KeyRound}
+                    title={t('admin:inventory.emptyTitle', 'No keys found')}
+                    description={t(
+                      'admin:inventory.emptyDesc',
+                      'No keys match the chosen filter. Use Import Keys to stock your catalog.'
+                    )}
+                    actionLabel={t('admin:inventory.importKeys', 'Import Keys')}
+                    onAction={() => setImportSheetOpen(true)}
+                  />
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  {t('admin:common.noFilteredResults', 'No records match your active filters')}
+                </div>
+              )
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="ps-4 pe-3 py-3.5 text-start">
@@ -307,7 +440,7 @@ export function AdminInventoryRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((keyRecord) => (
+                  {pagination.paginatedItems.map((keyRecord) => (
                     <TableRow key={keyRecord.id} className="border-border/40 hover:bg-muted/20 transition-colors">
                       <TableCell className="font-mono text-xs font-bold text-start text-foreground ps-4 pe-3 py-3.5">
                         #{keyRecord.id.slice(0, 8)}
@@ -371,6 +504,17 @@ export function AdminInventoryRoute() {
                   ))}
                 </TableBody>
               </Table>
+              {filteredKeys.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  pageSizeOptions={[10, 20, 50, 100]}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+              </>
             )}
           </CardContent>
         </Card>

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   Tag,
   Plus,
-  Search,
   CheckCircle,
   XCircle,
   Percent,
@@ -18,7 +17,7 @@ import type { PromoDetailResponse } from '@workspace/domain/schemas/promos'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Switch } from '@workspace/ui/components/switch'
 import {
   Card,
@@ -40,24 +39,71 @@ import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
 export function AdminPromosRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
   const { t } = useTranslation(['admin'])
 
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'inactive'>('all')
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
 
   const { data: promos, isLoading } = useAdminPromos()
   const toggleMutation = useTogglePromoStatus()
 
+  const statusCounts = React.useMemo(() => {
+    const all = promos?.length || 0
+    const active = promos?.filter((p) => p.is_active).length || 0
+    const inactive = all - active
+    return { all, active, inactive }
+  }, [promos])
+
   const filteredPromos = React.useMemo(() => {
-    const items = promos || []
-    if (!searchQuery.trim()) return items
-    const query = searchQuery.toLowerCase().trim()
-    return items.filter((p) => p.code.toLowerCase().includes(query))
-  }, [promos, searchQuery])
+    let items = promos || []
+    if (statusFilter === 'active') {
+      items = items.filter((p) => p.is_active)
+    } else if (statusFilter === 'inactive') {
+      items = items.filter((p) => !p.is_active)
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      items = items.filter((p) => p.code.toLowerCase().includes(query))
+    }
+    return items
+  }, [promos, statusFilter, searchQuery])
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (statusFilter !== 'all') {
+      chips.push({
+        id: 'status',
+        label: statusFilter === 'active' ? t('admin:categories.active', 'Active') : t('admin:categories.inactive', 'Inactive'),
+        onRemove: () => setStatusFilter('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, statusFilter, t])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setStatusFilter('all')
+  }
 
   const { sortedItems, sortConfig, toggleSort } = useDataTableSort<PromoDetailResponse>(
     filteredPromos,
@@ -67,6 +113,13 @@ export function AdminPromosRoute() {
       current_total_uses: (p) => Number(p.current_total_uses),
     }
   )
+
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 10 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, statusFilter, resetPage])
 
   const handleToggle = (code: string, currentStatus: boolean) => {
     toggleMutation.mutate({ code, is_active: !currentStatus })
@@ -88,21 +141,43 @@ export function AdminPromosRoute() {
         </Button>
       </AdminPageHeader>
 
-      {/* Streamlined Toolbar */}
+      {/* Streamlined Toolbar & Promos Table */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <InputGroup className="flex-1 max-w-sm h-9 bg-muted/30 border-border/70 focus-within:bg-background transition-colors">
-            <InputGroupAddon>
-              <Search className="size-4 text-muted-foreground" />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder={t('admin:promos.searchPlaceholder', 'Search discount code...')}
+        <DataTableToolbar
+          search={
+            <DataTableSearch
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-xs sm:text-sm"
+              onChange={setSearchQuery}
+              placeholder={t('admin:promos.searchPlaceholder', 'Search discount code...')}
             />
-          </InputGroup>
-        </div>
+          }
+          views={
+            <Tabs
+              value={statusFilter}
+              onValueChange={(val) => {
+                if (val) setStatusFilter(val as 'all' | 'active' | 'inactive')
+              }}
+            >
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs whitespace-nowrap">
+                  {t('admin:products.tabs.all', 'All')} ({statusCounts.all})
+                </TabsTrigger>
+                <TabsTrigger value="active" className="text-xs whitespace-nowrap">
+                  {t('admin:categories.active', 'Active')} ({statusCounts.active})
+                </TabsTrigger>
+                <TabsTrigger value="inactive" className="text-xs whitespace-nowrap">
+                  {t('admin:categories.inactive', 'Inactive')} ({statusCounts.inactive})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          }
+          activeFilters={
+            <DataTableActiveFilters
+              chips={activeFilterChips}
+              onClearAll={handleResetAllFilters}
+            />
+          }
+        />
 
         {/* Promos Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -127,20 +202,27 @@ export function AdminPromosRoute() {
                 {t('admin:common.loading', 'Loading discounts...')}
               </div>
             ) : filteredPromos.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  icon={Tag}
-                  title={t('admin:promos.emptyTitle', 'No discounts yet')}
-                  description={t(
-                    'admin:promos.emptyDesc',
-                    'Create your first promotional discount code to incentivize buyers.'
-                  )}
-                  actionLabel={t('admin:promos.createCoupon', 'Create Discount')}
-                  onAction={() => setCreateDialogOpen(true)}
-                />
-              </div>
+              (promos?.length || 0) === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={Tag}
+                    title={t('admin:promos.emptyTitle', 'No discounts yet')}
+                    description={t(
+                      'admin:promos.emptyDesc',
+                      'Create your first promotional discount code to incentivize buyers.'
+                    )}
+                    actionLabel={t('admin:promos.createCoupon', 'Create Discount')}
+                    onAction={() => setCreateDialogOpen(true)}
+                  />
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  {t('admin:common.noFilteredResults', 'No records match your active filters')}
+                </div>
+              )
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="ps-4 pe-3 py-3.5 text-start">
@@ -190,7 +272,7 @@ export function AdminPromosRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((promo) => {
+                  {pagination.paginatedItems.map((promo) => {
                     const isExhausted =
                       promo.max_total_uses !== null &&
                       promo.max_total_uses !== undefined &&
@@ -277,6 +359,16 @@ export function AdminPromosRoute() {
                   })}
                 </TableBody>
               </Table>
+              {filteredPromos.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+              </>
             )}
           </CardContent>
         </Card>

@@ -36,7 +36,15 @@ import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
+import {
+  DataTableToolbar,
+  DataTableSearch,
+  DataTableActiveFilters,
+  type ActiveFilterChipItem,
+} from '../components/data-table/data-table-toolbar'
+import { DataTablePagination } from '../components/data-table/data-table-pagination'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useDataTablePagination } from '../hooks/use-data-table-pagination'
 
 const ENTRY_TYPE_FILTERS = [
   { label: 'All Transactions', value: 'all' },
@@ -51,6 +59,7 @@ export function AdminLedgerRoute() {
   const { t } = useTranslation(['admin'])
 
   const [selectedType, setSelectedType] = React.useState<string>('all')
+  const [searchQuery, setSearchQuery] = React.useState('')
 
   const { data: summary, isLoading: summaryLoading } = useAdminLedgerSummary()
   const { data: ledgerData, isLoading: entriesLoading } = useAdminLedgerEntries({
@@ -58,16 +67,63 @@ export function AdminLedgerRoute() {
     limit: 100,
   })
 
-  const entries = ledgerData || []
+  const entries = React.useMemo(() => ledgerData || [], [ledgerData])
+
+  const filteredEntries = React.useMemo(() => {
+    let items = entries
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      items = items.filter(
+        (e) =>
+          e.description.toLowerCase().includes(q) ||
+          e.id.toLowerCase().includes(q) ||
+          (e.order_id && e.order_id.toLowerCase().includes(q)) ||
+          e.entry_type.toLowerCase().includes(q)
+      )
+    }
+    return items
+  }, [entries, searchQuery])
+
+  const activeFilterChips = React.useMemo(() => {
+    const chips: ActiveFilterChipItem[] = []
+    if (searchQuery.trim()) {
+      chips.push({
+        id: 'search',
+        label: `"${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      })
+    }
+    if (selectedType !== 'all') {
+      const typeItem = ENTRY_TYPE_FILTERS.find((f) => f.value === selectedType)
+      chips.push({
+        id: 'type',
+        label: typeItem ? typeItem.label : selectedType,
+        onRemove: () => setSelectedType('all'),
+      })
+    }
+    return chips
+  }, [searchQuery, selectedType])
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('')
+    setSelectedType('all')
+  }
 
   const { sortedItems, sortConfig, toggleSort } = useDataTableSort<LedgerEntryResponse>(
-    entries,
+    filteredEntries,
     { column: 'created_at', direction: 'desc' },
     {
       amount: (e) => Number(e.amount),
       running_balance: (e) => Number(e.running_balance),
     }
   )
+
+  const pagination = useDataTablePagination(sortedItems, { defaultPageSize: 20 })
+  const { resetPage } = pagination
+
+  React.useEffect(() => {
+    resetPage()
+  }, [searchQuery, selectedType, resetPage])
 
   const cashOnHandNum = summary?.egp_cash_on_hand ? Number(summary.egp_cash_on_hand) : 0
   const usdWalletNum = summary?.usd_wallet_balance ? Number(summary.usd_wallet_balance) : 0
@@ -167,21 +223,37 @@ export function AdminLedgerRoute() {
 
       {/* Streamlined Toolbar & Journal Table */}
       <div className="space-y-4">
-        {/* Entry Type Filter Rail */}
-        <Tabs
-          value={selectedType}
-          onValueChange={(val) => {
-            if (val) setSelectedType(val)
-          }}
-        >
-          <TabsList className="h-8">
-            {ENTRY_TYPE_FILTERS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <DataTableToolbar
+          search={
+            <DataTableSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('admin:ledger.searchPlaceholder', 'Search transactions, references, or notes...')}
+            />
+          }
+          views={
+            <Tabs
+              value={selectedType}
+              onValueChange={(val) => {
+                if (val) setSelectedType(val)
+              }}
+            >
+              <TabsList className="h-8">
+                {ENTRY_TYPE_FILTERS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-xs whitespace-nowrap">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          }
+          activeFilters={
+            <DataTableActiveFilters
+              chips={activeFilterChips}
+              onClearAll={handleResetAllFilters}
+            />
+          }
+        />
 
         {/* Double-entry Journal Table */}
         <Card className="border-border/80 shadow-none overflow-hidden">
@@ -191,7 +263,7 @@ export function AdminLedgerRoute() {
                 <CardTitle className="text-base font-bold tracking-tight">
                   {t('admin:ledger.journalTitle', 'Transactions')}
                   <span className="ms-2 font-mono text-xs font-normal text-muted-foreground tabular-nums">
-                    ({entries.length} {t('admin:common.records', 'records')})
+                    ({filteredEntries.length} {t('admin:common.records', 'records')})
                   </span>
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
@@ -205,19 +277,26 @@ export function AdminLedgerRoute() {
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading transactions...')}
               </div>
-            ) : sortedItems.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  icon={BookOpen}
-                  title={t('admin:ledger.emptyTitle', 'No transactions yet')}
-                  description={t(
-                    'admin:ledger.emptyDesc',
-                    'Completed customer orders and wholesale costs will appear here.'
-                  )}
-                />
-              </div>
+            ) : filteredEntries.length === 0 ? (
+              entries.length === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    icon={BookOpen}
+                    title={t('admin:ledger.emptyTitle', 'No transactions yet')}
+                    description={t(
+                      'admin:ledger.emptyDesc',
+                      'Completed customer orders and wholesale costs will appear here.'
+                    )}
+                  />
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  {t('admin:common.noFilteredResults', 'No records match your active filters')}
+                </div>
+              )
             ) : (
-              <Table>
+              <>
+                <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="ps-4 pe-3 py-3.5 text-start">
@@ -278,7 +357,7 @@ export function AdminLedgerRoute() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedItems.map((entry) => {
+                  {pagination.paginatedItems.map((entry) => {
                     const amountNum = Number(entry.amount)
                     const balanceNum = Number(entry.running_balance)
                     const isPositive = amountNum >= 0
@@ -328,6 +407,17 @@ export function AdminLedgerRoute() {
                   })}
                 </TableBody>
               </Table>
+              {filteredEntries.length > 0 && (
+                <DataTablePagination
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.totalItems}
+                  pageSizeOptions={[10, 20, 50, 100]}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              )}
+              </>
             )}
           </CardContent>
         </Card>
