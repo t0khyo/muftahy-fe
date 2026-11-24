@@ -4,6 +4,7 @@ import { Check, Headphones, ShieldCheck, ShoppingCart, Zap } from 'lucide-react'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { formatMoney } from '@workspace/domain/formatters/money'
+import { formatNumber } from '@workspace/domain/formatters/number'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
 
 export interface DetailBuyBoxProps {
@@ -116,9 +117,12 @@ export function DetailBuyBox({
               {formattedBasePrice}
             </span>
           )}
-          {product.discount_percentage && product.discount_percentage > 0 && (
+          {product.discount_percentage != null && Number(product.discount_percentage) > 0 && (
             <Badge variant="destructive" className="text-xs font-bold">
-              -{product.discount_percentage}%
+              -{formatNumber(Number(product.discount_percentage), {
+                locale: lang,
+                maximumFractionDigits: 0,
+              })}%
             </Badge>
           )}
         </div>

@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { Box } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
+import { formatNumber } from '@workspace/domain/formatters/number'
 import type { CategoryResponse, ProductResponse } from '@workspace/domain/schemas/product'
 import { getProductMainImageUrl } from '@workspace/api/factory'
 import { useAddToCart } from '../../cart/hooks/use-cart'
@@ -93,7 +94,6 @@ export function ProductCard({
     } as ProductResponse
   }, [productProp, cardProp])
 
-  const isInStock = product.stock_status === 'in_stock'
   const isPreorder = product.stock_status === 'preorder'
   const isOutOfStock = product.stock_status === 'out_of_stock'
 
@@ -175,30 +175,14 @@ export function ProductCard({
           )}
         </Link>
 
-        {/* Stock Status Badge */}
-        <div className="absolute end-2 top-2 z-10">
-          {isInStock && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 backdrop-blur-xs">
-              {t('stock.in_stock', { ns: 'products', defaultValue: 'In Stock' })}
-            </span>
-          )}
-          {isPreorder && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 backdrop-blur-xs">
-              {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
-            </span>
-          )}
-          {isOutOfStock && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground border border-border/40 backdrop-blur-xs">
-              {t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of Stock' })}
-            </span>
-          )}
-        </div>
-
-        {/* Discount Tag */}
-        {product.discount_percentage && product.discount_percentage > 0 && (
-          <div className="absolute start-2 bottom-2 z-10">
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-destructive text-destructive-foreground shadow-xs">
-              -{product.discount_percentage}%
+        {/* Sale Badge */}
+        {product.discount_percentage != null && Number(product.discount_percentage) > 0 && (
+          <div className="absolute end-2 top-2 z-10">
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 backdrop-blur-xs">
+              -{formatNumber(Number(product.discount_percentage), {
+                locale: currentLang,
+                maximumFractionDigits: 0,
+              })}%
             </span>
           </div>
         )}

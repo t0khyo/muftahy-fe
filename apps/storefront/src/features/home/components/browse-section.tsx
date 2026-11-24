@@ -1,17 +1,12 @@
 import * as React from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import {
-  ChevronRight,
-  FileSpreadsheet,
-  FolderTree,
-  Grid2x2,
-  ShieldCheck,
-} from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import type { CategoryResponse } from '@workspace/domain/schemas/product'
 import type { BrowseSectionConfig } from '../home.config'
 import { usePublicCategories } from '../../products/hooks/use-products'
+import { resolveCategoryIcon } from '../../products/utils/category-icon'
 import {
   OsWindowPattern,
   SecurityRadarPattern,
@@ -92,36 +87,6 @@ const DEFAULT_CATEGORIES: CanonicalCategory[] = [
     product_count: 2,
   },
 ]
-
-function resolveCategoryIcon(code?: string, slug?: string): React.ComponentType<{ className?: string }> {
-  const normalizedCode = code?.toUpperCase()
-  const normalizedSlug = slug?.toLowerCase()
-
-  if (
-    normalizedCode === 'OS' ||
-    normalizedSlug === 'operating-systems' ||
-    normalizedSlug?.includes('windows') ||
-    normalizedSlug?.includes('operating')
-  ) {
-    return Grid2x2
-  }
-  if (
-    normalizedCode === 'SEC' ||
-    normalizedSlug === 'security-antivirus' ||
-    normalizedSlug?.includes('security') ||
-    normalizedSlug?.includes('antivirus')
-  ) {
-    return ShieldCheck
-  }
-  if (
-    normalizedCode === 'OFF' ||
-    normalizedSlug === 'office-suites' ||
-    normalizedSlug?.includes('office')
-  ) {
-    return FileSpreadsheet
-  }
-  return FolderTree
-}
 
 export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
   const { lang } = useParams<{ lang: string }>()

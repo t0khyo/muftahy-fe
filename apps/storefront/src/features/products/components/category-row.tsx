@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { LayoutGrid, FolderTree } from 'lucide-react'
+import { LayoutGrid } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import type { CategoryResponse } from '@workspace/domain/schemas/product'
 import { usePublicCategories } from '../hooks/use-products'
+import { resolveCategoryIcon } from '../utils/category-icon'
 
 export interface CategoryRowProps {
   activeCategory?: string
@@ -60,6 +61,7 @@ export function CategoryRow({ activeCategory, categories: propCategories, classN
         {/* Dynamic Category Pills */}
         {sortedCategories.map((cat) => {
           const isActive = activeCategory === cat.slug
+          const Icon = resolveCategoryIcon(cat.code, cat.slug)
 
           return (
             <Link
@@ -74,7 +76,7 @@ export function CategoryRow({ activeCategory, categories: propCategories, classN
                   : 'bg-secondary/60 text-secondary-foreground hover:bg-secondary border border-border/40',
               )}
             >
-              <FolderTree className="size-4 shrink-0" aria-hidden="true" />
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
               <span>{cat.name}</span>
             </Link>
           )

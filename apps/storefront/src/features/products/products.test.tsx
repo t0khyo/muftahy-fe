@@ -1,68 +1,72 @@
-import * as React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { I18nextProvider } from 'react-i18next'
-import { MemoryRouter } from 'react-router'
-import { i18n } from '@workspace/i18n/config'
-import type { ProductResponse } from '@workspace/domain/schemas/product'
-import * as apiFactory from '@workspace/api/factory'
-import type { ProductFilterParams, ProductService } from '@workspace/api/services/product-service'
-import { ThemeProvider } from '../../app/theme-provider'
-import { ProductCard } from './components/product-card'
-import { ProductGrid } from './components/product-grid'
-import { ProductsRoute } from '../../routes/products-route'
+import * as React from "react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { describe, expect, it, vi, beforeEach } from "vitest"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { I18nextProvider } from "react-i18next"
+import { MemoryRouter } from "react-router"
+import { i18n } from "@workspace/i18n/config"
+import type { ProductResponse } from "@workspace/domain/schemas/product"
+import * as apiFactory from "@workspace/api/factory"
+import type {
+  ProductFilterParams,
+  ProductService,
+} from "@workspace/api/services/product-service"
+import { ThemeProvider } from "../../app/theme-provider"
+import { ProductCard } from "./components/product-card"
+import { ProductGrid } from "./components/product-grid"
+import { CategoryRow } from "./components/category-row"
+import { ProductsRoute } from "../../routes/products-route"
 
 const mockProduct: ProductResponse = {
-  id: '00000000-0000-4000-8000-000000000001',
-  name: 'Windows 11 Professional',
-  slug: 'windows-11-professional',
-  sku: 'OS-WIN11-PRO-RET',
+  id: "00000000-0000-4000-8000-000000000001",
+  name: "Windows 11 Professional",
+  slug: "windows-11-professional",
+  sku: "OS-WIN11-PRO-RET",
   category: {
-    id: 'cat-1',
-    name: 'Windows',
-    slug: 'windows',
-    code: 'OS',
+    id: "cat-1",
+    name: "Windows",
+    slug: "windows",
+    code: "OS",
     display_order: 0,
     is_active: true,
     product_count: 2,
   },
-  variant: 'retail',
-  base_price: '499.00',
-  sale_price: '349.00',
-  effective_price: '349.00',
+  variant: "retail",
+  base_price: "499.00",
+  sale_price: "349.00",
+  effective_price: "349.00",
   discount_percentage: 30,
-  stock_status: 'in_stock',
+  stock_status: "in_stock",
   available_count: 14,
   preorder_enabled: true,
-  description: 'Genuine Microsoft Windows 11 Pro digital retail license key.',
+  description: "Genuine Microsoft Windows 11 Pro digital retail license key.",
   is_active: true,
   images: [],
 }
 
 const mockProductOffice: ProductResponse = {
-  id: '00000000-0000-4000-8000-000000000002',
-  name: 'Office 2021 Professional Plus',
-  slug: 'office-2021-professional-plus',
-  sku: 'OFF-OFF21-PRO-RET',
+  id: "00000000-0000-4000-8000-000000000002",
+  name: "Office 2021 Professional Plus",
+  slug: "office-2021-professional-plus",
+  sku: "OFF-OFF21-PRO-RET",
   category: {
-    id: 'cat-2',
-    name: 'Office',
-    slug: 'office',
-    code: 'OFF',
+    id: "cat-2",
+    name: "Office",
+    slug: "office",
+    code: "OFF",
     display_order: 1,
     is_active: true,
     product_count: 1,
   },
-  variant: 'retail',
-  base_price: '599.00',
-  sale_price: '499.00',
-  effective_price: '499.00',
+  variant: "retail",
+  base_price: "599.00",
+  sale_price: "499.00",
+  effective_price: "499.00",
   discount_percentage: 17,
-  stock_status: 'in_stock',
+  stock_status: "in_stock",
   available_count: 8,
   preorder_enabled: true,
-  description: 'Word, Excel, PowerPoint, Outlook.',
+  description: "Word, Excel, PowerPoint, Outlook.",
   is_active: true,
   images: [],
 }
@@ -71,11 +75,14 @@ const mockCatalog = [mockProduct, mockProductOffice]
 
 function renderWithProviders(
   ui: React.ReactElement,
-  { lang = 'en', initialEntries = ['/'] }: { lang?: 'en' | 'ar'; initialEntries?: string[] } = {},
+  {
+    lang = "en",
+    initialEntries = ["/"],
+  }: { lang?: "en" | "ar"; initialEntries?: string[] } = {}
 ) {
   i18n.changeLanguage(lang)
   document.documentElement.lang = lang
-  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr"
 
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -92,141 +99,220 @@ function renderWithProviders(
           <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
         </QueryClientProvider>
       </I18nextProvider>
-    </ThemeProvider>,
+    </ThemeProvider>
   )
 }
 
-describe('ProductCard', () => {
+describe("ProductCard", () => {
   beforeEach(() => {
     vi.restoreAllMocks()
-    vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
-      getProducts: vi.fn().mockImplementation((filter?: ProductFilterParams) => {
-        let prods = [...mockCatalog]
-        if (filter?.category) {
-          prods = prods.filter((p) => p.category.slug === filter.category || p.category.name === filter.category)
-        }
-        return Promise.resolve(prods)
-      }),
+    vi.spyOn(apiFactory, "getProductService").mockReturnValue({
+      getProducts: vi
+        .fn()
+        .mockImplementation((filter?: ProductFilterParams) => {
+          let prods = [...mockCatalog]
+          if (filter?.category) {
+            prods = prods.filter(
+              (p) =>
+                p.category.slug === filter.category ||
+                p.category.name === filter.category
+            )
+          }
+          return Promise.resolve(prods)
+        }),
       getPublicCategories: vi.fn().mockResolvedValue([
-        { id: 'cat-1', name: 'Windows', slug: 'windows', code: 'OS', display_order: 0, is_active: true, product_count: 2 },
-        { id: 'cat-2', name: 'Office', slug: 'office', code: 'OFF', display_order: 1, is_active: true, product_count: 1 },
+        {
+          id: "cat-1",
+          name: "Windows",
+          slug: "windows",
+          code: "OS",
+          display_order: 0,
+          is_active: true,
+          product_count: 2,
+        },
+        {
+          id: "cat-2",
+          name: "Office",
+          slug: "office",
+          code: "OFF",
+          display_order: 1,
+          is_active: true,
+          product_count: 1,
+        },
       ]),
       getCategoryBySlug: vi.fn().mockImplementation((slug) =>
         Promise.resolve({
-          id: slug === 'windows' ? 'cat-1' : 'cat-2',
-          name: slug === 'windows' ? 'Windows' : 'Office',
+          id: slug === "windows" ? "cat-1" : "cat-2",
+          name: slug === "windows" ? "Windows" : "Office",
           slug,
-          code: slug === 'windows' ? 'OS' : 'OFF',
+          code: slug === "windows" ? "OS" : "OFF",
           display_order: 0,
           is_active: true,
           products: mockCatalog.filter((p) => p.category.slug === slug),
-        }),
+        })
       ),
-      getProductById: vi.fn().mockImplementation((id) =>
-        Promise.resolve(mockCatalog.find((p) => p.id === id) || mockCatalog[0]),
-      ),
-      getProductBySlug: vi.fn().mockImplementation((slug) =>
-        Promise.resolve(mockCatalog.find((p) => p.slug === slug) || mockCatalog[0]),
-      ),
+      getProductById: vi
+        .fn()
+        .mockImplementation((id) =>
+          Promise.resolve(
+            mockCatalog.find((p) => p.id === id) || mockCatalog[0]
+          )
+        ),
+      getProductBySlug: vi
+        .fn()
+        .mockImplementation((slug) =>
+          Promise.resolve(
+            mockCatalog.find((p) => p.slug === slug) || mockCatalog[0]
+          )
+        ),
     } as unknown as ProductService)
   })
 
-  it('renders correctly in English (LTR)', () => {
-    renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'en' })
+  it("renders correctly in English (LTR)", () => {
+    renderWithProviders(<ProductCard product={mockProduct} />, { lang: "en" })
 
-    expect(screen.getByText('Windows 11 Professional')).toBeInTheDocument()
-    expect(screen.queryByText('Windows')).not.toBeInTheDocument()
-    expect(screen.queryByText('Retail')).not.toBeInTheDocument()
-    expect(screen.getByText('In Stock')).toBeInTheDocument()
-    expect(screen.getByText('-30%')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /add to cart/i })).toBeInTheDocument()
-    expect(document.documentElement.dir).toBe('ltr')
+    expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
+    expect(screen.queryByText("Windows")).not.toBeInTheDocument()
+    expect(screen.queryByText("Retail")).not.toBeInTheDocument()
+    expect(screen.queryByText("In Stock")).not.toBeInTheDocument()
+    expect(screen.getByText("-30%")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /add to cart/i })
+    ).toBeInTheDocument()
+    expect(document.documentElement.dir).toBe("ltr")
   })
 
-  it('renders correctly in Arabic (RTL) with Western digits and adds to cart on click', async () => {
-    renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'ar' })
+  it("renders correctly in Arabic (RTL) with Western digits and adds to cart on click", async () => {
+    renderWithProviders(<ProductCard product={mockProduct} />, { lang: "ar" })
 
-    expect(screen.getByText('Windows 11 Professional')).toBeInTheDocument()
-    expect(screen.queryByText('ويندوز')).not.toBeInTheDocument()
-    expect(screen.getByText('متوفر')).toBeInTheDocument()
+    expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
+    expect(screen.queryByText("ويندوز")).not.toBeInTheDocument()
+    expect(screen.queryByText("متوفر")).not.toBeInTheDocument()
+    expect(screen.getByText("-30%")).toBeInTheDocument()
 
-    const btn = screen.getByRole('button', { name: /أضف إلى السلة/i })
+    const btn = screen.getByRole("button", { name: /أضف إلى السلة/i })
     expect(btn).toBeInTheDocument()
 
     // Must use Western digits 349, not Eastern Arabic numerals
-    expect(screen.getByText((content) => content.includes('349'))).toBeInTheDocument()
-    expect(document.documentElement.dir).toBe('rtl')
+    expect(
+      screen.getByText((content) => content.includes("349"))
+    ).toBeInTheDocument()
+    expect(document.documentElement.dir).toBe("rtl")
 
     fireEvent.click(btn)
-    expect(screen.getByText('تمت الإضافة')).toBeInTheDocument()
+    expect(screen.getByText("تمت الإضافة")).toBeInTheDocument()
   })
 
-  it('renders out of stock state disabled when preorder is disabled', () => {
+  it("renders out of stock state disabled when preorder is disabled", () => {
     const outOfStockProduct: ProductResponse = {
       ...mockProduct,
-      stock_status: 'out_of_stock',
+      stock_status: "out_of_stock",
       preorder_enabled: false,
     }
-    renderWithProviders(<ProductCard product={outOfStockProduct} />, { lang: 'en' })
+    renderWithProviders(<ProductCard product={outOfStockProduct} />, {
+      lang: "en",
+    })
 
-    const button = screen.getByRole('button', { name: /out of stock/i })
+    const button = screen.getByRole("button", { name: /out of stock/i })
     expect(button).toBeDisabled()
   })
 
-  it('renders preorder button when item is preorder', () => {
+  it("renders preorder button when item is preorder", () => {
     const preorderProduct: ProductResponse = {
       ...mockProduct,
-      stock_status: 'preorder',
+      stock_status: "preorder",
       preorder_enabled: true,
     }
-    renderWithProviders(<ProductCard product={preorderProduct} />, { lang: 'en' })
+    renderWithProviders(<ProductCard product={preorderProduct} />, {
+      lang: "en",
+    })
 
-    expect(screen.getAllByText('Preorder').length).toBeGreaterThan(0)
-    const button = screen.getByRole('button', { name: /preorder/i })
+    expect(screen.getAllByText("Preorder").length).toBeGreaterThan(0)
+    const button = screen.getByRole("button", { name: /preorder/i })
     expect(button).toBeEnabled()
+  })
+
+  it('formats decimal string discount_percentage without trailing .00', () => {
+    const decimalDiscountProduct = {
+      ...mockProduct,
+      discount_percentage: '30.00' as unknown as number,
+    }
+    renderWithProviders(<ProductCard product={decimalDiscountProduct} />, { lang: 'en' })
+
+    expect(screen.getByText('-30%')).toBeInTheDocument()
+    expect(screen.queryByText('-30.00%')).not.toBeInTheDocument()
   })
 })
 
-describe('ProductGrid', () => {
-  it('fetches and renders products from the service', async () => {
-    renderWithProviders(<ProductGrid />, { lang: 'en' })
+describe("ProductGrid", () => {
+  it("fetches and renders products from the service", async () => {
+    renderWithProviders(<ProductGrid />, { lang: "en" })
 
     await waitFor(() => {
-      expect(screen.getAllByText('Windows 11 Professional').length).toBeGreaterThan(0)
-      expect(screen.getByText('Office 2021 Professional Plus')).toBeInTheDocument()
+      expect(
+        screen.getAllByText("Windows 11 Professional").length
+      ).toBeGreaterThan(0)
+      expect(
+        screen.getByText("Office 2021 Professional Plus")
+      ).toBeInTheDocument()
     })
   })
 })
 
-describe('ProductsRoute (Listing Page)', () => {
-  it('renders default heading, breadcrumbs, category row, and catalog products in English', async () => {
-    renderWithProviders(<ProductsRoute />, { lang: 'en' })
+describe("ProductsRoute (Listing Page)", () => {
+  it("renders default heading, breadcrumbs, category row, and catalog products in English", async () => {
+    renderWithProviders(<ProductsRoute />, { lang: "en" })
 
-    expect(screen.getByRole('heading', { level: 1, name: /all products/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", { level: 1, name: /all products/i })
+    ).toBeInTheDocument()
 
-    const breadcrumbNav = screen.getByRole('navigation', { name: /breadcrumb/i })
+    const breadcrumbNav = screen.getByRole("navigation", {
+      name: /breadcrumb/i,
+    })
     expect(breadcrumbNav).toBeInTheDocument()
 
-    const categoryNav = screen.getByRole('navigation', { name: /category/i })
+    const categoryNav = screen.getByRole("navigation", { name: /category/i })
     expect(categoryNav).toBeInTheDocument()
 
-    const sidebar = screen.getByRole('complementary', { name: /filters/i })
+    const sidebar = screen.getByRole("complementary", { name: /filters/i })
     expect(sidebar).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getAllByText('Windows 11 Professional').length).toBeGreaterThan(0)
-      expect(screen.getByText('Office 2021 Professional Plus')).toBeInTheDocument()
+      expect(
+        screen.getAllByText("Windows 11 Professional").length
+      ).toBeGreaterThan(0)
+      expect(
+        screen.getByText("Office 2021 Professional Plus")
+      ).toBeInTheDocument()
     })
   })
 
-  it('renders filtered products by category in Arabic', async () => {
+  it("renders filtered products by category in Arabic", async () => {
     renderWithProviders(<ProductsRoute />, {
-      lang: 'ar',
-      initialEntries: ['/ar/products?category=windows'],
+      lang: "ar",
+      initialEntries: ["/ar/products?category=windows"],
     })
 
     await waitFor(() => {
-      expect(screen.getAllByText('Windows 11 Professional').length).toBeGreaterThan(0)
+      expect(
+        screen.getAllByText("Windows 11 Professional").length
+      ).toBeGreaterThan(0)
     })
+  })
+})
+
+describe("CategoryRow", () => {
+  it("renders relative Lucide icons for OS, Security, and Office category pills", () => {
+    const categories = [
+      { id: "c1", name: "Operating Systems", slug: "operating-systems", code: "OS", display_order: 1, is_active: true, product_count: 3 },
+      { id: "c2", name: "Security & Antivirus", slug: "security-antivirus", code: "SEC", display_order: 2, is_active: true, product_count: 0 },
+      { id: "c3", name: "Office Suites", slug: "office-suites", code: "OFF", display_order: 3, is_active: true, product_count: 2 },
+    ]
+    const { container } = renderWithProviders(<CategoryRow categories={categories} />, { lang: "en" })
+
+    expect(container.querySelector("svg.lucide-grid-2x2")).toBeInTheDocument()
+    expect(container.querySelector("svg.lucide-shield-check")).toBeInTheDocument()
+    expect(container.querySelector("svg.lucide-file-text")).toBeInTheDocument()
   })
 })
