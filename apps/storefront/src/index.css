@@ -99,3 +99,52 @@ select:disabled {
   }
 }
 
+/* ==========================================================================
+   Apple HIG Colorful Gradient Card Utilities (Browse Categories)
+   ========================================================================== */
+
+.apple-card-os {
+  background: 
+    radial-gradient(circle at 90% 10%, oklch(0.75 0.16 225 / 0.45) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, oklch(0.50 0.20 280 / 0.50) 0%, transparent 50%),
+    linear-gradient(135deg, oklch(0.62 0.19 242) 0%, oklch(0.52 0.21 258) 50%, oklch(0.40 0.20 275) 100%);
+  box-shadow: 0 10px 30px -10px oklch(0.50 0.20 260 / 0.35);
+}
+.apple-card-os:hover {
+  box-shadow: 0 20px 40px -10px oklch(0.50 0.20 260 / 0.50);
+}
+
+.apple-card-security {
+  background: 
+    radial-gradient(circle at 90% 10%, oklch(0.75 0.16 150 / 0.45) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, oklch(0.45 0.16 200 / 0.50) 0%, transparent 50%),
+    linear-gradient(135deg, oklch(0.64 0.17 165) 0%, oklch(0.52 0.16 182) 50%, oklch(0.38 0.15 200) 100%);
+  box-shadow: 0 10px 30px -10px oklch(0.52 0.16 182 / 0.35);
+}
+.apple-card-security:hover {
+  box-shadow: 0 20px 40px -10px oklch(0.52 0.16 182 / 0.50);
+}
+
+.apple-card-office {
+  background: 
+    radial-gradient(circle at 90% 10%, oklch(0.88 0.18 96 / 0.55) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, oklch(0.62 0.18 78 / 0.50) 0%, transparent 50%),
+    linear-gradient(135deg, oklch(0.76 0.18 94) 0%, oklch(0.66 0.18 86) 50%, oklch(0.54 0.17 78) 100%);
+  box-shadow: 0 10px 30px -10px oklch(0.66 0.18 86 / 0.35);
+}
+.apple-card-office:hover {
+  box-shadow: 0 20px 40px -10px oklch(0.66 0.18 86 / 0.50);
+}
+
+.apple-card-fallback {
+  background: 
+    radial-gradient(circle at 90% 10%, oklch(0.75 0.19 320 / 0.45) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, oklch(0.45 0.22 270 / 0.50) 0%, transparent 50%),
+    linear-gradient(135deg, oklch(0.60 0.22 300) 0%, oklch(0.50 0.23 285) 50%, oklch(0.38 0.20 270) 100%);
+  box-shadow: 0 10px 30px -10px oklch(0.50 0.23 285 / 0.35);
+}
+.apple-card-fallback:hover {
+  box-shadow: 0 20px 40px -10px oklch(0.50 0.23 285 / 0.50);
+}
+
+

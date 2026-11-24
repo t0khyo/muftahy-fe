@@ -38,7 +38,6 @@ export function ProductCard({
 }: ProductCardProps) {
   const { t, i18n } = useTranslation(['products', 'common'])
   const currentLang = locale ?? (i18n.language === 'ar' ? 'ar' : 'en')
-  const isRtl = currentLang === 'ar' || i18n.dir() === 'rtl'
   const [failedUrl, setFailedUrl] = React.useState<string | null>(null)
 
   // Support both product and fallback card
@@ -175,30 +174,6 @@ export function ProductCard({
             </div>
           )}
         </Link>
-
-        {/* Top Badges */}
-        <div className="absolute start-2 top-2 z-10 flex flex-wrap gap-1.5 items-center">
-          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-background/90 text-foreground backdrop-blur-xs shadow-xs">
-            {(() => {
-              const catObj = typeof product.category === 'object' && product.category !== null ? product.category : null
-              const catSlug = catObj ? catObj.slug : (typeof product.category === 'string' ? product.category : '')
-              const catName = catObj ? catObj.name : catSlug
-              if (isRtl && (catSlug.toLowerCase() === 'windows' || catName.toLowerCase() === 'windows')) return 'ويندوز'
-              if (isRtl && (catSlug.toLowerCase() === 'office' || catName.toLowerCase() === 'office')) return 'أوفيس'
-              if (catName.toLowerCase() === 'windows') return 'Windows'
-              if (catName.toLowerCase() === 'office') return 'Office'
-              return catName || 'Product'
-            })()}
-          </span>
-          {product.variant && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-secondary text-secondary-foreground">
-              {t(`variants.${product.variant}`, {
-                ns: 'products',
-                defaultValue: product.variant,
-              })}
-            </span>
-          )}
-        </div>
 
         {/* Stock Status Badge */}
         <div className="absolute end-2 top-2 z-10">

@@ -135,8 +135,8 @@ describe('ProductCard', () => {
     renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'en' })
 
     expect(screen.getByText('Windows 11 Professional')).toBeInTheDocument()
-    expect(screen.getByText('Windows')).toBeInTheDocument()
-    expect(screen.getByText('Retail')).toBeInTheDocument()
+    expect(screen.queryByText('Windows')).not.toBeInTheDocument()
+    expect(screen.queryByText('Retail')).not.toBeInTheDocument()
     expect(screen.getByText('In Stock')).toBeInTheDocument()
     expect(screen.getByText('-30%')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add to cart/i })).toBeInTheDocument()
@@ -147,7 +147,7 @@ describe('ProductCard', () => {
     renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'ar' })
 
     expect(screen.getByText('Windows 11 Professional')).toBeInTheDocument()
-    expect(screen.getByText('ويندوز')).toBeInTheDocument()
+    expect(screen.queryByText('ويندوز')).not.toBeInTheDocument()
     expect(screen.getByText('متوفر')).toBeInTheDocument()
 
     const btn = screen.getByRole('button', { name: /أضف إلى السلة/i })

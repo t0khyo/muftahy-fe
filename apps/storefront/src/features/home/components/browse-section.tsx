@@ -12,6 +12,12 @@ import { cn } from '@workspace/ui/lib/utils'
 import type { CategoryResponse } from '@workspace/domain/schemas/product'
 import type { BrowseSectionConfig } from '../home.config'
 import { usePublicCategories } from '../../products/hooks/use-products'
+import {
+  OsWindowPattern,
+  SecurityRadarPattern,
+  OfficeFolioPattern,
+  PrismRibbonPattern,
+} from './browse-card-patterns'
 
 export interface BrowseSectionProps {
   config: BrowseSectionConfig
@@ -30,53 +36,33 @@ interface CanonicalCategory {
 }
 
 interface CategoryTheme {
-  iconBg: string
-  iconColor: string
-  codeBg: string
+  cardClass: string
   codeLabel: string
-  glowClass: string
-  specsEn: string[]
-  specsAr: string[]
+  pattern: React.ComponentType<{ className?: string }>
 }
 
 const CATEGORY_THEMES: Record<string, CategoryTheme> = {
   'operating-systems': {
-    iconBg: 'bg-blue-500/10 dark:bg-blue-500/15',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-    codeBg: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
-    codeLabel: 'OS • System',
-    glowClass: 'from-blue-500/5 via-transparent to-transparent',
-    specsEn: ['Windows 11 & 10', 'Lifetime License', 'Retail & OEM'],
-    specsAr: ['ويندوز 11 و10', 'تفعيل مدى الحياة', 'نسخ Retail وOEM'],
+    cardClass: 'apple-card-os',
+    codeLabel: 'OS',
+    pattern: OsWindowPattern,
   },
   'security-antivirus': {
-    iconBg: 'bg-emerald-500/10 dark:bg-emerald-500/15',
-    iconColor: 'text-emerald-600 dark:text-emerald-400',
-    codeBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-    codeLabel: 'SEC • Defense',
-    glowClass: 'from-emerald-500/5 via-transparent to-transparent',
-    specsEn: ['Real-Time Shield', 'Multi-Device', 'VPN Included'],
-    specsAr: ['حماية فورية', 'أجهزة متعددة', 'VPN مدمج'],
+    cardClass: 'apple-card-security',
+    codeLabel: 'SEC',
+    pattern: SecurityRadarPattern,
   },
   'office-suites': {
-    iconBg: 'bg-amber-500/10 dark:bg-amber-500/15',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    codeBg: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-    codeLabel: 'OFF • Productivity',
-    glowClass: 'from-amber-500/5 via-transparent to-transparent',
-    specsEn: ['Word, Excel & PPT', 'Lifetime Activation', '1 PC / Mac'],
-    specsAr: ['وورد، إكسل، باوربوينت', 'تفعيل دائم', 'جهاز واحد'],
+    cardClass: 'apple-card-office',
+    codeLabel: 'OFF',
+    pattern: OfficeFolioPattern,
   },
 }
 
 const DEFAULT_THEME: CategoryTheme = {
-  iconBg: 'bg-primary/10',
-  iconColor: 'text-primary',
-  codeBg: 'bg-secondary text-secondary-foreground',
-  codeLabel: 'CAT • Category',
-  glowClass: 'from-primary/5 via-transparent to-transparent',
-  specsEn: [],
-  specsAr: [],
+  cardClass: 'apple-card-fallback',
+  codeLabel: 'CAT',
+  pattern: PrismRibbonPattern,
 }
 
 const DEFAULT_CATEGORIES: CanonicalCategory[] = [
@@ -183,9 +169,6 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 lg:mb-12 gap-4">
           <div className="text-start">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 mb-3">
-              {t('browse.sectionBadge', { defaultValue: isRtl ? 'الكتالوج' : 'Catalog' })}
-            </span>
             <h2
               id={headingId}
               className="text-h3 font-bold tracking-tight text-foreground"
@@ -215,11 +198,12 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
           </Link>
         </div>
 
-        {/* 3-Column Responsive Category Cards Grid with Taste Craftsmanship */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        {/* 3-Column Responsive Category Cards Grid with Apple HIG Colorful Mesh Gradients */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {categories.map((cat: CategoryResponse | CanonicalCategory) => {
             const Icon = resolveCategoryIcon(cat.code, cat.slug)
             const theme = CATEGORY_THEMES[cat.slug] || DEFAULT_THEME
+            const Pattern = theme.pattern
 
             // Dynamic localized category title
             const title = t(`categories.${cat.slug}`, {
@@ -236,9 +220,6 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
               defaultValue: cat.description || '',
             })
 
-            // Dynamic localized specs (taste fragment)
-            const specs = isRtl ? (theme.specsAr || theme.specsEn) : theme.specsEn
-
             const count = typeof cat.product_count === 'number' ? cat.product_count : 0
 
             return (
@@ -246,80 +227,54 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
                 key={cat.id || cat.slug}
                 to={`/${currentLang}/categories/${cat.slug}`}
                 className={cn(
-                  'group relative flex flex-col justify-between overflow-hidden rounded-2xl p-6 lg:p-7 text-start',
-                  'border border-border/50 bg-card/95 hover:bg-card',
-                  'dark:border-white/10 dark:hover:border-white/20 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]',
-                  'transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-primary/5',
+                  'group relative flex flex-col justify-between overflow-hidden rounded-2xl p-5 sm:p-5.5 lg:p-6 text-start',
+                  'border border-white/20 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)]',
+                  'transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  theme.cardClass,
                 )}
               >
-                {/* Subtle radial ambient glow on hover */}
+                {/* Layered Geometric Vector Pattern Artwork */}
                 <div
-                  className={cn(
-                    'pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-500 group-hover:opacity-100',
-                    theme.glowClass,
-                  )}
+                  className="pointer-events-none absolute -bottom-3 -end-3 size-36 sm:size-40 text-white opacity-25 transition-transform duration-500 ease-out group-hover:scale-105 group-hover:opacity-35 rtl:-scale-x-100"
                   aria-hidden="true"
-                />
+                >
+                  <Pattern className="size-full" />
+                </div>
 
-                <div className="relative space-y-4">
-                  {/* Card Header Row: Category Badge + Code Pill + Step Chevron */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          'size-12 rounded-xl flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-105',
-                          theme.iconBg,
-                          theme.iconColor,
-                        )}
-                      >
-                        <Icon className="size-6" />
+                <div className="relative space-y-3">
+                  {/* Card Header Row: Glass Icon + Code Pill + Step Chevron */}
+                  <div className="flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-10 rounded-xl bg-white/20 backdrop-blur-md text-white border border-white/25 flex items-center justify-center shadow-xs transition-transform duration-300 ease-out group-hover:scale-105">
+                        <Icon className="size-5" />
                       </div>
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide uppercase',
-                          theme.codeBg,
-                        )}
-                      >
-                        {theme.codeLabel}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-white/20 backdrop-blur-md text-white border border-white/20">
+                        {cat.code || theme.codeLabel}
                       </span>
                     </div>
 
-                    <div className="size-8 rounded-full bg-secondary/80 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200 shrink-0">
+                    <div className="size-8 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-200 shrink-0">
                       <ChevronRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div className="space-y-1.5 pt-1">
-                    <h3 className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-200">
+                  <div className="space-y-1 pt-0.5">
+                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white transition-colors duration-200">
                       {title}
                     </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                    <p className="text-xs sm:text-sm text-white/80 leading-relaxed line-clamp-2">
                       {description}
                     </p>
                   </div>
-
-                  {/* Tactile Micro-Spec Chips (Taste Fragment) */}
-                  {specs.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {specs.map((spec, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center rounded-md border border-border/40 bg-secondary/50 px-2 py-0.5 text-xs font-medium text-foreground/80 transition-colors group-hover:border-border/70 group-hover:bg-secondary/80"
-                        >
-                          {spec}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Footer Status Bar: Count / Coming Soon & Quiet Action Hint */}
-                <div className="relative mt-6 pt-4 border-t border-border/30 flex items-center justify-between text-xs">
+                <div className="relative mt-5 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-white">
                   {count > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/90 px-2.5 py-0.5 font-medium text-secondary-foreground">
-                      <span className="size-1.5 rounded-full bg-success animate-pulse" aria-hidden="true" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white">
+                      <span className="size-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
                       {t('browse.itemCount', {
                         ns: 'home',
                         count,
@@ -327,8 +282,8 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
                       })}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/70 px-2.5 py-0.5 font-medium text-muted-foreground">
-                      <span className="size-1.5 rounded-full bg-muted-foreground/50" aria-hidden="true" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white/90">
+                      <span className="size-1.5 rounded-full bg-white/60" aria-hidden="true" />
                       {t('browse.comingSoon', {
                         ns: 'home',
                         defaultValue: isRtl ? 'قريباً' : 'Coming soon',
@@ -336,9 +291,9 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
                     </span>
                   )}
 
-                  <span className="inline-flex items-center gap-1 font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-200">
-                    <span>{t('browse.exploreCategory', { ns: 'home', defaultValue: isRtl ? 'استكشف القسم' : 'Explore category' })}</span>
-                    <ChevronRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/85 group-hover:text-white transition-colors duration-200">
+                    <span>{t('browse.exploreCategory', { ns: 'home', defaultValue: isRtl ? 'استكشف' : 'Explore' })}</span>
+                    <ChevronRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                   </span>
                 </div>
               </Link>
