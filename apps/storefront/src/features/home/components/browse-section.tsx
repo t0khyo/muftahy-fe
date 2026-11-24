@@ -37,31 +37,26 @@ interface CanonicalCategory {
 
 interface CategoryTheme {
   cardClass: string
-  codeLabel: string
   pattern: React.ComponentType<{ className?: string }>
 }
 
 const CATEGORY_THEMES: Record<string, CategoryTheme> = {
   'operating-systems': {
     cardClass: 'apple-card-os',
-    codeLabel: 'OS',
     pattern: OsWindowPattern,
   },
   'security-antivirus': {
     cardClass: 'apple-card-security',
-    codeLabel: 'SEC',
     pattern: SecurityRadarPattern,
   },
   'office-suites': {
     cardClass: 'apple-card-office',
-    codeLabel: 'OFF',
     pattern: OfficeFolioPattern,
   },
 }
 
 const DEFAULT_THEME: CategoryTheme = {
   cardClass: 'apple-card-fallback',
-  codeLabel: 'CAT',
   pattern: PrismRibbonPattern,
 }
 
@@ -242,59 +237,52 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
                   <Pattern className="size-full" />
                 </div>
 
-                <div className="relative space-y-3">
-                  {/* Card Header Row: Glass Icon + Code Pill + Step Chevron */}
+                <div className="relative space-y-3.5">
+                  {/* Tier 1: Visual Identity (Icon) + Scannable Availability Badge */}
                   <div className="flex items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="size-10 rounded-xl bg-white/20 backdrop-blur-md text-white border border-white/25 flex items-center justify-center shadow-xs transition-transform duration-300 ease-out group-hover:scale-105">
-                        <Icon className="size-5" />
-                      </div>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-white/20 backdrop-blur-md text-white border border-white/20">
-                        {cat.code || theme.codeLabel}
-                      </span>
+                    <div className="size-10 rounded-xl bg-white/20 backdrop-blur-md text-white border border-white/25 flex items-center justify-center shadow-xs transition-transform duration-300 ease-out group-hover:scale-105">
+                      <Icon className="size-5" />
                     </div>
 
-                    <div className="size-8 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-200 shrink-0">
-                      <ChevronRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-                    </div>
+                    {count > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white border border-white/15">
+                        <span className="size-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
+                        {t('browse.itemCount', {
+                          ns: 'home',
+                          count,
+                          defaultValue: `${count} items`,
+                        })}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white/90 border border-white/10">
+                        <span className="size-1.5 rounded-full bg-white/60" aria-hidden="true" />
+                        {t('browse.comingSoon', {
+                          ns: 'home',
+                          defaultValue: isRtl ? 'قريباً' : 'Coming soon',
+                        })}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Body Content */}
-                  <div className="space-y-1 pt-0.5">
-                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white transition-colors duration-200">
+                  {/* Tier 2: Primary Content (Title + Concise Description) */}
+                  <div className="space-y-1">
+                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white">
                       {title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-white/80 leading-relaxed line-clamp-2">
+                    <p className="text-xs sm:text-sm text-white/85 leading-relaxed line-clamp-2">
                       {description}
                     </p>
                   </div>
                 </div>
 
-                {/* Footer Status Bar: Count / Coming Soon & Quiet Action Hint */}
-                <div className="relative mt-5 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-white">
-                  {count > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white">
-                      <span className="size-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
-                      {t('browse.itemCount', {
-                        ns: 'home',
-                        count,
-                        defaultValue: `${count} items`,
-                      })}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white/90">
-                      <span className="size-1.5 rounded-full bg-white/60" aria-hidden="true" />
-                      {t('browse.comingSoon', {
-                        ns: 'home',
-                        defaultValue: isRtl ? 'قريباً' : 'Coming soon',
-                      })}
-                    </span>
-                  )}
-
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/85 group-hover:text-white transition-colors duration-200">
-                    <span>{t('browse.exploreCategory', { ns: 'home', defaultValue: isRtl ? 'استكشف' : 'Explore' })}</span>
-                    <ChevronRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+                {/* Tier 3: Single Clear Action Cue */}
+                <div className="relative mt-5 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-white/90 group-hover:text-white transition-colors duration-200">
+                  <span className="font-medium">
+                    {t('browse.exploreCategory', { ns: 'home', defaultValue: isRtl ? 'استكشف القسم' : 'Explore category' })}
                   </span>
+                  <div className="size-7 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-200 shrink-0">
+                    <ChevronRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+                  </div>
                 </div>
               </Link>
             )
