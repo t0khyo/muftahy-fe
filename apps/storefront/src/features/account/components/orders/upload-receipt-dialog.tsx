@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, AlertCircle, FileCheck, Loader2 } from 'lucide-react'
-import { compressImage } from '@workspace/domain/media/image-compression'
+import { compressReceipt } from '@workspace/domain/media/image-compression'
 import {
   Dialog,
   DialogContent,
@@ -57,7 +57,7 @@ export function UploadReceiptDialog({
       setErrorMsg(null)
       setIsCompressing(true)
       try {
-        const compressed = await compressImage(file)
+        const compressed = await compressReceipt(file)
         setSelectedFile(compressed)
         setFileStats({
           originalSize: file.size,

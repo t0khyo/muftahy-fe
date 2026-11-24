@@ -7,7 +7,8 @@ import {
   X,
 } from 'lucide-react'
 import { formatMoney } from '@workspace/domain/formatters/money'
-import { resolveProductImage, resolveStorageUrl } from '../../features/products/utils/asset-resolver'
+import { getProductThumbnailUrl, resolveStorageUrl } from '../../features/products/utils/asset-resolver'
+import { useProduct } from '../../features/products/hooks/use-products'
 import { Button } from '@workspace/ui/components/button'
 import {
   Empty,
@@ -27,7 +28,122 @@ import {
 import { CART_CONFIG } from '../../features/cart/cart.config'
 import { QuantityStepper } from '../../features/cart/components/quantity-stepper'
 import { resolveLocalizedName } from '../../features/cart/lib/cart-selectors'
+import type { UnifiedCartItem } from '../../features/cart/hooks/use-cart'
 import { useCart, useRemoveCartItem, useUpdateCartItemQuantity } from '../../features/cart/hooks/use-cart'
+
+interface BagDrawerItemProps {
+  item: UnifiedCartItem
+  currentLang: string
+  onClose: () => void
+  onUpdateQuantity: (id: string, qty: number) => void
+  onRemove: (id: string) => void
+}
+
+function BagDrawerItem({
+  item,
+  currentLang,
+  onClose,
+  onUpdateQuantity,
+  onRemove,
+}: BagDrawerItemProps) {
+  const { t } = useTranslation(['header', 'products'])
+  const { data: product } = useProduct(item.coverImage ? '' : item.product_id)
+  const [failedUrl, setFailedUrl] = React.useState<string | null>(null)
+
+  const productName = item.name
+    ? (resolveLocalizedName(item.name, currentLang) || item.product_name)
+    : item.product_name
+  const lineTotal = formatMoney(
+    item.unit_price * item.quantity,
+    { currency: 'EGP', locale: currentLang },
+  )
+  const resolvedCover = item.coverImage
+    ? (resolveStorageUrl(item.coverImage) || item.coverImage)
+    : null
+  const thumbnailUrl = resolvedCover || getProductThumbnailUrl(product)
+  const showImage = Boolean(thumbnailUrl && failedUrl !== thumbnailUrl)
+  const productSlug = product?.slug || item.slug || item.product_id
+
+  return (
+    <div className="flex gap-4 pb-5 border-b border-border/30 last:border-b-0 last:pb-0">
+      {/* 4:3 Thumbnail with KeyRound fallback */}
+      <div className="w-20 lg:w-24 aspect-[4/3] shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
+        {showImage && thumbnailUrl ? (
+          <img
+            src={thumbnailUrl}
+            alt=""
+            onError={() => setFailedUrl(thumbnailUrl)}
+            className="size-full object-cover"
+          />
+        ) : (
+          <KeyRound
+            className="size-7 lg:size-8 text-muted-foreground/80"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+
+      {/* Content Column */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between text-start">
+        <div className="space-y-0.5">
+          <Link
+            to={`/${currentLang}/products/${productSlug}`}
+            onClick={onClose}
+            className="text-[15px] font-semibold text-foreground line-clamp-2 leading-snug hover:text-primary transition-colors"
+          >
+            {productName}
+          </Link>
+
+          {item.variant && (
+            <div className="text-[12px] text-muted-foreground uppercase font-medium">
+              {item.variant}
+            </div>
+          )}
+          {item.is_preorder && (
+            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+              {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
+            </div>
+          )}
+        </div>
+
+        {/* Interactive Quantity Stepper + Remove Link */}
+        <div className="pt-2 flex items-center justify-between gap-3">
+          <QuantityStepper
+            size="sm"
+            quantity={item.quantity}
+            min={1}
+            decreaseLabel={t('decreaseQuantity', {
+              ns: 'header',
+              defaultValue: 'Decrease quantity',
+            })}
+            increaseLabel={t('increaseQuantity', {
+              ns: 'header',
+              defaultValue: 'Increase quantity',
+            })}
+            quantityLabel={`${t('quantity', { ns: 'header', defaultValue: 'Quantity' })}: ${item.quantity}`}
+            onDecrease={() => onUpdateQuantity(item.id, item.quantity - 1)}
+            onIncrease={() => onUpdateQuantity(item.id, item.quantity + 1)}
+          />
+
+          <button
+            type="button"
+            onClick={() => onRemove(item.id)}
+            className="cursor-pointer text-xs text-muted-foreground hover:text-destructive underline underline-offset-4 decoration-border/60 hover:decoration-destructive transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            {t('remove', { ns: 'header', defaultValue: 'Remove' })}
+          </button>
+        </div>
+      </div>
+
+      {/* End Price Column */}
+      <div className="text-end shrink-0 pt-0.5">
+        <span className="text-[15px] font-semibold text-foreground tabular-nums">
+          {lineTotal}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 export interface CartButtonProps {
   className?: string
@@ -310,102 +426,16 @@ export function CartButton({
           ) : (
             /* Populated Scrollable List (only this scrolls) */
             <div className="flex-1 overflow-y-auto px-5 lg:px-6 py-4 space-y-5">
-              {items.map((item) => {
-                const productName = item.name
-                  ? (resolveLocalizedName(item.name, currentLang) || item.product_name)
-                  : item.product_name
-                const lineTotal = formatMoney(
-                  item.unit_price * item.quantity,
-                  { currency: 'EGP', locale: currentLang },
-                )
-                const coverImage =
-                  resolveStorageUrl(item.coverImage) ||
-                  item.coverImage ||
-                  resolveProductImage(item.category ?? 'windows', item.variant ?? null)
-
-                return (
-                  <div
-                    key={item.id}
-                    className="flex gap-4 pb-5 border-b border-border/30 last:border-b-0 last:pb-0"
-                  >
-                    {/* Thumbnail: 72px mobile / 80px desktop with coded cover fallback */}
-                    <div className="size-[72px] lg:size-20 shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
-                      {coverImage ? (
-                        <img
-                          src={coverImage}
-                          alt=""
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <KeyRound
-                          className="size-7 lg:size-8 text-muted-foreground/80"
-                          aria-hidden="true"
-                        />
-                      )}
-                    </div>
-
-                    {/* Content Column */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between text-start">
-                      <div className="space-y-0.5">
-                        <Link
-                          to={`/${currentLang}/products/${item.slug || item.product_id}`}
-                          onClick={handleClose}
-                          className="text-[15px] font-semibold text-foreground line-clamp-2 leading-snug hover:text-primary transition-colors"
-                        >
-                          {productName}
-                        </Link>
-
-                        {item.variant && (
-                          <div className="text-[12px] text-muted-foreground uppercase font-medium">
-                            {item.variant}
-                          </div>
-                        )}
-                        {item.is_preorder && (
-                          <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                            {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Interactive Quantity Stepper + Remove Link */}
-                      <div className="pt-2 flex items-center justify-between gap-3">
-                        <QuantityStepper
-                          size="sm"
-                          quantity={item.quantity}
-                          min={1}
-                          decreaseLabel={t('decreaseQuantity', {
-                            ns: 'header',
-                            defaultValue: 'Decrease quantity',
-                          })}
-                          increaseLabel={t('increaseQuantity', {
-                            ns: 'header',
-                            defaultValue: 'Increase quantity',
-                          })}
-                          quantityLabel={`${t('quantity', { ns: 'header', defaultValue: 'Quantity' })}: ${item.quantity}`}
-                          onDecrease={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                          onIncrease={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        />
-
-                        {/* Separate Remove Link */}
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(item.id)}
-                          className="cursor-pointer text-xs text-muted-foreground hover:text-destructive underline underline-offset-4 decoration-border/60 hover:decoration-destructive transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          {t('remove', { ns: 'header', defaultValue: 'Remove' })}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* End Price Column */}
-                    <div className="text-end shrink-0 pt-0.5">
-                      <span className="text-[15px] font-semibold text-foreground tabular-nums">
-                        {lineTotal}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
+              {items.map((item) => (
+                <BagDrawerItem
+                  key={item.id}
+                  item={item}
+                  currentLang={currentLang}
+                  onClose={handleClose}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemove={handleRemove}
+                />
+              ))}
             </div>
           )}
 

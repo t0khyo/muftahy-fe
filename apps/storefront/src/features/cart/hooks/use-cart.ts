@@ -56,7 +56,11 @@ export function useCart(): UnifiedCart {
   if (isAuthenticated) {
     const data = cartQuery.data
     return {
-      items: data?.items ?? [],
+      items: (data?.items ?? []).map((item) => ({
+        ...item,
+        coverImage: item.thumbnail_url ?? undefined,
+        slug: item.slug,
+      })),
       subtotal_egp: data?.subtotal_egp ?? 0,
       item_count: data?.item_count ?? 0,
       isLoading: cartQuery.isLoading,

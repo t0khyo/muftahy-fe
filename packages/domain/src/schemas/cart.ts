@@ -20,6 +20,8 @@ export const cartItemResponseSchema = z.object({
   quantity: z.number().int().positive(),
   is_preorder: z.boolean(),
   unit_price: z.coerce.number().nonnegative(),
+  thumbnail_url: z.string().nullable().optional(),
+  slug: z.string().optional(),
 })
 
 export type CartItemResponse = z.infer<typeof cartItemResponseSchema>

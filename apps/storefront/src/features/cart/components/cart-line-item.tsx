@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, Trash2 } from 'lucide-react'
@@ -6,7 +7,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import type { CartItem } from '../stores/cart-store'
 import { resolveLocalizedName } from '../lib/cart-selectors'
-import { resolveProductImage, resolveStorageUrl, getProductThumbnailUrl } from '../../products/utils/asset-resolver'
+import { resolveStorageUrl, getProductThumbnailUrl } from '../../products/utils/asset-resolver'
 import { useProduct } from '../../products/hooks/use-products'
 import { QuantityStepper } from './quantity-stepper'
 
@@ -29,6 +30,7 @@ export function CartLineItem({
 }: CartLineItemProps) {
   const { t } = useTranslation(['cart', 'products', 'common'])
   const { data: product } = useProduct(item.product_id || item.slug || '')
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
 
   const isOutOfStock = product ? product.stock_status === 'out_of_stock' : false
   const isLowStock =
@@ -67,24 +69,24 @@ export function CartLineItem({
       ? product.available_count
       : undefined
 
-  const category = item.category ?? product?.category?.slug ?? 'windows'
   const variant = item.variant ?? product?.variant ?? null
-  const coverImage =
-    resolveStorageUrl(item.coverImage) ||
-    item.coverImage ||
-    getProductThumbnailUrl(product) ||
-    resolveProductImage(category, variant)
+  const resolvedCover = item.coverImage
+    ? (resolveStorageUrl(item.coverImage) || item.coverImage)
+    : null
+  const coverImage = resolvedCover || getProductThumbnailUrl(product)
+  const showImage = Boolean(coverImage && failedUrl !== coverImage)
 
   return (
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 sm:py-5">
       {/* 1 ── Start Side: Artwork Thumbnail + Info */}
       <div className="flex items-start gap-4 min-w-0 flex-1 text-start">
-        {/* Artwork Thumbnail */}
-        <div className="size-[72px] lg:size-20 shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
-          {coverImage ? (
+        {/* 4:3 Artwork Thumbnail with KeyRound fallback */}
+        <div className="w-20 lg:w-24 aspect-[4/3] shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
+          {showImage && coverImage ? (
             <img
               src={coverImage}
               alt=""
+              onError={() => setFailedUrl(coverImage)}
               className="size-full object-cover"
             />
           ) : (

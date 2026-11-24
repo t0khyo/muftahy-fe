@@ -16,7 +16,7 @@ import { toast } from '@workspace/ui/components/sonner'
 import { resolveStorageUrl } from '@workspace/api/factory'
 import type { ProductImageResponse } from '@workspace/domain/schemas/product'
 import {
-  compressImage as compressProductImage,
+  compressProductImage,
   compressThumbnail,
 } from '@workspace/domain/media/image-compression'
 import {
@@ -336,7 +336,7 @@ export function ProductMediaSection({
             <p className="text-xs text-muted-foreground mt-0.5">
               {t(
                 'admin:productEditor.thumbnailDesc',
-                'Optimized 600×600 WebP thumbnail for catalog grids. Falls back to primary gallery image if unset.',
+                'Optimized 480×360 (4:3) WebP thumbnail for catalog grids. Falls back to primary gallery image if unset.',
               )}
             </p>
           </div>
@@ -411,7 +411,7 @@ export function ProductMediaSection({
           <p className="text-xs text-muted-foreground mt-0.5">
             {t(
               'admin:productEditor.mediaDescription',
-              'Upload up to 10 product images (JPEG, PNG, WebP up to 5MB, max 3840x2160).',
+              'Upload up to 10 product images (auto-optimized to 1920×1440 4:3 WebP, max 5MB).',
             )}
           </p>
         </div>

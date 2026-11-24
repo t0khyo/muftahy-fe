@@ -1,9 +1,10 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
+import { getProductService } from '@workspace/api/factory'
 import { ThemeProvider } from '../../app/theme-provider'
 import { useCartStore } from '../../features/cart/stores/cart-store'
 import { SiteHeader } from './site-header'
@@ -206,6 +207,61 @@ describe('SiteHeader Component', () => {
     const removeBtn = screen.getByRole('button', { name: /remove/i })
     fireEvent.click(removeBtn)
     expect(screen.getAllByText(/your bag is empty/i).length).toBeGreaterThan(0)
+  })
+
+  it('resolves product thumbnail in bag drawer via product_id and falls back on image error', async () => {
+    const prodId = '00000000-0000-4000-8000-000000000077'
+    const productService = getProductService()
+    vi.spyOn(productService, 'getProductById').mockResolvedValueOnce({
+      id: prodId,
+      name: 'Windows 11 Pro',
+      slug: 'windows-11-pro',
+      description: null,
+      sku: 'WIN-11-PRO',
+      category: {
+        id: '00000000-0000-4000-8000-000000000001',
+        name: 'Windows',
+        code: 'WIN',
+        slug: 'windows',
+        display_order: 1,
+        is_active: true,
+        product_count: 1,
+      },
+      variant: 'retail',
+      base_price: '500',
+      effective_price: '450',
+      discount_percentage: null,
+      stock_status: 'in_stock',
+      available_count: 10,
+      is_featured: false,
+      is_active: true,
+      thumbnail_url: 'https://cdn.example.com/win11-thumb.webp',
+      images: [],
+    })
+
+    act(() => {
+      useCartStore.getState().addItem({
+        product_id: prodId,
+        product_name: 'Windows 11 Pro',
+        unit_price: 450,
+      })
+    })
+
+    renderSiteHeader('/en/products')
+    fireEvent.click(screen.getByRole('button', { name: /cart, 1 item/i }))
+
+    await waitFor(() => {
+      const img = document.querySelector('img[src="https://cdn.example.com/win11-thumb.webp"]')
+      expect(img).toBeInTheDocument()
+    })
+
+    // Simulate image load failure -> falls back to KeyRound without broken <img>
+    const img = document.querySelector('img[src="https://cdn.example.com/win11-thumb.webp"]') as HTMLImageElement
+    fireEvent.error(img)
+
+    await waitFor(() => {
+      expect(document.querySelector('img[src="https://cdn.example.com/win11-thumb.webp"]')).not.toBeInTheDocument()
+    })
   })
 
   it('respects sticky=false prop', () => {
