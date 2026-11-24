@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import type { ProductCategory } from '@workspace/domain/schemas/product'
+import type { CategoryResponse, ProductCategory } from '@workspace/domain/schemas/product'
 import { useRelatedProducts } from '../../hooks/use-products'
 import { ProductCard } from '../product-card'
 
 export interface DetailRelatedRailProps {
   currentId: string
-  category?: ProductCategory
+  category?: ProductCategory | CategoryResponse | Pick<CategoryResponse, 'slug'>
   currentSlug?: string
   relatedSlugs?: string[]
   lang?: string
@@ -16,7 +16,14 @@ export function DetailRelatedRail({
   category,
 }: DetailRelatedRailProps) {
   const { t } = useTranslation(['detail', 'common'])
-  const { data: relatedProducts = [], isError } = useRelatedProducts(category, currentId)
+  const categorySlug =
+    typeof category === 'object' && category !== null
+      ? category.slug
+      : typeof category === 'string'
+        ? category
+        : undefined
+
+  const { data: relatedProducts = [], isError } = useRelatedProducts(categorySlug, currentId)
 
   const validProducts = relatedProducts.filter((p) => p.id !== currentId)
 

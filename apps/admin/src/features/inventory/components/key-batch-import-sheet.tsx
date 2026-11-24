@@ -238,7 +238,7 @@ function KeyBatchImportForm({
                       {products?.map((p) => (
                         <SelectItem key={p.id} value={p.id} className="text-xs font-mono">
                           <span className="font-semibold text-foreground">{p.name}</span>
-                          <span className="ms-1.5 text-[10px] text-muted-foreground">({p.category})</span>
+                          <span className="ms-1.5 text-[10px] text-muted-foreground">({p.category?.name || ''})</span>
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -246,8 +246,8 @@ function KeyBatchImportForm({
                 </Select>
                 {selectedProduct && (
                   <p className="text-[11px] font-mono text-muted-foreground mt-1">
-                    SKU: <span className="text-foreground font-semibold">{selectedProduct.id.slice(0, 8)}</span> • Cat:{' '}
-                    <span className="capitalize">{selectedProduct.category}</span>
+                    SKU: <span className="text-foreground font-semibold">{selectedProduct.sku || selectedProduct.id.slice(0, 8)}</span> • Cat:{' '}
+                    <span className="capitalize">{selectedProduct.category?.name || ''}</span>
                   </p>
                 )}
               </Field>

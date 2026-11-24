@@ -1,11 +1,13 @@
 import * as React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router'
 import { i18n } from '@workspace/i18n/config'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
+import * as apiFactory from '@workspace/api/factory'
+import type { ProductFilterParams, ProductService } from '@workspace/api/services/product-service'
 import { ThemeProvider } from '../../app/theme-provider'
 import { ProductCard } from './components/product-card'
 import { ProductGrid } from './components/product-grid'
@@ -14,7 +16,17 @@ import { ProductsRoute } from '../../routes/products-route'
 const mockProduct: ProductResponse = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Windows 11 Professional',
-  category: 'windows',
+  slug: 'windows-11-professional',
+  sku: 'OS-WIN11-PRO-RET',
+  category: {
+    id: 'cat-1',
+    name: 'Windows',
+    slug: 'windows',
+    code: 'OS',
+    display_order: 0,
+    is_active: true,
+    product_count: 2,
+  },
   variant: 'retail',
   base_price: '499.00',
   sale_price: '349.00',
@@ -25,7 +37,37 @@ const mockProduct: ProductResponse = {
   preorder_enabled: true,
   description: 'Genuine Microsoft Windows 11 Pro digital retail license key.',
   is_active: true,
+  images: [],
 }
+
+const mockProductOffice: ProductResponse = {
+  id: '00000000-0000-4000-8000-000000000002',
+  name: 'Office 2021 Professional Plus',
+  slug: 'office-2021-professional-plus',
+  sku: 'OFF-OFF21-PRO-RET',
+  category: {
+    id: 'cat-2',
+    name: 'Office',
+    slug: 'office',
+    code: 'OFF',
+    display_order: 1,
+    is_active: true,
+    product_count: 1,
+  },
+  variant: 'retail',
+  base_price: '599.00',
+  sale_price: '499.00',
+  effective_price: '499.00',
+  discount_percentage: 17,
+  stock_status: 'in_stock',
+  available_count: 8,
+  preorder_enabled: true,
+  description: 'Word, Excel, PowerPoint, Outlook.',
+  is_active: true,
+  images: [],
+}
+
+const mockCatalog = [mockProduct, mockProductOffice]
 
 function renderWithProviders(
   ui: React.ReactElement,
@@ -55,6 +97,40 @@ function renderWithProviders(
 }
 
 describe('ProductCard', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
+      getProducts: vi.fn().mockImplementation((filter?: ProductFilterParams) => {
+        let prods = [...mockCatalog]
+        if (filter?.category) {
+          prods = prods.filter((p) => p.category.slug === filter.category || p.category.name === filter.category)
+        }
+        return Promise.resolve(prods)
+      }),
+      getPublicCategories: vi.fn().mockResolvedValue([
+        { id: 'cat-1', name: 'Windows', slug: 'windows', code: 'OS', display_order: 0, is_active: true, product_count: 2 },
+        { id: 'cat-2', name: 'Office', slug: 'office', code: 'OFF', display_order: 1, is_active: true, product_count: 1 },
+      ]),
+      getCategoryBySlug: vi.fn().mockImplementation((slug) =>
+        Promise.resolve({
+          id: slug === 'windows' ? 'cat-1' : 'cat-2',
+          name: slug === 'windows' ? 'Windows' : 'Office',
+          slug,
+          code: slug === 'windows' ? 'OS' : 'OFF',
+          display_order: 0,
+          is_active: true,
+          products: mockCatalog.filter((p) => p.category.slug === slug),
+        }),
+      ),
+      getProductById: vi.fn().mockImplementation((id) =>
+        Promise.resolve(mockCatalog.find((p) => p.id === id) || mockCatalog[0]),
+      ),
+      getProductBySlug: vi.fn().mockImplementation((slug) =>
+        Promise.resolve(mockCatalog.find((p) => p.slug === slug) || mockCatalog[0]),
+      ),
+    } as unknown as ProductService)
+  })
+
   it('renders correctly in English (LTR)', () => {
     renderWithProviders(<ProductCard product={mockProduct} />, { lang: 'en' })
 

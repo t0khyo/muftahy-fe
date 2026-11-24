@@ -21,7 +21,7 @@ export function DetailBuyBox({
   isJustAdded,
   lang,
 }: DetailBuyBoxProps) {
-  const { t } = useTranslation(['detail', 'products', 'common'])
+  const { t, i18n } = useTranslation(['detail', 'products', 'common'])
   const navigate = useNavigate()
 
   const isInStock = product.stock_status === 'in_stock'
@@ -62,10 +62,15 @@ export function DetailBuyBox({
       {/* 1. Category & Variant Badges */}
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary" className="h-7 px-3 text-xs font-semibold uppercase">
-          {t(`categories.${product.category}`, {
-            ns: 'products',
-            defaultValue: product.category,
-          })}
+          {(() => {
+            const catObj = typeof product.category === 'object' && product.category !== null ? product.category : null
+            const catSlug = catObj ? catObj.slug : (typeof product.category === 'string' ? product.category : '')
+            const catName = catObj ? catObj.name : catSlug
+            const isAr = lang === 'ar' || i18n.language === 'ar'
+            if (isAr && (catSlug.toLowerCase() === 'windows' || catName.toLowerCase() === 'windows')) return 'ويندوز'
+            if (isAr && (catSlug.toLowerCase() === 'office' || catName.toLowerCase() === 'office')) return 'أوفيس'
+            return catName || ''
+          })()}
         </Badge>
         {product.variant && (
           <Badge variant="outline" className="h-7 px-3 text-xs font-semibold uppercase">
@@ -74,6 +79,17 @@ export function DetailBuyBox({
               defaultValue: product.variant,
             })}
           </Badge>
+        )}
+        {product.sku && (
+          <span
+            dir="ltr"
+            className="inline-flex items-center text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border border-border/40"
+          >
+            <span className="text-[10px] text-muted-foreground/70 me-1 uppercase font-sans">
+              {t('skuLabel', { defaultValue: 'SKU' })}:
+            </span>
+            {product.sku}
+          </span>
         )}
       </div>
 

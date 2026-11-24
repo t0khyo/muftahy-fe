@@ -25,6 +25,7 @@ shadcn/ui components built on Base UI primitives, configured with the `base-nova
 - `[skeleton.tsx:Skeleton]` `Skeleton` — animated loading placeholder
 - `[switch.tsx:Switch]` `Switch` — accessible boolean toggle switch (Base UI `Switch`)
 - `[table.tsx:Table]` `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption` — data table components
+- `[sonner.tsx:Toaster]` `Toaster`, `toast` — toast notifications (Sonner) with direction awareness and theme support
 
 ## Invariants
 

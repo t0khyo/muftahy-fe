@@ -14,7 +14,7 @@ export interface BrowseSectionProps {
 }
 
 interface CategoryCardItem {
-  id: 'windows' | 'office'
+  id: string
   nameKey: string
   defaultName: string
   defaultDesc: string
@@ -28,7 +28,7 @@ const CATEGORIES: CategoryCardItem[] = [
     nameKey: 'categories.windows',
     defaultName: 'Windows',
     defaultDesc: 'Genuine Windows 11 & Windows 10 Pro retail and OEM keys',
-    href: '/:lang/products?category=windows',
+    href: '/:lang/categories/windows',
     icon: Grid2x2,
   },
   {
@@ -36,7 +36,7 @@ const CATEGORIES: CategoryCardItem[] = [
     nameKey: 'categories.office',
     defaultName: 'Office',
     defaultDesc: 'Office 2021 & 2019 Professional Plus lifetime licenses',
-    href: '/:lang/products?category=office',
+    href: '/:lang/categories/office',
     icon: FileSpreadsheet,
   },
 ]

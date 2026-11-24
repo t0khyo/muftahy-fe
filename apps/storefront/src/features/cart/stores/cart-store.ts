@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartService } from '@workspace/api/services/cart-service'
-import type { ProductCategory, ProductVariant } from '@workspace/domain/schemas/product'
+import type { ProductVariant } from '@workspace/domain/schemas/product'
 
 export interface CartItem {
   id: string
@@ -11,7 +11,7 @@ export interface CartItem {
   is_preorder: boolean
   unit_price: number
   unit_price_egp?: string
-  category?: ProductCategory
+  category?: string
   variant?: ProductVariant
   coverImage?: string
   slug?: string
@@ -30,7 +30,7 @@ export interface CartInputItem {
   unit_price_egp?: string | number
   priceMinor?: number
   currency?: string
-  category?: ProductCategory
+  category?: string
   variant?: ProductVariant
   coverImage?: string
   slug?: string

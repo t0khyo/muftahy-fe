@@ -39,7 +39,7 @@ export interface HeroSectionConfig extends BaseSectionConfig {
 }
 
 export interface BrowseCategoryTile {
-  id: 'windows' | 'office'
+  id: string
   labelKey: string
   descKey: string
   href: string
@@ -79,7 +79,7 @@ export interface PlatformStripSectionConfig extends BaseSectionConfig {
 export interface ProductRailSectionConfig extends BaseSectionConfig {
   type: 'product-rail'
   collection?: string
-  category?: 'windows' | 'office'
+  category?: string
   titleKey: string
   viewAllHref: string
 }
@@ -166,7 +166,7 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       enabled: true,
       category: 'windows',
       titleKey: 'bestSellers',
-      viewAllHref: '/:lang/products?category=windows',
+      viewAllHref: '/:lang/categories/windows',
     },
     {
       id: 'bundles',

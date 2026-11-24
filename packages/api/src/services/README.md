@@ -8,12 +8,23 @@ Defines the core service TypeScript interfaces — the primary architectural sea
 
 ### ProductService (`product-service.ts`)
 - `[product-service.ts:ProductService]` `interface ProductService`
-  - `[product-service.ts:ProductService.list]` `list(filter?: ProductListFilter): Promise<ProductListResult>` — returns paginated product result matching criteria
-  - `[product-service.ts:ProductService.listByCollection]` `listByCollection(collection: ProductCollection): Promise<Product[]>` — returns products for a named collection ('best-sellers', 'deals', 'new')
-  - `[product-service.ts:ProductService.getFilterCounts]` `getFilterCounts(filter?: ProductListFilter): Promise<ProductFilterCounts>` — returns aggregated facet counts for filters
-  - `[product-service.ts:ProductService.getBySlug]` `getBySlug(slug: string): Promise<Product | null>` — lookup by URL slug; returns `null` when not found
-  - `[product-service.ts:ProductService.getById]` `getById(id: string): Promise<Product | null>` — lookup by ID; returns `null` when not found
-  - `[product-service.ts:ProductService.getSampleLicenseKey]` `getSampleLicenseKey(productId: string): Promise<string>` — returns an obfuscated mock key string
+  - `getProducts(params?: ProductFilterParams): Promise<ProductResponse[]>` — queries catalog products optionally filtered by category slug and `only_active`
+  - `getPublicCategories(): Promise<CategoryResponse[]>` — queries active public categories sorted by display order
+  - `getCategoryBySlug(slug: string): Promise<CategoryDetailResponse>` — queries category details and active products by URL slug
+  - `getProductBySlug(slug: string): Promise<ProductResponse>` — queries a single product by SEO slug
+  - `getAdminCategories(): Promise<CategoryResponse[]>` — admin listing of all categories including inactive ones
+  - `createCategory(data: CategoryCreateInput): Promise<CategoryResponse>` — creates a new catalog category
+  - `updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryResponse>` — updates category fields
+  - `deleteCategory(id: string): Promise<{ message: string }>` — deletes an empty category
+  - `getProductById(id: string): Promise<ProductResponse>` — queries product by UUID
+  - `createProduct(data: ProductCreateInput): Promise<ProductResponse>` — creates a new product
+  - `updateProduct(id: string, data: ProductUpdateInput): Promise<ProductResponse>` — updates product details
+  - `deleteProduct(id: string): Promise<{ message: string }>` — deletes a product
+  - `uploadProductImage(productId: string, input: ProductImageUploadInput): Promise<ProductImageResponse>` — uploads a product media image
+  - `deleteProductImage(productId: string, imageId: string): Promise<{ message: string }>` — deletes an uploaded image
+  - `setPrimaryProductImage(productId: string, imageId: string): Promise<ProductImageResponse>` — sets an image as primary
+  - `reorderProductImages(productId: string, data: ImageReorderRequest): Promise<ProductImageResponse[]>` — reorders product images
+  - `getSampleLicenseKey(productId: string): Promise<string>` — returns an obfuscated mock key string
 
 ### AuthService (`auth-service.ts`)
 - `[auth-service.ts:AuthService]` `interface AuthService`

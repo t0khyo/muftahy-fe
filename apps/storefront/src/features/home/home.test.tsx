@@ -5,11 +5,120 @@ import { QueryClient, QueryClientProvider, type UseQueryResult } from '@tanstack
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
+import type { ProductService } from '@workspace/api/services/product-service'
 import { ThemeProvider } from '../../app/theme-provider'
 import { HomePage } from './components/home-page'
 import { ProductRail } from '../products/components/product-rail'
 import { DEFAULT_HOME_CONFIG, type HomeConfig } from './home.config'
 import * as useProductsModule from '../products/hooks/use-products'
+import * as apiFactory from '@workspace/api/factory'
+
+const mockProducts: ProductResponse[] = [
+  {
+    id: '00000000-0000-4000-8000-000000000001',
+    name: 'Windows 11 Professional',
+    slug: 'windows-11-professional',
+    sku: 'OS-WIN11-PRO-RET',
+    category: {
+      id: 'cat-1',
+      name: 'Windows',
+      slug: 'windows',
+      code: 'OS',
+      display_order: 0,
+      is_active: true,
+      product_count: 2,
+    },
+    variant: 'retail',
+    base_price: '499.00',
+    sale_price: '349.00',
+    effective_price: '349.00',
+    discount_percentage: 30,
+    stock_status: 'in_stock',
+    available_count: 14,
+    preorder_enabled: true,
+    description: 'Genuine Microsoft Windows 11 Pro digital retail license key.',
+    is_active: true,
+    images: [],
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000002',
+    name: 'Office 2021 Professional Plus',
+    slug: 'office-2021-professional-plus',
+    sku: 'OFF-OFF21-PRO-RET',
+    category: {
+      id: 'cat-2',
+      name: 'Office',
+      slug: 'office',
+      code: 'OFF',
+      display_order: 1,
+      is_active: true,
+      product_count: 1,
+    },
+    variant: 'retail',
+    base_price: '599.00',
+    sale_price: '499.00',
+    effective_price: '499.00',
+    discount_percentage: 17,
+    stock_status: 'in_stock',
+    available_count: 8,
+    preorder_enabled: true,
+    description: 'Word, Excel, PowerPoint, Outlook.',
+    is_active: true,
+    images: [],
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000003',
+    name: 'Windows 11 Home',
+    slug: 'windows-11-home',
+    sku: 'OS-WIN11-HOM-OEM',
+    category: {
+      id: 'cat-1',
+      name: 'Windows',
+      slug: 'windows',
+      code: 'OS',
+      display_order: 0,
+      is_active: true,
+      product_count: 2,
+    },
+    variant: 'oem',
+    base_price: '249.00',
+    sale_price: null,
+    effective_price: '249.00',
+    discount_percentage: null,
+    stock_status: 'in_stock',
+    available_count: 5,
+    preorder_enabled: true,
+    description: 'OEM License for new PC.',
+    is_active: true,
+    images: [],
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000004',
+    name: 'Windows 10 Professional',
+    slug: 'windows-10-professional',
+    sku: 'OS-WIN10-PRO-RET',
+    category: {
+      id: 'cat-1',
+      name: 'Windows',
+      slug: 'windows',
+      code: 'OS',
+      display_order: 0,
+      is_active: true,
+      product_count: 2,
+    },
+    variant: 'retail',
+    base_price: '299.00',
+    sale_price: null,
+    effective_price: '299.00',
+    discount_percentage: null,
+    stock_status: 'in_stock',
+    available_count: 20,
+    preorder_enabled: true,
+    description: 'Windows 10 Pro digital license.',
+    is_active: true,
+    images: [],
+  },
+]
 
 function renderHomePage(
   initialRoute = '/en',
@@ -56,6 +165,30 @@ function renderHomePage(
 describe('Home Page Skeleton', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
+      getProducts: vi.fn().mockResolvedValue(mockProducts),
+      getPublicCategories: vi.fn().mockResolvedValue([
+        { id: 'cat-1', name: 'Windows', slug: 'windows', code: 'OS', display_order: 0, is_active: true, product_count: 2 },
+        { id: 'cat-2', name: 'Office', slug: 'office', code: 'OFF', display_order: 1, is_active: true, product_count: 1 },
+      ]),
+      getCategoryBySlug: vi.fn().mockImplementation((slug) =>
+        Promise.resolve({
+          id: slug === 'windows' ? 'cat-1' : 'cat-2',
+          name: slug === 'windows' ? 'Windows' : 'Office',
+          slug,
+          code: slug === 'windows' ? 'OS' : 'OFF',
+          display_order: 0,
+          is_active: true,
+          products: mockProducts.filter((p) => p.category.slug === slug),
+        }),
+      ),
+      getProductById: vi.fn().mockImplementation((id) =>
+        Promise.resolve(mockProducts.find((p) => p.id === id) || mockProducts[0]),
+      ),
+      getProductBySlug: vi.fn().mockImplementation((slug) =>
+        Promise.resolve(mockProducts.find((p) => p.slug === slug) || mockProducts[0]),
+      ),
+    } as unknown as ProductService)
   })
 
   it('renders sections in exact config order and contains exactly one h1', async () => {
@@ -146,10 +279,10 @@ describe('Home Page Skeleton', () => {
     // 2 Category tiles: Windows and Office
     const categoryLinks = within(browseSection)
       .getAllByRole('link')
-      .filter((l) => l.getAttribute('href')?.includes('category='))
+      .filter((l) => l.getAttribute('href')?.includes('categories/') || l.getAttribute('href')?.includes('category='))
     expect(categoryLinks.map((l) => l.getAttribute('href'))).toEqual([
-      '/en/products?category=windows',
-      '/en/products?category=office',
+      '/en/categories/windows',
+      '/en/categories/office',
     ])
   })
 

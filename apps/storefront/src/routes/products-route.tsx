@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { PackageOpen } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
-import type { ProductCategory } from '@workspace/domain/schemas/product'
 import { Breadcrumbs, type BreadcrumbItem } from '../components/breadcrumbs'
-import { useProducts } from '../features/products/hooks/use-products'
+import { useProducts, usePublicCategories } from '../features/products/hooks/use-products'
 import { calculateFilterCounts } from '../features/products/hooks/use-filter-counts'
 import { useProductFilters } from '../features/products/hooks/use-product-filters'
 import { CategoryRow } from '../features/products/components/category-row'
@@ -43,6 +42,9 @@ export function ProductsRoute() {
     isFetching,
   } = useProducts(queryFilter)
 
+  // Fetch public categories
+  const { data: categories = [] } = usePublicCategories()
+
   // Calculate facet counts directly from catalog
   const counts = React.useMemo(() => calculateFilterCounts(products), [products])
 
@@ -50,13 +52,20 @@ export function ProductsRoute() {
 
   const selectedCategory = state.category
 
-  const categoryLabels: Record<ProductCategory, string> = React.useMemo(
+  const currentCategory = React.useMemo(() => {
+    if (!selectedCategory) return null
+    return categories.find((c) => c.slug === selectedCategory) || null
+  }, [categories, selectedCategory])
+
+  const categoryLabels: Record<string, string> = React.useMemo(
     () => ({
       windows: t('categories.windows', { ns: 'products', defaultValue: 'Windows' }),
       office: t('categories.office', { ns: 'products', defaultValue: 'Office' }),
     }),
     [t],
   )
+
+  const activeCategoryLabel = currentCategory?.name || (selectedCategory ? (categoryLabels[selectedCategory] || selectedCategory) : '')
 
   const breadcrumbItems: BreadcrumbItem[] = React.useMemo(() => {
     const items: BreadcrumbItem[] = [
@@ -73,13 +82,13 @@ export function ProductsRoute() {
 
     if (selectedCategory) {
       items.push({
-        label: categoryLabels[selectedCategory] || selectedCategory,
+        label: activeCategoryLabel,
         current: true,
       })
     }
 
     return items
-  }, [t, currentLang, selectedCategory, categoryLabels])
+  }, [t, currentLang, selectedCategory, activeCategoryLabel])
 
   const { heading, subline } = React.useMemo(() => {
     if (queryFilter.search) {
@@ -92,9 +101,16 @@ export function ProductsRoute() {
       }
     }
 
+    if (currentCategory) {
+      return {
+        heading: currentCategory.name,
+        subline: currentCategory.description || t('subtitle', { ns: 'products' }),
+      }
+    }
+
     if (selectedCategory) {
       return {
-        heading: categoryLabels[selectedCategory] || selectedCategory,
+        heading: activeCategoryLabel,
         subline: t('subtitle', { ns: 'products' }),
       }
     }
@@ -106,7 +122,7 @@ export function ProductsRoute() {
         defaultValue: 'Instant digital delivery for genuine Microsoft Windows and Office licenses',
       }),
     }
-  }, [queryFilter.search, selectedCategory, total, categoryLabels, t])
+  }, [queryFilter.search, currentCategory, selectedCategory, activeCategoryLabel, total, t])
 
   return (
     <div className="site-container py-6 lg:py-10">
@@ -151,6 +167,7 @@ export function ProductsRoute() {
       <div className="flex items-start gap-8">
         {/* Desktop Sidebar */}
         <FilterSidebar
+          categories={categories}
           state={state}
           counts={counts}
           activeFiltersCount={activeFiltersCount}
@@ -249,6 +266,7 @@ export function ProductsRoute() {
 
       {/* Mobile Filter Sheet */}
       <FilterSheet
+        categories={categories}
         open={isMobileFilterOpen}
         onOpenChange={setIsMobileFilterOpen}
         state={state}

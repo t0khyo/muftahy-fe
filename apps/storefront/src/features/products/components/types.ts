@@ -1,5 +1,8 @@
 export type {
+  CategoryResponse,
+  CategoryDetailResponse,
   ProductCategory,
+  ProductImageResponse,
   ProductVariant,
   StockStatus,
   ProductResponse,

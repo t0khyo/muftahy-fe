@@ -2,12 +2,15 @@ import * as React from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { isSupportedLanguage, type SupportedLanguage } from '@workspace/i18n/config'
+import { Toaster } from '@workspace/ui/components/sonner'
+import { useTheme } from './theme-context'
 import { SiteFooter } from '../components/site-footer/site-footer'
 import { SiteHeader } from '../components/site-header/site-header'
 
 export function RootLayout() {
   const { lang } = useParams<{ lang: string }>()
   const { i18n } = useTranslation()
+  const { theme } = useTheme()
 
   const isValidLang = lang && isSupportedLanguage(lang)
   const currentLang: SupportedLanguage = isValidLang ? (lang as SupportedLanguage) : 'en'
@@ -39,6 +42,11 @@ export function RootLayout() {
         <Outlet />
       </main>
       <SiteFooter />
+      <Toaster
+        theme={theme}
+        dir={currentLang === 'ar' ? 'rtl' : 'ltr'}
+        position={currentLang === 'ar' ? 'bottom-left' : 'bottom-right'}
+      />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useCart, useAddToCart } from '../../cart/hooks/use-cart'
 import { useProduct } from '../hooks/use-products'
-import { resolveProductImage } from '../utils/asset-resolver'
+import { resolveProductImage, getProductMainImageUrl } from '../utils/asset-resolver'
 import { DetailBreadcrumb } from '../components/detail/detail-breadcrumb'
 import { DetailMedia } from '../components/detail/detail-media'
 import { DetailBuyBox } from '../components/detail/detail-buy-box'
@@ -15,10 +15,11 @@ import { DetailNotFound } from '../components/detail/detail-not-found'
 import { DetailError } from '../components/detail/detail-error'
 
 export function ProductDetailPage() {
-  const { lang = 'ar', id = '' } = useParams<{ lang: string; id: string }>()
+  const { lang = 'ar', slug, id } = useParams<{ lang: string; slug?: string; id?: string }>()
+  const productIdentifier = slug || id || ''
   const { t } = useTranslation(['detail', 'common'])
 
-  const { data: product, isLoading, isError, refetch } = useProduct(id)
+  const { data: product, isLoading, isError, refetch } = useProduct(productIdentifier)
   const cart = useCart()
   const { mutate: addToCart } = useAddToCart()
 
@@ -35,7 +36,7 @@ export function ProductDetailPage() {
   }, [product, cart.items])
 
   const coverImageUrl = product
-    ? resolveProductImage(product.category, product.variant)
+    ? (getProductMainImageUrl(product) || resolveProductImage(product.category?.slug, product.variant))
     : ''
 
   const handleAddToCart = React.useCallback(() => {
@@ -49,6 +50,10 @@ export function ProductDetailPage() {
       unitPrice: Number(product.effective_price),
       isPreorder,
       quantity: 1,
+      slug: product.slug,
+      coverImage: getProductMainImageUrl(product) || undefined,
+      category: product.category?.slug,
+      variant: product.variant,
     })
 
     setIsJustAdded(true)
@@ -132,6 +137,7 @@ export function ProductDetailPage() {
         <div className="lg:col-span-7 w-full">
           <DetailMedia
             coverImage={coverImageUrl}
+            images={product.images}
             productTitle={product.name}
             lang={lang}
           />

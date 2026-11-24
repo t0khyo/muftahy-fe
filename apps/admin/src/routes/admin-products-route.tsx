@@ -17,6 +17,7 @@ import {
 } from '../features/products/hooks/use-admin-products'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { formatMoney } from '@workspace/domain/formatters/money'
+import { getProductMainImageUrl } from '@workspace/api/factory'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@workspace/ui/components/input-group'
@@ -37,12 +38,12 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
-import { ProductFormDialog } from '../features/products/components/product-form-dialog'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
 import { DataTableRowActions } from '../components/data-table-row-actions'
 import { useDataTableSort } from '../hooks/use-data-table-sort'
+import { useAdminCategories } from '../features/categories/hooks/use-admin-categories'
 
 export function AdminProductsRoute() {
   const { lang = 'en' } = useParams<{ lang: string }>()
@@ -50,10 +51,9 @@ export function AdminProductsRoute() {
   const { t } = useTranslation(['admin'])
 
   const [searchQuery, setSearchQuery] = React.useState('')
-  const [formDialogOpen, setFormDialogOpen] = React.useState(false)
-  const [editingProduct, setEditingProduct] = React.useState<ProductResponse | null>(null)
 
   const { data: products, isLoading } = useAdminProducts()
+  const { data: categories = [] } = useAdminCategories()
   const statusMutation = useUpdateProductStatus()
 
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all')
@@ -61,14 +61,15 @@ export function AdminProductsRoute() {
   const filteredProducts = React.useMemo(() => {
     let items = products || []
     if (selectedCategory !== 'all') {
-      items = items.filter((p) => p.category?.toLowerCase() === selectedCategory.toLowerCase())
+      items = items.filter((p) => p.category?.slug === selectedCategory || p.category?.id === selectedCategory)
     }
     if (!searchQuery.trim()) return items
     const query = searchQuery.toLowerCase().trim()
     return items.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
-        (p.category && p.category.toLowerCase().includes(query))
+        (p.sku && p.sku.toLowerCase().includes(query)) ||
+        (p.category?.name && p.category.name.toLowerCase().includes(query))
     )
   }, [products, searchQuery, selectedCategory])
 
@@ -82,13 +83,11 @@ export function AdminProductsRoute() {
   )
 
   const handleOpenCreate = () => {
-    setEditingProduct(null)
-    setFormDialogOpen(true)
+    navigate(`/${lang}/products/new`)
   }
 
   const handleOpenEdit = (product: ProductResponse) => {
-    setEditingProduct(product)
-    setFormDialogOpen(true)
+    navigate(`/${lang}/products/${product.id}`)
   }
 
   const handleToggleStatus = (id: string, currentStatus: boolean) => {
@@ -132,9 +131,12 @@ export function AdminProductsRoute() {
             }}
           >
             <TabsList className="h-8">
-              {['all', 'windows', 'office'].map((cat) => (
-                <TabsTrigger key={cat} value={cat} className="text-xs capitalize">
-                  {cat === 'all' ? t('admin:common.all', 'All') : cat}
+              <TabsTrigger value="all" className="text-xs">
+                {t('admin:common.all', 'All')}
+              </TabsTrigger>
+              {categories.map((cat) => (
+                <TabsTrigger key={cat.id} value={cat.slug} className="text-xs">
+                  {cat.name}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -237,23 +239,42 @@ export function AdminProductsRoute() {
                       <TableRow key={product.id} className="border-border/40 hover:bg-muted/20 transition-colors">
                         <TableCell className="ps-4 pe-3 py-3.5 text-start">
                           <div className="flex items-center gap-3">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary border border-primary/10 shrink-0">
-                              <PackageCheck className="size-4.5" />
-                            </div>
+                            {(() => {
+                              const coverUrl = getProductMainImageUrl(product)
+                              return coverUrl ? (
+                                <img
+                                  src={coverUrl}
+                                  alt=""
+                                  className="size-9 rounded-lg object-cover border border-border/40 shrink-0 select-none"
+                                />
+                              ) : (
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary border border-primary/10 shrink-0">
+                                  <PackageCheck className="size-4.5" />
+                                </div>
+                              )
+                            })()}
                             <div className="grid gap-0.5 min-w-0">
                               <span className="font-semibold text-sm text-foreground truncate">
                                 {product.name}
                               </span>
-                              <span className="font-mono text-[10px] text-muted-foreground">
-                                {product.id.slice(0, 8)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                {product.sku ? (
+                                  <span dir="ltr" className="font-mono text-[10px] text-muted-foreground">
+                                    {product.sku}
+                                  </span>
+                                ) : (
+                                  <span className="font-mono text-[10px] text-muted-foreground">
+                                    {product.id.slice(0, 8)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="px-3 py-3.5 text-start">
                           <div className="flex flex-wrap gap-1.5 items-center">
-                            <Badge variant="outline" className="text-[10px] font-mono capitalize border-border/60 bg-muted/40">
-                              {product.category}
+                            <Badge variant="outline" className="text-[10px] font-mono border-border/60 bg-muted/40">
+                              {product.category?.name || ''}
                             </Badge>
                             {product.variant && (
                               <Badge variant="secondary" className="text-[9px] font-mono uppercase font-bold tracking-wider">
@@ -337,13 +358,6 @@ export function AdminProductsRoute() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Product Form Dialog */}
-      <ProductFormDialog
-        product={editingProduct}
-        open={formDialogOpen}
-        onOpenChange={setFormDialogOpen}
-      />
     </div>
   )
 }

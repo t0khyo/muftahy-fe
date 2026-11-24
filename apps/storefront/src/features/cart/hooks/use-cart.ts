@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCartService } from '@workspace/api/factory'
 import type { CartCheckoutRequest } from '@workspace/domain/schemas/cart'
-import type { ProductCategory, ProductVariant } from '@workspace/domain/schemas/product'
+import type { ProductVariant } from '@workspace/domain/schemas/product'
 import { useAuth } from '../../auth/hooks/use-auth'
 import { useCartStore } from '../stores/cart-store'
 
@@ -15,9 +15,10 @@ export interface UnifiedCartItem {
   quantity: number
   is_preorder: boolean
   unit_price: number
-  category?: ProductCategory
+  category?: string
   variant?: ProductVariant | null
   coverImage?: string
+  slug?: string
   name?: string | { en: string; ar: string }
 }
 
@@ -77,6 +78,7 @@ export function useCart(): UnifiedCart {
       category: i.category,
       variant: i.variant,
       coverImage: i.coverImage,
+      slug: i.slug,
       name: i.name,
     })),
     subtotal_egp: subtotal,
@@ -99,6 +101,20 @@ export function useAddToCart() {
       productName,
       unitPrice,
       isPreorder = false,
+      slug,
+      coverImage,
+      category,
+      variant,
+    }: {
+      productId: string
+      quantity?: number
+      productName?: string
+      unitPrice?: number
+      isPreorder?: boolean
+      slug?: string
+      coverImage?: string
+      category?: string
+      variant?: ProductVariant | null
     }) => {
       if (!isAuthenticated) {
         addGuestItem({
@@ -107,6 +123,10 @@ export function useAddToCart() {
           quantity,
           unit_price: unitPrice,
           is_preorder: isPreorder,
+          slug,
+          coverImage,
+          category,
+          variant: variant ?? undefined,
         })
       }
     },
@@ -119,6 +139,10 @@ export function useAddToCart() {
       productName?: string
       unitPrice?: number
       isPreorder?: boolean
+      slug?: string
+      coverImage?: string
+      category?: string
+      variant?: ProductVariant | null
     }) => {
       if (isAuthenticated) {
         return cartService.addItem(productId, quantity)

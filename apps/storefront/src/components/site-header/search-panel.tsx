@@ -229,7 +229,7 @@ export function SearchPanel({
                       {liveResults.map((prod) => (
                         <li key={prod.id}>
                           <Link
-                            to={`/${currentLang}/products/${prod.id}`}
+                            to={`/${currentLang}/products/${prod.slug || prod.id}`}
                             onClick={handleLinkClick}
                             className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-secondary/60 text-sm text-foreground/90 hover:text-foreground transition-colors group"
                           >

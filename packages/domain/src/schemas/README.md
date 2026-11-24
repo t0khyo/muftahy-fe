@@ -7,22 +7,18 @@ Zod schemas and TypeScript types for all core domain objects. This is the single
 ## Interface
 
 ### Product & Catalog Schemas (`product.ts`)
-- `[product.ts:supportedCurrencySchema]` / `[product.ts:MoneyValue]` — enum of supported ISO 4217 currency codes; `[product.ts:moneySchema]` validates `amountMinor` (non-negative integer) and `currency`
-- `[product.ts:productCategorySchema]` / `[product.ts:ProductCategory]` — `'games' | 'software' | 'subscriptions' | 'gift-cards'`
-- `[product.ts:productPlatformSchema]` / `[product.ts:ProductPlatform]` — `'steam' | 'playstation' | 'xbox' | 'nintendo' | 'pc' | 'microsoft'`
-- `[product.ts:productRegionSchema]` / `[product.ts:ProductRegion]` — `'global' | 'gcc' | 'eg' | 'mena' | 'us' | 'eu'`
-- `[product.ts:localizedStringSchema]` / `[product.ts:LocalizedString]` — `{ en: string; ar: string }` where both are non-empty strings
-- `[product.ts:productPlanSchema]` / `[product.ts:ProductPlan]` — product edition/tier schema (`id`, `slug`, `title`, `price`, `stock`, `deliveryType`)
-- `[product.ts:productSpecsSchema]` / `[product.ts:ProductSpecs]` — technical specifications (developer, publisher, releaseDate, languages, requirements)
-- `[product.ts:productFaqItemSchema]` / `[product.ts:ProductFaqItem]` — FAQ item with bilingual question and answer
-- `[product.ts:productMediaItemSchema]` / `[product.ts:ProductMediaItem]` — media assets (type 'image' | 'video', url, optional alt/thumbnail)
-- `[product.ts:productSchema]` / `[product.ts:Product]` — full product entity schema including bilingual fields, plans, specs, FAQs, and tags
-- `[product.ts:getSummaryPlan]` `(product: Product): ProductPlan` — helper resolving the primary active or default plan for display
-- `[product.ts:productCollectionSchema]` / `[product.ts:ProductCollection]` — `'best-sellers' | 'deals' | 'new'`
-- `[product.ts:productSortOptionSchema]` / `[product.ts:ProductSortOption]` — `'featured' | 'best-selling' | 'price-asc' | 'price-desc' | 'newest'`
-- `[product.ts:productListFilterSchema]` / `[product.ts:ProductListFilter]` — filter bag for catalog filtering and pagination
-- `[product.ts:ProductListResult]` — paginated response envelope (`items`, `total`, `page`, `pageSize`, `hasMore`)
-- `[product.ts:FilterOptionCount]` / `[product.ts:ProductFilterCounts]` — faceted search filter count interfaces
+- `[product.ts:categoryResponseSchema]` / `[product.ts:CategoryResponse]` / `[product.ts:Category]` — relational category entity (`id`, `name`, `code`, `slug`, `description`, `display_order`, `is_active`, `product_count`)
+- `[product.ts:categoryCreateSchema]` / `[product.ts:CategoryCreateInput]` — category creation payload (`name`, `code`, `slug?`, `description?`, `display_order?`, `is_active?`)
+- `[product.ts:categoryUpdateSchema]` / `[product.ts:CategoryUpdateInput]` — category partial update payload
+- `[product.ts:categoryDetailResponseSchema]` / `[product.ts:CategoryDetailResponse]` — category response extended with `products: ProductResponse[]`
+- `[product.ts:productImageResponseSchema]` / `[product.ts:ProductImageResponse]` / `[product.ts:ProductImage]` — product image entity (`id`, `file_path`, `alt_text`, `is_primary`, `display_order`, `file_size`, `mime_type`, `width`, `height`, `url`)
+- `[product.ts:imageReorderRequestSchema]` / `[product.ts:ImageReorderRequest]` — batch image display order update payload (`items: [{ image_id, display_order }]`)
+- `[product.ts:productResponseSchema]` / `[product.ts:ProductResponse]` / `[product.ts:Product]` — product entity (`id`, `name`, `category: CategoryResponse`, `sku`, `slug`, `variant`, `base_price`, `sale_price`, `effective_price`, `discount_percentage`, `stock_status`, `available_count`, `preorder_enabled`, `description`, `is_active`, `primary_image_url`, `images`)
+- `[product.ts:productCreateSchema]` / `[product.ts:ProductCreateInput]` — admin product creation payload (`name`, `category_id`, `sku`, `slug?`, `variant?`, `base_price`, `sale_price?`, `preorder_enabled?`, `is_active?`, `description?`)
+- `[product.ts:productUpdateSchema]` / `[product.ts:ProductUpdateInput]` — admin product update payload
+- `[product.ts:isUuid]` `(value: string): boolean` — checks if string is a valid UUID
+- `[product.ts:slugify]` `(text: string, maxLength?: number): string` — derives URL-safe ASCII slug (empty string if no ASCII alphanumerics)
+- `[product.ts:validateSkuForCategory]` `(sku: string, categoryCode: string): boolean` — verifies 4-segment uppercase SKU format and category code prefix match
 
 ### Authentication & Profile Schemas (`auth.ts`)
 - `[auth.ts:loginRequestSchema]` / `[auth.ts:LoginRequest]` — `{ email, password }` credential submission schema

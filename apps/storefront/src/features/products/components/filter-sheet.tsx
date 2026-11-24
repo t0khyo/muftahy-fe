@@ -17,18 +17,19 @@ import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import { X } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
-import type { ProductCategory, StockStatus } from '@workspace/domain/schemas/product'
+import type { CategoryResponse, StockStatus } from '@workspace/domain/schemas/product'
 import type { ProductFiltersState } from '../hooks/use-product-filters'
 import type { FilterCounts } from '../hooks/use-filter-counts'
 
 export interface FilterSheetProps {
+  categories?: CategoryResponse[]
   open: boolean
   onOpenChange: (open: boolean) => void
   state: ProductFiltersState
   counts?: FilterCounts
   totalResults: number
   activeFiltersCount: number
-  onSetCategory: (cat?: ProductCategory) => void
+  onSetCategory: (cat?: string) => void
   onSetVariant: (variant?: 'retail' | 'oem') => void
   onSetStockStatus: (status?: StockStatus) => void
   onSetInStockOnly: (val: boolean) => void
@@ -36,6 +37,7 @@ export interface FilterSheetProps {
 }
 
 export function FilterSheet({
+  categories,
   open,
   onOpenChange,
   state,
@@ -123,32 +125,56 @@ export function FilterSheet({
                   <span>{t('all', { ns: 'common', defaultValue: 'All' })}</span>
                   {counts && <span className="text-xs">{counts.total}</span>}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => onSetCategory('windows')}
-                  className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
-                    state.category === 'windows'
-                      ? 'bg-secondary font-medium text-foreground'
-                      : 'text-muted-foreground hover:bg-secondary/50',
-                  )}
-                >
-                  <span>{t('categories.windows', { defaultValue: 'Windows' })}</span>
-                  {counts && <span className="text-xs">{counts.windowsCount}</span>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSetCategory('office')}
-                  className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
-                    state.category === 'office'
-                  ? 'bg-secondary font-medium text-foreground'
-                  : 'text-muted-foreground hover:bg-secondary/50',
-                  )}
-                >
-                  <span>{t('categories.office', { defaultValue: 'Office' })}</span>
-                  {counts && <span className="text-xs">{counts.officeCount}</span>}
-                </button>
+                {categories && categories.length > 0 ? (
+                  categories.map((cat) => {
+                    const count = counts?.byCategorySlug?.[cat.slug] ?? cat.product_count
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => onSetCategory(cat.slug)}
+                        className={cn(
+                          'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                          state.category === cat.slug
+                            ? 'bg-secondary font-medium text-foreground'
+                            : 'text-muted-foreground hover:bg-secondary/50',
+                        )}
+                      >
+                        <span>{cat.name}</span>
+                        {typeof count === 'number' && <span className="text-xs">{count}</span>}
+                      </button>
+                    )
+                  })
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onSetCategory('windows')}
+                      className={cn(
+                        'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                        state.category === 'windows'
+                          ? 'bg-secondary font-medium text-foreground'
+                          : 'text-muted-foreground hover:bg-secondary/50',
+                      )}
+                    >
+                      <span>{t('categories.windows', { defaultValue: 'Windows' })}</span>
+                      {counts && <span className="text-xs">{counts.windowsCount}</span>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onSetCategory('office')}
+                      className={cn(
+                        'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-start transition-colors',
+                        state.category === 'office'
+                          ? 'bg-secondary font-medium text-foreground'
+                          : 'text-muted-foreground hover:bg-secondary/50',
+                      )}
+                    >
+                      <span>{t('categories.office', { defaultValue: 'Office' })}</span>
+                      {counts && <span className="text-xs">{counts.officeCount}</span>}
+                    </button>
+                  </>
+                )}
               </AccordionContent>
             </AccordionItem>
 

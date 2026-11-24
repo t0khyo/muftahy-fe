@@ -7,7 +7,7 @@ import {
   X,
 } from 'lucide-react'
 import { formatMoney } from '@workspace/domain/formatters/money'
-import { resolveProductImage } from '../../features/products/utils/asset-resolver'
+import { resolveProductImage, resolveStorageUrl } from '../../features/products/utils/asset-resolver'
 import { Button } from '@workspace/ui/components/button'
 import {
   Empty,
@@ -310,6 +310,7 @@ export function CartButton({
                   { currency: 'EGP', locale: currentLang },
                 )
                 const coverImage =
+                  resolveStorageUrl(item.coverImage) ||
                   item.coverImage ||
                   resolveProductImage(item.category ?? 'windows', item.variant ?? null)
 
@@ -338,7 +339,7 @@ export function CartButton({
                     <div className="flex-1 min-w-0 flex flex-col justify-between text-start">
                       <div className="space-y-0.5">
                         <Link
-                          to={`/${currentLang}/products/${item.product_id}`}
+                          to={`/${currentLang}/products/${item.slug || item.product_id}`}
                           onClick={handleClose}
                           className="text-[15px] font-semibold text-foreground line-clamp-2 leading-snug hover:text-primary transition-colors"
                         >

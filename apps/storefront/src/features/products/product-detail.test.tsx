@@ -13,7 +13,17 @@ import '../../test-setup'
 const mockDetailProduct: ProductResponse = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Windows 11 Professional',
-  category: 'windows',
+  sku: 'OS-WIN11-PRO-RET',
+  slug: 'windows-11-professional',
+  category: {
+    id: 'cat-1',
+    name: 'Windows',
+    code: 'WIN',
+    slug: 'windows',
+    display_order: 0,
+    is_active: true,
+    product_count: 1,
+  },
   variant: 'retail',
   base_price: '499.00',
   sale_price: '349.00',
@@ -24,6 +34,7 @@ const mockDetailProduct: ProductResponse = {
   preorder_enabled: true,
   description: 'Genuine Microsoft Windows 11 Pro digital retail license key.',
   is_active: true,
+  images: [],
 }
 
 function renderProductDetail(initialEntry: string, queryClient?: QueryClient) {

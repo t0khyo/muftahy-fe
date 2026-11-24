@@ -10,6 +10,7 @@ import {
   Tag,
   BookOpen,
   ShieldAlert,
+  FolderTree,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -77,6 +78,12 @@ export function AppSidebar({
           url: `/${lang}/products`,
           icon: PackageCheck,
           isActive: pathname.startsWith(`/${lang}/products`),
+        },
+        {
+          title: t('admin:categories.title', 'Categories'),
+          url: `/${lang}/categories`,
+          icon: FolderTree,
+          isActive: pathname.startsWith(`/${lang}/categories`),
         },
         {
           title: t('admin:nav.inventory', 'Inventory'),

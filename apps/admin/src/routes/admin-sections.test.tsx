@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AdminLayout } from '../features/dashboard/components/admin-layout'
 import { AdminProductsRoute } from './admin-products-route'
+import { AdminCategoriesRoute } from './admin-categories-route'
 import { AdminOrdersRoute } from './admin-orders-route'
 import { AdminInventoryRoute } from './admin-inventory-route'
 import { AdminTicketsRoute } from './admin-tickets-route'
@@ -66,6 +67,7 @@ describe('Admin Section Workstation Pages', () => {
 
     vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
       getProducts: vi.fn().mockResolvedValue([]),
+      getAdminCategories: vi.fn().mockResolvedValue([]),
     } as unknown as ProductService)
 
     vi.spyOn(apiFactory, 'getAdminOrderService').mockReturnValue({
@@ -128,6 +130,25 @@ describe('Admin Section Workstation Pages', () => {
     expect(screen.getByRole('heading', { name: 'Products' })).toBeInTheDocument()
     expect(await screen.findByText('No products found')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /add product/i }).length).toBeGreaterThan(0)
+  })
+
+  it('renders Categories at /en/categories', async () => {
+    mockAuth()
+    render(
+      <QueryClientProvider client={testQueryClient}>
+        <MemoryRouter initialEntries={['/en/categories']}>
+          <Routes>
+            <Route path="/:lang" element={<AdminLayout />}>
+              <Route path="categories" element={<AdminCategoriesRoute />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByRole('heading', { name: 'Categories' })).toBeInTheDocument()
+    expect(await screen.findByText('No categories found')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /add category/i }).length).toBeGreaterThan(0)
   })
 
   it('renders Orders workstation at /en/orders', async () => {

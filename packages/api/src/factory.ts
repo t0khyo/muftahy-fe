@@ -1,3 +1,4 @@
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 import type { ProductService } from './services/product-service'
 import type { AuthService } from './services/auth-service'
 import type { UserService } from './services/user-service'
@@ -89,12 +90,23 @@ class ServiceRegistry {
   private readonly ledgerServices = new Map<string, LedgerService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
 
-  getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService {
-    const key = options?.baseURL ?? 'default'
+  getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService
+  getProductService(app: AppScope, options?: { useMock?: boolean; baseURL?: string }): ProductService
+  getProductService(
+    appOrOptions?: AppScope | { useMock?: boolean; baseURL?: string },
+    options?: { useMock?: boolean; baseURL?: string },
+  ): ProductService {
+    const isApp = typeof appOrOptions === 'string'
+    const app: AppScope = isApp ? (appOrOptions as AppScope) : 'storefront'
+    const opts = isApp ? options : appOrOptions
+
+    const key = `${app}_${opts?.baseURL ?? 'default'}`
     let service = this.productServices.get(key)
     if (!service) {
+      const tokenStorage = app === 'admin' ? this.getTokenStorage('admin') : undefined
       const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
+        baseURL: opts?.baseURL ?? getApiBaseUrl(),
+        tokenStorage,
       })
       service = new HttpProductAdapter(client)
       this.productServices.set(key, service)
@@ -283,8 +295,16 @@ class ServiceRegistry {
 }
 
 export const services = new ServiceRegistry()
-export const getProductService = (options?: { useMock?: boolean; baseURL?: string }): ProductService =>
-  services.getProductService(options)
+
+export function getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService
+export function getProductService(app: AppScope, options?: { useMock?: boolean; baseURL?: string }): ProductService
+export function getProductService(
+  appOrOptions?: AppScope | { useMock?: boolean; baseURL?: string },
+  options?: { useMock?: boolean; baseURL?: string },
+): ProductService {
+  return services.getProductService(appOrOptions as any, options)
+}
+
 export const getAuthService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): AuthService =>
   services.getAuthService(app, options)
 export const getUserService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): UserService =>
@@ -308,3 +328,69 @@ export const getPromoService = (options?: { baseURL?: string }): PromoService =>
 export const getLedgerService = (options?: { baseURL?: string }): LedgerService =>
   services.getLedgerService(options)
 export const getTokenStorage = (app: AppScope = 'storefront'): TokenStorage => services.getTokenStorage(app)
+
+/**
+ * Resolves static media storage paths to fully qualified URLs.
+ */
+export function resolveStorageUrl(
+  pathOrUrl: string | null | undefined,
+  baseURL?: string,
+): string | null {
+  if (!pathOrUrl || typeof pathOrUrl !== 'string') {
+    return null
+  }
+  const trimmed = pathOrUrl.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  // Retired legacy assets
+  if (trimmed.startsWith('/images/products/') || trimmed.startsWith('images/products/')) {
+    return null
+  }
+
+  // Fully qualified URLs or browser local blobs
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:')
+  ) {
+    return trimmed
+  }
+
+  // Extract base URL stripping /api/v1 or /v1 suffix
+  const rawBase = baseURL ?? getApiBaseUrl()
+  const base = rawBase.replace(/\/api\/v1\/?$/, '').replace(/\/v1\/?$/, '').replace(/\/+$/, '')
+
+  if (trimmed.startsWith('products/')) {
+    return `${base}/storage/${trimmed}`
+  }
+  if (trimmed.startsWith('/storage/')) {
+    return `${base}${trimmed}`
+  }
+  if (trimmed.startsWith('storage/')) {
+    return `${base}/${trimmed}`
+  }
+  if (trimmed.startsWith('/')) {
+    return `${base}${trimmed}`
+  }
+
+  return `${base}/${trimmed}`
+}
+
+/**
+ * Extracts the primary or first image URL from a product entity and resolves it through resolveStorageUrl.
+ */
+export function getProductMainImageUrl(
+  product: Pick<ProductResponse, 'primary_image_url' | 'images'> | null | undefined,
+  baseURL?: string,
+): string | null {
+  if (!product) return null
+  const candidate =
+    product.primary_image_url ||
+    product.images?.find((img) => img.is_primary)?.url ||
+    product.images?.[0]?.url ||
+    null
+  return resolveStorageUrl(candidate, baseURL)
+}

@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { Box } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
-import type { ProductResponse } from '@workspace/domain/schemas/product'
+import type { CategoryResponse, ProductResponse } from '@workspace/domain/schemas/product'
+import { getProductMainImageUrl } from '@workspace/api/factory'
 import { useAddToCart } from '../../cart/hooks/use-cart'
-import { resolveProductImage } from '../utils/asset-resolver'
 import { AddToCartButton } from './add-to-cart-button'
 
 export interface ProductCardProps {
@@ -17,6 +18,17 @@ export interface ProductCardProps {
   onAddToCart?: (product: ProductResponse) => void
 }
 
+const DEFAULT_MOCK_CATEGORY: CategoryResponse = {
+  id: '00000000-0000-4000-8000-000000000000',
+  name: 'Operating Systems',
+  code: 'OS',
+  slug: 'operating-systems',
+  description: 'Operating systems licenses',
+  display_order: 1,
+  is_active: true,
+  product_count: 1,
+}
+
 export function ProductCard({
   product: productProp,
   card: cardProp,
@@ -26,6 +38,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const { t, i18n } = useTranslation(['products', 'common'])
   const currentLang = locale ?? (i18n.language === 'ar' ? 'ar' : 'en')
+  const isRtl = currentLang === 'ar' || i18n.dir() === 'rtl'
+  const [failedUrl, setFailedUrl] = React.useState<string | null>(null)
 
   // Support both product and fallback card
   const product: ProductResponse = React.useMemo(() => {
@@ -38,7 +52,9 @@ export function ProductCard({
           (typeof c.slug === 'string' ? c.slug : undefined) ??
           '00000000-0000-4000-8000-000000000001',
         name: typeof c.name === 'string' ? c.name : 'Software License',
-        category: c.category === 'office' ? 'office' : 'windows',
+        category: DEFAULT_MOCK_CATEGORY,
+        sku: 'OS-MOCK-SKU-001',
+        slug: (typeof c.slug === 'string' ? c.slug : undefined) ?? 'mock-software-license',
         variant: c.variant === 'oem' ? 'oem' : 'retail',
         base_price:
           (typeof c.originalPrice === 'string' ? c.originalPrice : undefined) ??
@@ -53,12 +69,16 @@ export function ProductCard({
         preorder_enabled: true,
         description: typeof c.trustNote === 'string' ? c.trustNote : null,
         is_active: true,
+        primary_image_url: null,
+        images: [],
       }
     }
     return {
       id: '00000000-0000-4000-8000-000000000001',
       name: 'Product',
-      category: 'windows',
+      category: DEFAULT_MOCK_CATEGORY,
+      sku: 'OS-MOCK-SKU-001',
+      slug: 'mock-product',
       variant: 'retail',
       base_price: '499.00',
       sale_price: null,
@@ -69,6 +89,8 @@ export function ProductCard({
       preorder_enabled: true,
       description: null,
       is_active: true,
+      primary_image_url: null,
+      images: [],
     } as ProductResponse
   }, [productProp, cardProp])
 
@@ -88,7 +110,8 @@ export function ProductCard({
       })
     : null
 
-  const coverImageUrl = resolveProductImage(product.category, product.variant)
+  const coverImageUrl = getProductMainImageUrl(product)
+  const imageFailed = Boolean(coverImageUrl && failedUrl === coverImageUrl)
 
   const { mutate: addToCart } = useAddToCart()
 
@@ -104,6 +127,10 @@ export function ProductCard({
       unitPrice: Number(product.effective_price),
       isPreorder,
       quantity: 1,
+      slug: product.slug,
+      coverImage: coverImageUrl ?? undefined,
+      category: product.category?.slug,
+      variant: product.variant ?? undefined,
     })
   }
 
@@ -113,7 +140,7 @@ export function ProductCard({
       ? t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })
       : t('addToCart', { ns: 'products', defaultValue: 'Add to cart' })
 
-  const productUrl = `/${currentLang}/products/${product.id}`
+  const productUrl = `/${currentLang}/products/${product.slug || product.id}`
 
   return (
     <article
@@ -128,23 +155,40 @@ export function ProductCard({
       )}
     >
       {/* 1 ── Header / Thumbnail */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-secondary/40 mb-3 sm:mb-3.5">
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-secondary/40 mb-3 sm:mb-3.5 flex items-center justify-center">
         <Link to={productUrl} tabIndex={-1} className="block size-full">
-          <img
-            src={coverImageUrl}
-            alt={product.name}
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
+          {coverImageUrl && !imageFailed ? (
+            <img
+              src={coverImageUrl}
+              alt={product.name}
+              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              onError={() => coverImageUrl && setFailedUrl(coverImageUrl)}
+            />
+          ) : (
+            <div
+              className="flex size-full items-center justify-center bg-secondary/40 text-muted-foreground"
+              role="img"
+              aria-label={product.name}
+            >
+              <Box className="size-10 stroke-1 text-muted-foreground/60" />
+            </div>
+          )}
         </Link>
 
         {/* Top Badges */}
         <div className="absolute start-2 top-2 z-10 flex flex-wrap gap-1.5 items-center">
           <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-background/90 text-foreground backdrop-blur-xs shadow-xs">
-            {t(`categories.${product.category}`, {
-              ns: 'products',
-              defaultValue: product.category,
-            })}
+            {(() => {
+              const catObj = typeof product.category === 'object' && product.category !== null ? product.category : null
+              const catSlug = catObj ? catObj.slug : (typeof product.category === 'string' ? product.category : '')
+              const catName = catObj ? catObj.name : catSlug
+              if (isRtl && (catSlug.toLowerCase() === 'windows' || catName.toLowerCase() === 'windows')) return 'ويندوز'
+              if (isRtl && (catSlug.toLowerCase() === 'office' || catName.toLowerCase() === 'office')) return 'أوفيس'
+              if (catName.toLowerCase() === 'windows') return 'Windows'
+              if (catName.toLowerCase() === 'office') return 'Office'
+              return catName || 'Product'
+            })()}
           </span>
           {product.variant && (
             <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-secondary text-secondary-foreground">

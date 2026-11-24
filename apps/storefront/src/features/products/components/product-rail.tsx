@@ -12,7 +12,7 @@ import {
   type CarouselApi,
 } from '@workspace/ui/components/carousel'
 import { cn } from '@workspace/ui/lib/utils'
-import type { ProductCategory, ProductResponse } from '@workspace/domain/schemas/product'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { useProducts } from '../hooks/use-products'
 import { ProductCard } from './product-card'
 import { ProductRailSkeleton } from './product-rail-skeleton'
@@ -21,7 +21,7 @@ export interface ProductRailProps {
   id: string
   titleKey: string
   viewAllHref: string
-  category?: ProductCategory
+  category?: string
   collection?: string
   products?: ProductResponse[]
   className?: string

@@ -4,6 +4,8 @@ import { CatchAllRedirect } from './catch-all-redirect'
 import { AdminLoginRoute } from '../routes/admin-login-route'
 import { AdminDashboardRoute } from '../routes/admin-dashboard-route'
 import { AdminProductsRoute } from '../routes/admin-products-route'
+import { AdminProductEditorRoute } from '../routes/admin-product-editor-route'
+import { AdminCategoriesRoute } from '../routes/admin-categories-route'
 import { AdminOrdersRoute } from '../routes/admin-orders-route'
 import { AdminInventoryRoute } from '../routes/admin-inventory-route'
 import { AdminTicketsRoute } from '../routes/admin-tickets-route'
@@ -44,6 +46,18 @@ export const router = createBrowserRouter([
           {
             path: 'products',
             element: <AdminProductsRoute />,
+          },
+          {
+            path: 'products/new',
+            element: <AdminProductEditorRoute />,
+          },
+          {
+            path: 'products/:id',
+            element: <AdminProductEditorRoute />,
+          },
+          {
+            path: 'categories',
+            element: <AdminCategoriesRoute />,
           },
           {
             path: 'orders',

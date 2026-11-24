@@ -8,9 +8,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@workspace/ui/components/breadcrumb'
+import type { CategoryResponse } from '@workspace/domain/schemas/product'
 
 export interface DetailBreadcrumbProps {
-  category: string
+  category: Pick<CategoryResponse, 'name' | 'slug'> | string
   productTitle: string
   lang: string
 }
@@ -20,12 +21,19 @@ export function DetailBreadcrumb({
   productTitle,
   lang,
 }: DetailBreadcrumbProps) {
-  const { t } = useTranslation(['products', 'common'])
+  const { t, i18n } = useTranslation(['products', 'common'])
 
-  const categoryLabel =
-    category === 'windows'
-      ? t('categories.windows', { ns: 'products', defaultValue: 'Windows' })
-      : t('categories.office', { ns: 'products', defaultValue: 'Office' })
+  const categoryLabel = (() => {
+    const catObj = typeof category === 'object' && category !== null ? category : null
+    const catSlug = catObj ? catObj.slug : (typeof category === 'string' ? category : '')
+    const catName = catObj ? catObj.name : catSlug
+    const isAr = lang === 'ar' || i18n.language === 'ar'
+    if (isAr && (catSlug.toLowerCase() === 'windows' || catName.toLowerCase() === 'windows')) return 'ويندوز'
+    if (isAr && (catSlug.toLowerCase() === 'office' || catName.toLowerCase() === 'office')) return 'أوفيس'
+    return catName
+  })()
+
+  const categorySlug = typeof category === 'string' ? category : category.slug
 
   return (
     <Breadcrumb aria-label="Breadcrumb" className="w-full mb-6">
@@ -37,7 +45,7 @@ export function DetailBreadcrumb({
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink render={<Link to={`/${lang}/products?category=${category}`} />}>
+          <BreadcrumbLink render={<Link to={`/${lang}/categories/${categorySlug}`} />}>
             {categoryLabel}
           </BreadcrumbLink>
         </BreadcrumbItem>

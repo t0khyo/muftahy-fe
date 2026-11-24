@@ -14,6 +14,7 @@ import { ForgotPasswordRoute } from '../routes/forgot-password-route'
 import { HomeRoute } from '../routes/home'
 import { LoginRoute } from '../routes/login-route'
 import { ProductDetailRoute } from '../routes/product-detail-route'
+import { CategoryRoute } from '../routes/category-route'
 import { ProductsRoute } from '../routes/products-route'
 import { ProfileRoute } from '../routes/profile-route'
 import { RegisterRoute } from '../routes/register-route'
@@ -38,8 +39,12 @@ export const router = createBrowserRouter([
         element: <ProductsRoute />,
       },
       {
-        path: 'products/:id',
+        path: 'products/:slug',
         element: <ProductDetailRoute />,
+      },
+      {
+        path: 'categories/:slug',
+        element: <CategoryRoute />,
       },
       {
         path: 'search',

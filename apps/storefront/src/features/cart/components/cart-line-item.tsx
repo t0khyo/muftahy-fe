@@ -6,7 +6,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import type { CartItem } from '../stores/cart-store'
 import { resolveLocalizedName } from '../lib/cart-selectors'
-import { resolveProductImage } from '../../products/utils/asset-resolver'
+import { resolveProductImage, resolveStorageUrl, getProductMainImageUrl } from '../../products/utils/asset-resolver'
 import { useProduct } from '../../products/hooks/use-products'
 
 export interface CartLineItemProps {
@@ -46,10 +46,13 @@ export function CartLineItem({
     plan: productName,
   })
 
-  const category = item.category ?? product?.category ?? 'windows'
+  const category = item.category ?? product?.category?.slug ?? 'windows'
   const variant = item.variant ?? product?.variant ?? null
   const coverImage =
-    item.coverImage || resolveProductImage(category, variant)
+    resolveStorageUrl(item.coverImage) ||
+    item.coverImage ||
+    getProductMainImageUrl(product) ||
+    resolveProductImage(category, variant)
 
   return (
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 sm:py-5">
@@ -75,7 +78,7 @@ export function CartLineItem({
         <div className="space-y-1 min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to={`/${lang}/products/${item.product_id}`}
+              to={`/${lang}/products/${product?.slug || item.slug || item.product_id}`}
               className="font-semibold text-foreground hover:text-primary transition-colors text-base line-clamp-2 leading-snug"
             >
               {productName}

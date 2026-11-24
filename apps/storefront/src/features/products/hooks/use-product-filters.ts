@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { useSearchParams } from 'react-router'
-import type { ProductCategory, StockStatus } from '@workspace/domain/schemas/product'
+import type { StockStatus } from '@workspace/domain/schemas/product'
 import type { ProductCatalogFilters } from './use-products'
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest'
 
 export interface ProductFiltersState {
-  category?: ProductCategory
+  category?: string
   variant?: 'retail' | 'oem'
   stockStatus?: StockStatus
   inStockOnly: boolean
@@ -25,9 +25,9 @@ export interface ActiveFilterChip {
 export function useProductFilters() {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const categoryParam = searchParams.get('category') as ProductCategory | null
-  const category: ProductCategory | undefined =
-    categoryParam === 'windows' || categoryParam === 'office' ? categoryParam : undefined
+  const categoryParam = searchParams.get('category')
+  const category: string | undefined =
+    categoryParam && categoryParam.trim() ? categoryParam.trim() : undefined
 
   const variantParam = searchParams.get('variant') as 'retail' | 'oem' | null
   const variant: 'retail' | 'oem' | undefined =
@@ -94,7 +94,7 @@ export function useProductFilters() {
   )
 
   const setCategory = React.useCallback(
-    (cat?: ProductCategory) => {
+    (cat?: string) => {
       updateParams({ category: cat ?? null })
     },
     [updateParams],
