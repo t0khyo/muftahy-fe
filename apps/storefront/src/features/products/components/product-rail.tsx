@@ -172,9 +172,9 @@ export function ProductRail({
               {/* Embla Viewport Track */}
               <div
                 data-testid={`rail-content-${id}`}
-                className="flex-1 min-w-0"
+                className="flex-1 min-w-0 -my-2"
               >
-                <CarouselContent className="-ms-4">
+                <CarouselContent className="-ms-4 py-2">
                   {products.map((product) => (
                     <CarouselItem
                       key={product.id}

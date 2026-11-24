@@ -148,7 +148,7 @@ export function ProductCard({
         'bg-card border border-border/40 hover:border-border/80 text-card-foreground',
         'p-3 sm:p-3.5 lg:p-4 h-full',
         'transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs',
-        'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40 has-[:focus-visible]:border-border',
         isOutOfStock && !product.preorder_enabled && 'opacity-70',
         className,
       )}
