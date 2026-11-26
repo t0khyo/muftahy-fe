@@ -23,9 +23,11 @@ describe('NavUser Component', () => {
       user: {
         id: 'usr-admin-1',
         email: 'operator@souqmuftah.com',
-        full_name: 'Lead Operator',
+        display_name: 'Lead Operator',
+        role: 'admin',
         is_active: true,
-        created_at: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
       },
       role: 'admin',
       isAuthenticated: true,

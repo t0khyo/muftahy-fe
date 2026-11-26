@@ -55,9 +55,11 @@ describe('AdminProductsRoute feedback behavior', () => {
       user: {
         id: 'usr-1',
         email: 'admin1@souqmuftah.com',
-        full_name: 'Lead Admin',
+        display_name: 'Lead Admin',
+        role: 'admin',
         is_active: true,
-        created_at: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
       },
       role: 'admin',
       isAuthenticated: true,

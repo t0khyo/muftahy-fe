@@ -50,7 +50,7 @@ export function NavUser({ side }: { side?: 'left' | 'right' } = {}) {
     }
   }
 
-  const name = user?.full_name || 'System Operator'
+  const name = user?.display_name || 'System Operator'
   const email = user?.email || 'admin1@souqmuftah.com'
 
   return (

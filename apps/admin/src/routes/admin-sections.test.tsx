@@ -26,6 +26,7 @@ import type { TicketService } from '@workspace/api/services/ticket-service'
 import type { PromoService } from '@workspace/api/services/promo-service'
 import type { LedgerService } from '@workspace/api/services/ledger-service'
 import type { AuditService } from '@workspace/api/services/audit-service'
+import type { AdminProfileService } from '@workspace/api/services/admin-profile-service'
 
 describe('Admin Section Workstation Pages', () => {
   let testQueryClient: QueryClient
@@ -35,9 +36,11 @@ describe('Admin Section Workstation Pages', () => {
       user: {
         id: 'usr-1',
         email: 'admin1@souqmuftah.com',
-        full_name: 'Lead Admin',
+        display_name: 'Lead Admin',
+        role: 'admin',
         is_active: true,
-        created_at: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
       },
       role: 'admin',
       isAuthenticated: true,
@@ -109,6 +112,20 @@ describe('Admin Section Workstation Pages', () => {
       getLogs: vi.fn().mockResolvedValue({ items: [], total: 0 }),
       exportLogs: vi.fn().mockResolvedValue(new Blob([])),
     } as unknown as AuditService)
+
+    vi.spyOn(apiFactory, 'getAdminProfileService').mockReturnValue({
+      getMyProfile: vi.fn().mockResolvedValue({
+        id: 'usr-1',
+        email: 'admin1@souqmuftah.com',
+        display_name: 'Lead Admin',
+        role: 'admin',
+        is_active: true,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      }),
+      updateMyProfile: vi.fn(),
+      listAdmins: vi.fn().mockResolvedValue([]),
+    } as unknown as AdminProfileService)
   })
 
   it('renders Products workstation at /en/products', async () => {

@@ -6,6 +6,7 @@ import type { OrderService } from './services/order-service'
 import type { TicketService } from './services/ticket-service'
 import type { CartService } from './services/cart-service'
 import type { AdminDashboardService } from './services/admin-dashboard-service'
+import type { AdminProfileService } from './services/admin-profile-service'
 import type { InventoryService } from './services/inventory-service'
 import type { AdminOrderService } from './services/admin-order-service'
 import type { AuditService } from './services/audit-service'
@@ -20,6 +21,7 @@ import { HttpOrderAdapter } from './adapters/http/http-order-adapter'
 import { HttpTicketAdapter } from './adapters/http/http-ticket-adapter'
 import { HttpCartAdapter } from './adapters/http/http-cart-adapter'
 import { HttpAdminDashboardAdapter } from './adapters/http/http-admin-dashboard-adapter'
+import { HttpAdminProfileAdapter } from './adapters/http/http-admin-profile-adapter'
 import { HttpInventoryAdapter } from './adapters/http/http-inventory-adapter'
 import { HttpAdminOrderAdapter } from './adapters/http/http-admin-order-adapter'
 import { HttpAuditAdapter } from './adapters/http/http-audit-adapter'
@@ -83,6 +85,7 @@ class ServiceRegistry {
   private readonly ticketServices = new Map<string, TicketService>()
   private readonly cartServices = new Map<string, CartService>()
   private readonly adminDashboardServices = new Map<string, AdminDashboardService>()
+  private readonly adminProfileServices = new Map<string, AdminProfileService>()
   private readonly inventoryServices = new Map<string, InventoryService>()
   private readonly adminOrderServices = new Map<string, AdminOrderService>()
   private readonly auditServices = new Map<string, AuditService>()
@@ -201,6 +204,16 @@ class ServiceRegistry {
     return service
   }
 
+  getAdminProfileService(options?: { baseURL?: string }): AdminProfileService {
+    const key = options?.baseURL ?? 'default'
+    let service = this.adminProfileServices.get(key)
+    if (!service) {
+      service = new HttpAdminProfileAdapter(this.createClient('admin', options?.baseURL))
+      this.adminProfileServices.set(key, service)
+    }
+    return service
+  }
+
   getInventoryService(options?: { baseURL?: string }): InventoryService {
     const key = options?.baseURL ?? 'default'
     let service = this.inventoryServices.get(key)
@@ -278,6 +291,8 @@ export const getCartService = (app: AppScope = 'storefront', options?: { baseURL
   services.getCartService(app, options)
 export const getAdminDashboardService = (options?: { baseURL?: string }): AdminDashboardService =>
   services.getAdminDashboardService(options)
+export const getAdminProfileService = (options?: { baseURL?: string }): AdminProfileService =>
+  services.getAdminProfileService(options)
 export const getInventoryService = (options?: { baseURL?: string }): InventoryService =>
   services.getInventoryService(options)
 export const getAdminOrderService = (options?: { baseURL?: string }): AdminOrderService =>

@@ -38,6 +38,38 @@ describe('HttpAuditAdapter', () => {
     expect(result.items.length).toBe(1)
   })
 
+  it('serializes adminId, targetType, success, and date bounds on getLogs and exportLogs', async () => {
+    const blob = new Blob(['[]'], { type: 'application/json' })
+    const listClient = createMockClient({ items: [], total: 0, page: 1, limit: 50 })
+    const exportClient = createMockClient(blob)
+
+    await new HttpAuditAdapter(listClient).getLogs({
+      adminId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      targetType: 'product',
+      success: false,
+      startDate: '2026-11-01T00:00:00Z',
+      endDate: '2026-11-26T23:59:59Z',
+    })
+    expect(listClient.request).toHaveBeenCalledWith(
+      '/audit/logs?start_date=2026-11-01T00%3A00%3A00Z&end_date=2026-11-26T23%3A59%3A59Z&admin_id=b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22&target_type=product&success=false',
+      { method: 'GET' },
+    )
+
+    await new HttpAuditAdapter(exportClient).exportLogs({
+      format: 'json',
+      adminId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      targetType: 'promo',
+      success: true,
+    })
+    expect(exportClient.request).toHaveBeenCalledWith(
+      '/audit/export?format=json&admin_id=b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22&target_type=promo&success=true',
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      },
+    )
+  })
+
   it('requests export blob', async () => {
     const blob = new Blob(['col1,col2\nval1,val2'], { type: 'text/csv' })
     const client = createMockClient(blob)

@@ -5,7 +5,7 @@ import { AdminAuthProvider } from '../context/admin-auth-provider'
 import { useAdminAuth } from './use-admin-auth'
 import * as apiFactory from '@workspace/api/factory'
 import type { AuthService } from '@workspace/api/services/auth-service'
-import type { UserService } from '@workspace/api/services/user-service'
+import type { AdminProfileService } from '@workspace/api/services/admin-profile-service'
 
 // Valid JWT payload for testing: { sub: 'usr-1', role: 'admin', aud: 'admin' }
 const MOCK_ADMIN_ACCESS_TOKEN =
@@ -66,20 +66,24 @@ describe('useAdminAuth hook', () => {
       logout: vi.fn().mockResolvedValue(undefined),
     }
 
-    const mockUserService = {
-      getProfile: vi.fn().mockResolvedValue({
+    const mockAdminProfileService = {
+      getMyProfile: vi.fn().mockResolvedValue({
         id: 'usr-1',
         email: 'admin1@souqmuftah.com',
-        full_name: 'Lead Admin',
+        display_name: 'Lead Admin',
+        role: 'admin',
         is_active: true,
         created_at: '2026-01-01T00:00:00Z',
-        phone: null,
+        updated_at: '2026-01-01T00:00:00Z',
       }),
-      updateProfile: vi.fn(),
+      updateMyProfile: vi.fn(),
+      listAdmins: vi.fn().mockResolvedValue([]),
     }
 
     vi.spyOn(apiFactory, 'getAuthService').mockReturnValue(mockAuthService as unknown as AuthService)
-    vi.spyOn(apiFactory, 'getUserService').mockReturnValue(mockUserService as unknown as UserService)
+    vi.spyOn(apiFactory, 'getAdminProfileService').mockReturnValue(
+      mockAdminProfileService as unknown as AdminProfileService,
+    )
 
     const wrapper = ({ children }: { children: React.ReactNode }) => <AdminAuthProvider>{children}</AdminAuthProvider>
     const { result } = renderHook(() => useAdminAuth(), { wrapper })

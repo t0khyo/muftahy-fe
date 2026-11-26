@@ -1,8 +1,12 @@
 import * as React from 'react'
-import type { LoginRequest, UserProfile } from '@workspace/domain/schemas/auth'
+import type { AdminProfileResponse } from '@workspace/domain/schemas/admin-profile'
+import type { LoginRequest } from '@workspace/domain/schemas/auth'
 import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
-import { getAuthService, getTokenStorage, getUserService } from '@workspace/api/factory'
-import { parseJwtPayload } from '@workspace/api/adapters/http/token-storage'
+import {
+  getAdminProfileService,
+  getAuthService,
+  getTokenStorage,
+} from '@workspace/api/factory'
 import { queryClient } from '../../../app/query-client'
 import { AdminAuthContext, type AdminAuthContextValue } from './admin-auth-context'
 
@@ -10,44 +14,23 @@ export interface AdminAuthProviderProps {
   children: React.ReactNode
 }
 
-function resolveAdminProfile(email: string, sub?: string): UserProfile {
-  const normalized = email.trim().toLowerCase()
-  return {
-    id: sub || 'admin',
-    email: normalized,
-    full_name: normalized === 'abdelrahman.m.eltokhy@gmail.com' ? 'Abdelrahman ElTokhy' : 'System Admin',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    phone: null,
-  }
-}
-
 export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
-  const [user, setUser] = React.useState<UserProfile | null>(null)
+  const [user, setUser] = React.useState<AdminProfileResponse | null>(null)
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false)
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [isInitializing, setIsInitializing] = React.useState<boolean>(true)
 
   const authService = React.useMemo(() => getAuthService('admin'), [])
-  const userService = React.useMemo(() => getUserService('admin'), [])
+  const adminProfileService = React.useMemo(() => getAdminProfileService(), [])
   const tokenStorage = React.useMemo(() => getTokenStorage('admin'), [])
 
-  const refreshProfile = React.useCallback(async (): Promise<UserProfile | null> => {
+  const refreshProfile = React.useCallback(async (): Promise<AdminProfileResponse | null> => {
     try {
       if (tokenStorage.getAudience() !== 'admin') {
         throw new Error('Invalid audience for admin app')
       }
 
-      let profile: UserProfile
-      try {
-        profile = await userService.getProfile()
-      } catch {
-        const storedEmail = typeof window !== 'undefined' ? window.localStorage?.getItem('muftahy_admin_email') : null
-        const token = tokenStorage.getAccessToken()
-        const payload = token ? parseJwtPayload(token) : null
-        profile = resolveAdminProfile(storedEmail || 'admin@souqmuftah.com', payload?.sub)
-      }
-
+      const profile = await adminProfileService.getMyProfile()
       setUser(profile)
       setIsAuthenticated(true)
       return profile
@@ -57,7 +40,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       tokenStorage.clearTokens()
       return null
     }
-  }, [userService, tokenStorage])
+  }, [adminProfileService, tokenStorage])
 
   // Silent session hydration on mount
   React.useEffect(() => {
@@ -70,16 +53,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
             throw new Error('Token audience is not admin')
           }
 
-          let profile: UserProfile
-          try {
-            profile = await userService.getProfile()
-          } catch {
-            const storedEmail = typeof window !== 'undefined' ? window.localStorage?.getItem('muftahy_admin_email') : null
-            const token = tokenStorage.getAccessToken()
-            const payload = token ? parseJwtPayload(token) : null
-            profile = resolveAdminProfile(storedEmail || 'admin@souqmuftah.com', payload?.sub)
-          }
-
+          const profile = await adminProfileService.getMyProfile()
           if (mounted) {
             setUser(profile)
             setIsAuthenticated(true)
@@ -120,7 +94,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       mounted = false
       unsubscribe()
     }
-  }, [tokenStorage, userService, isAuthenticated, refreshProfile])
+  }, [tokenStorage, adminProfileService, isAuthenticated, refreshProfile])
 
   const login = React.useCallback(
     async (credentials: LoginRequest): Promise<void> => {
@@ -134,30 +108,14 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
           throw new ApiClientError(403, 'PERMISSION_DENIED', 'Access denied: not an administrator token')
         }
 
-        try {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            window.localStorage.setItem('muftahy_admin_email', credentials.email.trim().toLowerCase())
-          }
-        } catch {
-          // Ignore storage write issues
-        }
-
-        let profile: UserProfile
-        try {
-          profile = await userService.getProfile()
-        } catch {
-          const token = tokenStorage.getAccessToken()
-          const payload = token ? parseJwtPayload(token) : null
-          profile = resolveAdminProfile(credentials.email, payload?.sub)
-        }
-
+        const profile = await adminProfileService.getMyProfile()
         setUser(profile)
         setIsAuthenticated(true)
       } finally {
         setIsLoading(false)
       }
     },
-    [authService, tokenStorage, userService]
+    [authService, tokenStorage, adminProfileService],
   )
 
   const logout = React.useCallback(async (): Promise<void> => {
@@ -168,13 +126,6 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         await authService.logout(refreshToken).catch(() => {})
       }
     } finally {
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.removeItem('muftahy_admin_email')
-        }
-      } catch {
-        // Ignore
-      }
       tokenStorage.clearTokens()
       queryClient.clear()
       setUser(null)
@@ -194,7 +145,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       logout,
       refreshProfile,
     }),
-    [user, isAuthenticated, isLoading, isInitializing, login, logout, refreshProfile]
+    [user, isAuthenticated, isLoading, isInitializing, login, logout, refreshProfile],
   )
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>

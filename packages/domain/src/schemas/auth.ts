@@ -169,6 +169,7 @@ export const apiErrorCodeSchema = z.enum([
   'FILE_TOO_LARGE',
   'INVALID_IMAGE_FORMAT',
   'IMAGE_TOO_LARGE',
+  'INVALID_DATE_RANGE',
 ])
 
 export type ApiErrorCode = z.infer<typeof apiErrorCodeSchema>

@@ -1,6 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { getUserService } from '@workspace/api/factory'
-import type { UpdateProfileRequest, UserProfile } from '@workspace/domain/schemas/auth'
+import { getAdminProfileService } from '@workspace/api/factory'
+import type {
+  AdminProfileResponse,
+  AdminProfileUpdate,
+} from '@workspace/domain/schemas/admin-profile'
 import { useAdminMutation } from '../../../hooks/use-admin-mutation'
 import { useAdminAuth } from '../../auth/hooks/use-admin-auth'
 
@@ -9,7 +12,7 @@ export const ADMIN_PROFILE_QUERY_KEY = ['admin-profile'] as const
 export function useAdminProfile(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const { user: authUser, refreshProfile } = useAdminAuth()
-  const userService = getUserService('admin')
+  const adminProfileService = getAdminProfileService()
 
   const {
     data: profile,
@@ -17,23 +20,16 @@ export function useAdminProfile(options?: { errorMode?: 'toast' | 'inline' }) {
     isError,
     error,
     refetch,
-  } = useQuery<UserProfile>({
+  } = useQuery<AdminProfileResponse>({
     queryKey: ADMIN_PROFILE_QUERY_KEY,
-    queryFn: async () => {
-      try {
-        return await userService.getProfile()
-      } catch (err) {
-        if (authUser) return authUser
-        throw err
-      }
-    },
+    queryFn: () => adminProfileService.getMyProfile(),
     initialData: authUser ?? undefined,
     staleTime: 1000 * 60 * 5,
   })
 
   const updateMutation = useAdminMutation({
-    mutationFn: async (payload: UpdateProfileRequest) => {
-      return await userService.updateProfile(payload)
+    mutationFn: async (payload: AdminProfileUpdate) => {
+      return await adminProfileService.updateMyProfile(payload)
     },
     onSuccess: async (updated) => {
       queryClient.setQueryData(ADMIN_PROFILE_QUERY_KEY, updated)

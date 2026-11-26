@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { i18n } from '@workspace/i18n/config'
 import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import * as apiFactory from '@workspace/api/factory'
-import type { UserService } from '@workspace/api/services/user-service'
+import type { AdminProfileService } from '@workspace/api/services/admin-profile-service'
 import { toast } from '@workspace/ui/components/sonner'
 import { createAdminQueryClient } from '../app/query-client'
 import * as useAdminAuthModule from '../features/auth/hooks/use-admin-auth'
@@ -21,39 +21,40 @@ vi.mock('react-router', async () => {
   }
 })
 
-describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
+describe('AdminProfileRoute Workstation', () => {
   let testQueryClient: QueryClient
   const mockLogout = vi.fn().mockResolvedValue(undefined)
   const mockRefreshProfile = vi.fn().mockResolvedValue(undefined)
 
-  const mockUser = {
-    id: 'usr-admin-42',
+  const mockAdmin = {
+    id: 'b8c4e120-5e77-4f8b-8b0c-1234567890ab',
     email: 'operator@souqmuftah.com',
-    full_name: 'Lead Administrator',
-    phone: '+201001112222',
+    display_name: 'Lead Administrator',
+    role: 'admin',
     is_active: true,
     created_at: '2026-01-15T10:00:00Z',
+    updated_at: '2026-11-26T14:30:00Z',
   }
 
-  const mockUserService = {
-    getProfile: vi.fn().mockResolvedValue(mockUser),
-    updateProfile: vi.fn().mockImplementation((payload) =>
-      Promise.resolve({ ...mockUser, ...payload })
+  const mockAdminProfileService = {
+    getMyProfile: vi.fn().mockResolvedValue(mockAdmin),
+    updateMyProfile: vi.fn().mockImplementation((payload) =>
+      Promise.resolve({ ...mockAdmin, ...payload }),
     ),
-    getUserKeys: vi.fn().mockResolvedValue([]),
+    listAdmins: vi.fn().mockResolvedValue([mockAdmin]),
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUserService.getProfile.mockReset().mockResolvedValue(mockUser)
-    mockUserService.updateProfile
+    mockAdminProfileService.getMyProfile.mockReset().mockResolvedValue(mockAdmin)
+    mockAdminProfileService.updateMyProfile
       .mockReset()
-      .mockImplementation((payload) => Promise.resolve({ ...mockUser, ...payload }))
+      .mockImplementation((payload) => Promise.resolve({ ...mockAdmin, ...payload }))
     i18n.changeLanguage('en')
     testQueryClient = createAdminQueryClient()
 
     vi.spyOn(useAdminAuthModule, 'useAdminAuth').mockReturnValue({
-      user: mockUser,
+      user: mockAdmin,
       role: 'admin',
       isAuthenticated: true,
       isLoading: false,
@@ -63,14 +64,16 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
       refreshProfile: mockRefreshProfile,
     })
 
-    vi.spyOn(apiFactory, 'getUserService').mockReturnValue(mockUserService as unknown as UserService)
+    vi.spyOn(apiFactory, 'getAdminProfileService').mockReturnValue(
+      mockAdminProfileService as unknown as AdminProfileService,
+    )
   })
 
   afterEach(() => {
     i18n.changeLanguage('en')
   })
 
-  it('renders minimal profile details and does not display AI slop (scopes, telemetry, copyable IDs)', async () => {
+  it('renders admin display_name and read-only email without phone or OTP fields', async () => {
     render(
       <I18nProvider>
         <QueryClientProvider client={testQueryClient}>
@@ -80,29 +83,23 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
-      </I18nProvider>
+      </I18nProvider>,
     )
 
-    // Minimal Heading and identity
     expect(screen.getByRole('heading', { level: 1, name: /^profile$/i })).toBeInTheDocument()
     expect(screen.getByText('Lead Administrator')).toBeInTheDocument()
     expect(screen.getByText('operator@souqmuftah.com')).toBeInTheDocument()
     expect(screen.getByText('System Administrator')).toBeInTheDocument()
 
-    // Form fields
-    expect(screen.getByLabelText(/full name/i)).toHaveValue('Lead Administrator')
-    expect(screen.getByLabelText(/email address/i)).toHaveValue('operator@souqmuftah.com')
+    expect(screen.getByLabelText(/display name/i)).toHaveValue('Lead Administrator')
+    const emailInput = screen.getByLabelText(/email address/i)
+    expect(emailInput).toHaveValue('operator@souqmuftah.com')
+    expect(emailInput).toBeDisabled()
 
-    // Verify AI slop is completely gone
-    expect(screen.queryByText('usr-admin-42')).not.toBeInTheDocument()
-    expect(screen.queryByText('Administrative Scopes')).not.toBeInTheDocument()
-    expect(screen.queryByText('Product Catalog & SKU Registry')).not.toBeInTheDocument()
-    expect(screen.queryByText('Key Pool Vault Management')).not.toBeInTheDocument()
-    expect(screen.queryByText('Bearer / Refresh Rotation')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument()
   })
 
-  it('allows editing full name and phone number and submits form with toast confirmation', async () => {
+  it('updates display_name via PATCH /admin/me without OTP and shows success toast', async () => {
     const successSpy = vi.spyOn(toast, 'success')
     render(
       <I18nProvider>
@@ -113,11 +110,11 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
-      </I18nProvider>
+      </I18nProvider>,
     )
 
-    const nameInput = screen.getByLabelText(/full name/i)
-    fireEvent.change(nameInput, { target: { value: 'Updated Lead Admin' } })
+    const nameInput = screen.getByLabelText(/display name/i)
+    fireEvent.change(nameInput, { target: { value: '  Updated  Lead Admin  ' } })
 
     const saveBtn = screen.getByRole('button', { name: /save changes/i })
     expect(saveBtn).not.toBeDisabled()
@@ -125,22 +122,21 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
     fireEvent.click(saveBtn)
 
     await waitFor(() => {
-      expect(mockUserService.updateProfile).toHaveBeenCalledWith({
-        full_name: 'Updated Lead Admin',
-        phone: '+201001112222',
+      expect(mockAdminProfileService.updateMyProfile).toHaveBeenCalledWith({
+        display_name: 'Updated Lead Admin',
       })
       expect(mockRefreshProfile).toHaveBeenCalled()
       expect(successSpy).toHaveBeenCalledTimes(1)
     })
   })
 
-  it('displays inline FormErrorAlert on 422 profile update error without firing error toast', async () => {
+  it('displays inline FormErrorAlert on 422 validation error without firing error toast', async () => {
     Element.prototype.scrollIntoView = vi.fn()
     const errorSpy = vi.spyOn(toast, 'error')
-    mockUserService.updateProfile.mockRejectedValueOnce(
-      new ApiClientError(422, 'VALIDATION_ERROR', 'Invalid phone number format', undefined, undefined, {
-        fieldErrors: [{ field: 'phone', message: 'Phone must be E.164 format' }],
-      })
+    mockAdminProfileService.updateMyProfile.mockRejectedValueOnce(
+      new ApiClientError(422, 'VALIDATION_ERROR', 'Display name rejected by server', undefined, undefined, {
+        fieldErrors: [{ field: 'display_name', message: 'Display name rejected by server' }],
+      }),
     )
 
     render(
@@ -152,15 +148,15 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
-      </I18nProvider>
+      </I18nProvider>,
     )
 
-    const phoneInput = screen.getByLabelText(/phone number/i)
-    fireEvent.change(phoneInput, { target: { value: '12345' } })
+    const nameInput = screen.getByLabelText(/display name/i)
+    fireEvent.change(nameInput, { target: { value: 'Valid Server Test' } })
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
 
     const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('Phone must be E.164 format')
+    expect(alert).toHaveTextContent('Display name rejected by server')
     expect(errorSpy).not.toHaveBeenCalled()
   })
 
@@ -174,7 +170,7 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
-      </I18nProvider>
+      </I18nProvider>,
     )
 
     const logoutBtn = screen.getByRole('button', { name: /logout/i })
@@ -198,10 +194,10 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
-      </I18nProvider>
+      </I18nProvider>,
     )
 
     expect(screen.getByRole('heading', { level: 1, name: /الملف الشخصي/i })).toBeInTheDocument()
-    expect(screen.getByText('Lead Administrator')).toBeInTheDocument()
+    expect(screen.getByLabelText(/الاسم الظاهر/i)).toHaveValue('Lead Administrator')
   })
 })

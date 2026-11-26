@@ -1,15 +1,16 @@
 import * as React from 'react'
-import type { LoginRequest, UserProfile } from '@workspace/domain/schemas/auth'
+import type { AdminProfileResponse } from '@workspace/domain/schemas/admin-profile'
+import type { LoginRequest } from '@workspace/domain/schemas/auth'
 
 export interface AdminAuthContextValue {
-  user: UserProfile | null
+  user: AdminProfileResponse | null
   role: 'admin' | null
   isAuthenticated: boolean
   isLoading: boolean
   isInitializing: boolean
   login: (credentials: LoginRequest) => Promise<void>
   logout: () => Promise<void>
-  refreshProfile: () => Promise<UserProfile | null>
+  refreshProfile: () => Promise<AdminProfileResponse | null>
 }
 
 export const defaultAdminAuthContextValue: AdminAuthContextValue = {

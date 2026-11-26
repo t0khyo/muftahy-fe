@@ -3,23 +3,18 @@ import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2, LogOut } from 'lucide-react'
 import {
-  Loader2,
-  LogOut,
-} from 'lucide-react'
-import {
-  updateProfileRequestSchema,
-  type UpdateProfileRequest,
-} from '@workspace/domain/schemas/auth'
+  adminProfileUpdateSchema,
+  normalizeAdminDisplayName,
+  type AdminProfileUpdate,
+} from '@workspace/domain/schemas/admin-profile'
 import { Blobatar } from '@workspace/ui/components/blobatar'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { FieldGroup, Field, FieldLabel, FieldError } from '@workspace/ui/components/field'
-import {
-  Card,
-  CardContent,
-} from '@workspace/ui/components/card'
+import { Card, CardContent } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { FormErrorAlert } from '../components/feedback/form-error-alert'
@@ -42,22 +37,21 @@ export function AdminProfileRoute() {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-  } = useForm<UpdateProfileRequest>({
-    resolver: zodResolver(updateProfileRequestSchema),
+  } = useForm<AdminProfileUpdate>({
+    resolver: zodResolver(adminProfileUpdateSchema),
     values: {
-      full_name: profile?.full_name || '',
-      phone: profile?.phone || '',
+      display_name: profile?.display_name || '',
     },
   })
 
-  const handleSave = async (data: UpdateProfileRequest) => {
+  const handleSave = async (data: AdminProfileUpdate) => {
     resetUpdateError()
+    const normalizedName = normalizeAdminDisplayName(data.display_name)
     try {
-      await updateProfile({
-        full_name: data.full_name?.trim(),
-        phone: data.phone?.trim() || null,
+      const updated = await updateProfile({
+        display_name: normalizedName,
       })
-      reset(data)
+      reset({ display_name: updated.display_name })
     } catch {
       // Inline 4xx errors render via FormErrorAlert; transient failures toast via MutationCache.
     }
@@ -89,8 +83,8 @@ export function AdminProfileRoute() {
     )
   }
 
-  const displayName = profile.full_name || 'System Operator'
-  const email = profile.email || 'admin1@souqmuftah.com'
+  const displayName = profile.display_name || 'System Operator'
+  const email = profile.email
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -116,7 +110,9 @@ export function AdminProfileRoute() {
                   {displayName}
                 </h2>
                 <Badge variant="outline" className="text-xs font-medium">
-                  {t('admin:adminRole', 'System Administrator')}
+                  {profile.role === 'admin'
+                    ? t('admin:adminRole', 'System Administrator')
+                    : profile.role}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground font-mono">
@@ -133,18 +129,24 @@ export function AdminProfileRoute() {
           {/* Form */}
           <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
             <FieldGroup className="gap-4">
-              <Field data-invalid={!!errors.full_name} className="space-y-2 text-start">
-                <FieldLabel htmlFor="full_name" className="text-xs font-medium">
-                  {t('admin:profile.fullName', 'Full Name')}
+              <Field data-invalid={!!errors.display_name} className="space-y-2 text-start">
+                <FieldLabel htmlFor="display_name" className="text-xs font-medium">
+                  {t('admin:profile.displayName', 'Display Name')}
                 </FieldLabel>
                 <Input
-                  id="full_name"
-                  {...register('full_name')}
+                  id="display_name"
+                  {...register('display_name')}
                   placeholder={displayName}
                   className="h-9 text-sm"
                 />
-                {errors.full_name && (
-                  <FieldError>{errors.full_name.message}</FieldError>
+                <p className="text-[11px] text-muted-foreground">
+                  {t(
+                    'admin:profile.displayNameHint',
+                    'Shown across the admin console and audit logs (2-255 characters).',
+                  )}
+                </p>
+                {errors.display_name && (
+                  <FieldError>{errors.display_name.message}</FieldError>
                 )}
               </Field>
 
@@ -161,21 +163,6 @@ export function AdminProfileRoute() {
                 <p className="text-[11px] text-muted-foreground">
                   {t('admin:profile.emailHint', 'Your email cannot be changed.')}
                 </p>
-              </Field>
-
-              <Field data-invalid={!!errors.phone} className="space-y-2 text-start">
-                <FieldLabel htmlFor="phone" className="text-xs font-medium">
-                  {t('admin:profile.phone', 'Phone Number')}
-                </FieldLabel>
-                <Input
-                  id="phone"
-                  {...register('phone')}
-                  placeholder={t('admin:profile.phonePlaceholder', '+20 100 000 0000')}
-                  className="h-9 text-sm font-mono"
-                />
-                {errors.phone && (
-                  <FieldError>{errors.phone.message}</FieldError>
-                )}
               </Field>
             </FieldGroup>
 

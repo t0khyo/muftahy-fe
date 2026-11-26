@@ -8,6 +8,7 @@ export interface GetAuditLogsParams {
   adminId?: string
   action?: string
   targetType?: string
+  success?: boolean
 }
 
 export interface ExportAuditLogsParams {
@@ -17,6 +18,7 @@ export interface ExportAuditLogsParams {
   adminId?: string
   action?: string
   targetType?: string
+  success?: boolean
 }
 
 export interface AuditService {

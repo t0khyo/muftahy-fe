@@ -1,5 +1,24 @@
 import { z } from 'zod'
 
+export const AUDIT_TARGET_TYPES = [
+  'admin',
+  'category',
+  'product',
+  'product_image',
+  'key',
+  'order',
+  'order_item',
+  'ticket',
+  'promo',
+  'ledger',
+] as const
+
+export const auditFilterIdentifierSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .regex(/^[a-zA-Z0-9_-]+$/)
+
 export const auditLogResponseSchema = z.object({
   id: z.string().uuid(),
   admin_id: z.string().uuid(),
