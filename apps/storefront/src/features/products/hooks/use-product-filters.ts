@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { useSearchParams } from 'react-router'
-import type { StockStatus } from '@workspace/domain/schemas/product'
 import type { ProductCatalogFilters } from './use-products'
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest'
@@ -8,8 +7,6 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest'
 export interface ProductFiltersState {
   category?: string
   variant?: 'retail' | 'oem'
-  stockStatus?: StockStatus
-  inStockOnly: boolean
   sort: SortOption
   search?: string
   page: number
@@ -17,7 +14,7 @@ export interface ProductFiltersState {
 
 export interface ActiveFilterChip {
   id: string
-  type: 'category' | 'variant' | 'stock'
+  type: 'category' | 'variant'
   value?: string
   labelFallback: string
 }
@@ -33,14 +30,6 @@ export function useProductFilters() {
   const variant: 'retail' | 'oem' | undefined =
     variantParam === 'retail' || variantParam === 'oem' ? variantParam : undefined
 
-  const stockParam = searchParams.get('stock') as StockStatus | null
-  const stockStatus: StockStatus | undefined =
-    stockParam === 'in_stock' || stockParam === 'preorder' || stockParam === 'out_of_stock'
-      ? stockParam
-      : undefined
-
-  const inStockOnly = searchParams.get('inStock') === 'true' || searchParams.get('inStock') === '1'
-
   const sortParam = searchParams.get('sort') as SortOption | null
   const validSorts: SortOption[] = ['featured', 'price-asc', 'price-desc', 'newest']
   const sort: SortOption = sortParam && validSorts.includes(sortParam) ? sortParam : 'featured'
@@ -54,22 +43,16 @@ export function useProductFilters() {
     () => ({
       category,
       variant,
-      stockStatus,
-      inStockOnly,
       sort,
       search,
       page,
     }),
-    [category, variant, stockStatus, inStockOnly, sort, search, page],
+    [category, variant, sort, search, page],
   )
 
   const activeFiltersCount = React.useMemo(() => {
-    let count = 0
-    if (variant) count += 1
-    if (stockStatus) count += 1
-    if (inStockOnly) count += 1
-    return count
-  }, [variant, stockStatus, inStockOnly])
+    return variant ? 1 : 0
+  }, [variant])
 
   const updateParams = React.useCallback(
     (updates: Record<string, string | null | undefined>, resetPage = true) => {
@@ -103,20 +86,6 @@ export function useProductFilters() {
   const setVariant = React.useCallback(
     (v?: 'retail' | 'oem') => {
       updateParams({ variant: v ?? null })
-    },
-    [updateParams],
-  )
-
-  const setStockStatus = React.useCallback(
-    (s?: StockStatus) => {
-      updateParams({ stock: s ?? null })
-    },
-    [updateParams],
-  )
-
-  const setInStockOnly = React.useCallback(
-    (val: boolean) => {
-      updateParams({ inStock: val ? 'true' : null })
     },
     [updateParams],
   )
@@ -164,12 +133,10 @@ export function useProductFilters() {
     () => ({
       category,
       variant,
-      stock_status: stockStatus,
-      inStockOnly,
       sort,
       search,
     }),
-    [category, variant, stockStatus, inStockOnly, sort, search],
+    [category, variant, sort, search],
   )
 
   return {
@@ -178,8 +145,6 @@ export function useProductFilters() {
     activeFiltersCount,
     setCategory,
     setVariant,
-    setStockStatus,
-    setInStockOnly,
     setSort,
     setPage,
     clearAll,

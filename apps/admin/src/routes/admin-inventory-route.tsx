@@ -47,6 +47,7 @@ import {
 import { MaskedKeyReveal } from '../features/inventory/components/masked-key-reveal'
 import { KeyBatchImportSheet } from '../features/inventory/components/key-batch-import-sheet'
 import { KeyUpdateDialog } from '../features/inventory/components/key-update-dialog'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -79,9 +80,31 @@ export function AdminInventoryRoute() {
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
   const [selectedKeyForEdit, setSelectedKeyForEdit] = React.useState<KeyResponse | null>(null)
 
-  const { data: stockSummary } = useProductStockSummary()
-  const { data: products } = useAdminProducts()
-  const { data: keyData, isLoading } = useInventoryKeys({
+  const {
+    data: stockSummary,
+    isError: stockSummaryError,
+    error: stockSummaryErr,
+    refetch: refetchStockSummary,
+    isFetching: stockSummaryFetching,
+    isPlaceholderData: stockSummaryPlaceholder,
+  } = useProductStockSummary()
+  const {
+    data: products,
+    isError: productsError,
+    error: productsErr,
+    refetch: refetchProducts,
+    isFetching: productsFetching,
+    isPlaceholderData: productsPlaceholder,
+  } = useAdminProducts()
+  const {
+    data: keyData,
+    isLoading,
+    isError: keysError,
+    error: keysErr,
+    refetch: refetchKeys,
+    isFetching: keysFetching,
+    isPlaceholderData: keysPlaceholder,
+  } = useInventoryKeys({
     status: selectedStatus === 'all' ? undefined : selectedStatus,
   })
 
@@ -207,7 +230,15 @@ export function AdminInventoryRoute() {
       </AdminPageHeader>
 
       {/* Stock Health Metric Ribbon */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {stockSummaryError && (!stockSummary || stockSummaryPlaceholder) ? (
+        <AdminQueryError
+          error={stockSummaryErr}
+          onRetry={() => refetchStockSummary()}
+          isRetrying={stockSummaryFetching}
+          variant="compact"
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Keys */}
         <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
@@ -279,7 +310,8 @@ export function AdminInventoryRoute() {
             <p className="text-xs text-muted-foreground mt-1.5">Requires supplier replacement</p>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Streamlined Toolbar & Keys Table */}
       <div className="space-y-4">
@@ -292,26 +324,35 @@ export function AdminInventoryRoute() {
             />
           }
           filters={
-            <Select
-              items={productFilterItems}
-              value={productFilter}
-              onValueChange={(val) => setProductFilter(val ?? 'all')}
-            >
-              <SelectTrigger className="h-8 text-xs min-w-[150px] max-w-[200px] cursor-pointer bg-background border-border/70">
-                <SelectValue
-                  placeholder={t('admin:inventory.allProducts', 'All Products')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {productFilterItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            productsError && (!products || productsPlaceholder) ? (
+              <AdminQueryError
+                error={productsErr}
+                onRetry={() => refetchProducts()}
+                isRetrying={productsFetching}
+                variant="compact"
+              />
+            ) : (
+              <Select
+                items={productFilterItems}
+                value={productFilter}
+                onValueChange={(val) => setProductFilter(val ?? 'all')}
+              >
+                <SelectTrigger className="h-8 text-xs min-w-[150px] max-w-[200px] cursor-pointer bg-background border-border/70">
+                  <SelectValue
+                    placeholder={t('admin:inventory.allProducts', 'All Products')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {productFilterItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )
           }
           views={
             <Tabs
@@ -355,7 +396,16 @@ export function AdminInventoryRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {keysError && (!keyData || keysPlaceholder) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={keysErr}
+                  onRetry={() => refetchKeys()}
+                  isRetrying={keysFetching}
+                  variant="section"
+                />
+              </div>
+            ) : isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading keys...')}
               </div>

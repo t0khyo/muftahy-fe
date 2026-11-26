@@ -35,6 +35,7 @@ import {
   TableRow,
 } from '@workspace/ui/components/table'
 import { PromoFormDialog } from '../features/promos/components/promo-form-dialog'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -57,7 +58,8 @@ export function AdminPromosRoute() {
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'inactive'>('all')
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
 
-  const { data: promos, isLoading } = useAdminPromos()
+  const { data: promos, isLoading, isError, error, refetch, isFetching, isPlaceholderData } =
+    useAdminPromos()
   const toggleMutation = useTogglePromoStatus()
 
   const statusCounts = React.useMemo(() => {
@@ -197,7 +199,16 @@ export function AdminPromosRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isError && (!promos || isPlaceholderData) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={error}
+                  onRetry={() => refetch()}
+                  isRetrying={isFetching}
+                  variant="page"
+                />
+              </div>
+            ) : isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading discounts...')}
               </div>

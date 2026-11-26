@@ -30,7 +30,12 @@ export function RootLayout() {
   return (
     <div key={currentLang} className="min-h-screen bg-background text-foreground">
       <Outlet />
-      <Toaster dir={currentLang === 'ar' ? 'rtl' : 'ltr'} theme={resolvedTheme} />
+      <Toaster
+        dir={currentLang === 'ar' ? 'rtl' : 'ltr'}
+        theme={resolvedTheme}
+        // Sonner requires physical position names so toasts stay at logical bottom-end away from the sidebar
+        position={currentLang === 'ar' ? 'bottom-left' : 'bottom-right'}
+      />
     </div>
   )
 }

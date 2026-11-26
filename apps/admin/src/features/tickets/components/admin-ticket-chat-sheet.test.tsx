@@ -1,10 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AdminTicketChatSheet } from './admin-ticket-chat-sheet'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '@workspace/i18n/config'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import * as apiFactory from '@workspace/api/factory'
 import type { TicketService } from '@workspace/api/services/ticket-service'
 import type { TicketDetail } from '@workspace/domain/schemas/ticket'
+import { toast } from '@workspace/ui/components/sonner'
+import { createAdminQueryClient } from '../../../app/query-client'
+import { AdminTicketChatSheet } from './admin-ticket-chat-sheet'
 
 describe('AdminTicketChatSheet Component', () => {
   let testQueryClient: QueryClient
@@ -71,23 +76,30 @@ describe('AdminTicketChatSheet Component', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.restoreAllMocks()
+    mockTicketService.getTicket.mockReset().mockResolvedValue(sampleTicket)
+    mockTicketService.addComment.mockReset().mockImplementation((_ticketId: string, content: string) => {
+      return Promise.resolve({
+        id: '123e4567-e89b-12d3-a456-426614174099',
+        author_type: 'admin' as const,
+        author_name: 'Support Operator',
+        content,
+        created_at: new Date().toISOString(),
+      })
+    })
     Element.prototype.scrollIntoView = vi.fn()
 
-    testQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
-        mutations: { retry: false },
-      },
-    })
+    testQueryClient = createAdminQueryClient()
     vi.spyOn(apiFactory, 'getTicketService').mockReturnValue(mockTicketService as unknown as TicketService)
   })
 
   function renderWithProviders(ui: React.ReactElement) {
     return render(
-      <QueryClientProvider client={testQueryClient}>
-        {ui}
-      </QueryClientProvider>
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={testQueryClient}>
+          {ui}
+        </QueryClientProvider>
+      </I18nextProvider>
     )
   }
 
@@ -220,5 +232,46 @@ describe('AdminTicketChatSheet Component', () => {
       expect(sheetContent).toHaveAttribute('data-side', 'right')
       expect(sheetContent).toHaveClass('right-0')
     })
+  })
+
+  it('renders section AdminQueryError when ticket detail fails to load', async () => {
+    mockTicketService.getTicket.mockRejectedValue(
+      new ApiClientError(500, 'INTERNAL_ERROR', 'Service down')
+    )
+
+    renderWithProviders(
+      <AdminTicketChatSheet
+        ticketId={sampleTicket.id}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    )
+
+    const retryBtn = await screen.findByRole('button', { name: /retry/i }, { timeout: 3000 })
+    expect(retryBtn).toBeInTheDocument()
+  })
+
+  it('renders inline FormErrorAlert and preserves message draft on 422 addComment error', async () => {
+    const errorSpy = vi.spyOn(toast, 'error')
+    mockTicketService.addComment.mockRejectedValueOnce(
+      new ApiClientError(422, 'VALIDATION_ERROR', 'Message cannot be empty or invalid')
+    )
+
+    renderWithProviders(
+      <AdminTicketChatSheet
+        ticketId={sampleTicket.id}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    )
+
+    const textarea = (await screen.findByRole('textbox')) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: 'Draft operator reply to keep' } })
+    fireEvent.click(screen.getByRole('button', { name: /send reply/i }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(i18n.t('admin:errors.VALIDATION_ERROR'))
+    expect(textarea.value).toBe('Draft operator reply to keep')
+    expect(errorSpy).not.toHaveBeenCalled()
   })
 })

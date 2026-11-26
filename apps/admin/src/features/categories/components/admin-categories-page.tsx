@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from '@workspace/ui/components/dialog'
 import { AdminPageHeader } from '../../../components/admin-page-header'
+import { AdminQueryError } from '../../../components/feedback/admin-query-error'
 import { EmptyState } from '../../dashboard/components/empty-state'
 import { DataTableColumnHeader } from '../../../components/data-table-column-header'
 import {
@@ -49,7 +50,16 @@ import { CategoryFormDialog } from './category-form-dialog'
 
 export function AdminCategoriesPage() {
   const { t } = useTranslation(['admin'])
-  const { data: categories = [], isLoading } = useAdminCategories()
+  const {
+    data: categoriesData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+    isPlaceholderData,
+  } = useAdminCategories()
+  const categories = React.useMemo(() => categoriesData ?? [], [categoriesData])
   const updateMutation = useUpdateCategory()
   const deleteMutation = useDeleteCategory()
 
@@ -210,7 +220,14 @@ export function AdminCategoriesPage() {
       />
 
       {/* Table / Empty State */}
-      {isLoading ? (
+      {isError && (!categoriesData || isPlaceholderData) ? (
+        <AdminQueryError
+          error={error}
+          onRetry={() => refetch()}
+          isRetrying={isFetching}
+          variant="page"
+        />
+      ) : isLoading ? (
         <div className="p-12 text-center text-sm text-muted-foreground">
           {t('admin:common.loading', { defaultValue: 'Loading categories...' })}
         </div>

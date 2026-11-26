@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/component
 import { Calendar } from '@workspace/ui/components/calendar'
 import { Calendar as CalendarIcon, X, Percent } from 'lucide-react'
 import { formatDate } from '@workspace/domain/formatters/date'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { useCreatePromo } from '../hooks/use-promos'
 
 interface PromoFormDialogProps {
@@ -24,9 +25,9 @@ interface PromoFormDialogProps {
 }
 
 export function PromoFormDialog({ open, onOpenChange }: PromoFormDialogProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['admin'])
   const { lang = 'en' } = useParams<{ lang: string }>()
-  const createMutation = useCreatePromo()
+  const createMutation = useCreatePromo({ errorMode: 'inline' })
 
   const [code, setCode] = React.useState('')
   const [discount, setDiscount] = React.useState('')
@@ -35,11 +36,19 @@ export function PromoFormDialog({ open, onOpenChange }: PromoFormDialogProps) {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined)
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false)
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      createMutation.reset()
+    }
+    onOpenChange(nextOpen)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const discountNum = parseFloat(discount)
     if (!code || isNaN(discountNum) || discountNum <= 0 || discountNum > 100) return
 
+    createMutation.reset()
     try {
       await createMutation.mutateAsync({
         code: code.trim().toUpperCase(),
@@ -56,21 +65,22 @@ export function PromoFormDialog({ open, onOpenChange }: PromoFormDialogProps) {
       setIsCalendarOpen(false)
       onOpenChange(false)
     } catch {
-      // Handled
+      // Keeps dialog open; FormErrorAlert renders 400/409/422 and MutationCache handles toast errors
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg p-6">
         <DialogHeader>
-          <DialogTitle>{t('admin.promosModule.createPromo', 'Create Discount Code')}</DialogTitle>
+          <DialogTitle>{t('admin:promosModule.createPromo', 'Create Discount Code')}</DialogTitle>
           <DialogDescription>
             Create a new discount code with percentage discount and usage limits.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4 text-xs">
+          <FormErrorAlert error={createMutation.error} />
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="promo-code">{t('admin.promosModule.promoCode', 'Promo Code')}</FieldLabel>

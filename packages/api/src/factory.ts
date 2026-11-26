@@ -89,6 +89,20 @@ class ServiceRegistry {
   private readonly promoServices = new Map<string, PromoService>()
   private readonly ledgerServices = new Map<string, LedgerService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
+  private adminRateLimitHandler?: (retryAfter: number) => void
+
+  setAdminRateLimitHandler(handler?: (retryAfter: number) => void): void {
+    this.adminRateLimitHandler = handler
+  }
+
+  private createClient(app: AppScope, baseURL?: string): NativeFetchClient {
+    const tokenStorage = this.getTokenStorage(app)
+    return new NativeFetchClient({
+      baseURL: baseURL ?? getApiBaseUrl(),
+      tokenStorage,
+      onRateLimited: app === 'admin' ? (retryAfter) => this.adminRateLimitHandler?.(retryAfter) : undefined,
+    })
+  }
 
   getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService
   getProductService(app: AppScope, options?: { useMock?: boolean; baseURL?: string }): ProductService
@@ -103,11 +117,10 @@ class ServiceRegistry {
     const key = `${app}_${opts?.baseURL ?? 'default'}`
     let service = this.productServices.get(key)
     if (!service) {
-      const tokenStorage = app === 'admin' ? this.getTokenStorage('admin') : undefined
-      const client = new NativeFetchClient({
-        baseURL: opts?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
+      const client =
+        app === 'admin'
+          ? this.createClient('admin', opts?.baseURL)
+          : new NativeFetchClient({ baseURL: opts?.baseURL ?? getApiBaseUrl() })
       service = new HttpProductAdapter(client)
       this.productServices.set(key, service)
     }
@@ -130,12 +143,7 @@ class ServiceRegistry {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.authServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage(app)
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpAuthAdapter(client)
+      service = new HttpAuthAdapter(this.createClient(app, options?.baseURL))
       this.authServices.set(key, service)
     }
 
@@ -146,12 +154,7 @@ class ServiceRegistry {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.userServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage(app)
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpUserAdapter(client)
+      service = new HttpUserAdapter(this.createClient(app, options?.baseURL))
       this.userServices.set(key, service)
     }
 
@@ -162,12 +165,7 @@ class ServiceRegistry {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.orderServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage(app)
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpOrderAdapter(client)
+      service = new HttpOrderAdapter(this.createClient(app, options?.baseURL))
       this.orderServices.set(key, service)
     }
     return service
@@ -177,12 +175,7 @@ class ServiceRegistry {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.ticketServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage(app)
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpTicketAdapter(client)
+      service = new HttpTicketAdapter(this.createClient(app, options?.baseURL))
       this.ticketServices.set(key, service)
     }
     return service
@@ -192,12 +185,7 @@ class ServiceRegistry {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.cartServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage(app)
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpCartAdapter(client)
+      service = new HttpCartAdapter(this.createClient(app, options?.baseURL))
       this.cartServices.set(key, service)
     }
     return service
@@ -207,12 +195,7 @@ class ServiceRegistry {
     const key = options?.baseURL ?? 'default'
     let service = this.adminDashboardServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage('admin')
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpAdminDashboardAdapter(client)
+      service = new HttpAdminDashboardAdapter(this.createClient('admin', options?.baseURL))
       this.adminDashboardServices.set(key, service)
     }
     return service
@@ -222,12 +205,7 @@ class ServiceRegistry {
     const key = options?.baseURL ?? 'default'
     let service = this.inventoryServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage('admin')
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpInventoryAdapter(client)
+      service = new HttpInventoryAdapter(this.createClient('admin', options?.baseURL))
       this.inventoryServices.set(key, service)
     }
     return service
@@ -237,12 +215,7 @@ class ServiceRegistry {
     const key = options?.baseURL ?? 'default'
     let service = this.adminOrderServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage('admin')
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpAdminOrderAdapter(client)
+      service = new HttpAdminOrderAdapter(this.createClient('admin', options?.baseURL))
       this.adminOrderServices.set(key, service)
     }
     return service
@@ -252,12 +225,7 @@ class ServiceRegistry {
     const key = options?.baseURL ?? 'default'
     let service = this.auditServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage('admin')
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpAuditAdapter(client)
+      service = new HttpAuditAdapter(this.createClient('admin', options?.baseURL))
       this.auditServices.set(key, service)
     }
     return service
@@ -267,12 +235,7 @@ class ServiceRegistry {
     const key = options?.baseURL ?? 'default'
     let service = this.promoServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage('admin')
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpPromoAdapter(client)
+      service = new HttpPromoAdapter(this.createClient('admin', options?.baseURL))
       this.promoServices.set(key, service)
     }
     return service
@@ -282,12 +245,7 @@ class ServiceRegistry {
     const key = options?.baseURL ?? 'default'
     let service = this.ledgerServices.get(key)
     if (!service) {
-      const tokenStorage = this.getTokenStorage('admin')
-      const client = new NativeFetchClient({
-        baseURL: options?.baseURL ?? getApiBaseUrl(),
-        tokenStorage,
-      })
-      service = new HttpLedgerAdapter(client)
+      service = new HttpLedgerAdapter(this.createClient('admin', options?.baseURL))
       this.ledgerServices.set(key, service)
     }
     return service
@@ -295,6 +253,9 @@ class ServiceRegistry {
 }
 
 export const services = new ServiceRegistry()
+
+export const setAdminRateLimitHandler = (handler?: (retryAfter: number) => void): void =>
+  services.setAdminRateLimitHandler(handler)
 
 export function getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService
 export function getProductService(app: AppScope, options?: { useMock?: boolean; baseURL?: string }): ProductService

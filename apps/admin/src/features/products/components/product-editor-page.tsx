@@ -24,13 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from '@workspace/ui/components/sonner'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { slugify, validateSkuForCategory } from '@workspace/domain/schemas/product'
 import type { CategoryResponse, ProductResponse, ProductVariant } from '@workspace/domain/schemas/product'
 import { getProductService } from '@workspace/api/factory'
+import { AdminQueryError } from '../../../components/feedback/admin-query-error'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { getStorefrontUrl } from '../../../lib/storefront-url'
 import {
+  adminProductKeys,
   useAdminProductDetail,
   useCreateProduct,
   useUpdateProduct,
@@ -46,14 +50,51 @@ export interface ProductEditorPageProps {
 
 export function ProductEditorPage({ productId }: ProductEditorPageProps) {
   const isEditing = Boolean(productId && productId !== 'new')
-  const { data: product, isLoading: isLoadingProduct } = useAdminProductDetail(productId || '')
-  const { data: categories = [], isLoading: isLoadingCategories } = useAdminCategories()
+  const {
+    data: product,
+    isLoading: isLoadingProduct,
+    isError: isProductError,
+    isPlaceholderData: isProductPlaceholder,
+    error: productError,
+    isFetching: isProductFetching,
+    refetch: refetchProduct,
+  } = useAdminProductDetail(productId || '')
+  const {
+    data: categories = [],
+    isLoading: isLoadingCategories,
+    isError: isCategoriesError,
+    error: categoriesError,
+    isFetching: isCategoriesFetching,
+    refetch: refetchCategories,
+  } = useAdminCategories()
 
   if (isEditing && isLoadingProduct) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Loader2 className="size-8 animate-spin text-primary" />
       </div>
+    )
+  }
+
+  if (isEditing && isProductError && (!product || isProductPlaceholder)) {
+    return (
+      <AdminQueryError
+        error={productError}
+        onRetry={() => refetchProduct()}
+        isRetrying={isProductFetching}
+        variant="page"
+      />
+    )
+  }
+
+  if (isCategoriesError && categories.length === 0) {
+    return (
+      <AdminQueryError
+        error={categoriesError}
+        onRetry={() => refetchCategories()}
+        isRetrying={isCategoriesFetching}
+        variant="page"
+      />
     )
   }
 
@@ -86,10 +127,12 @@ function ProductEditorForm({
   const { t, i18n } = useTranslation(['admin'])
   const isRtl = i18n.language === 'ar'
 
+  const queryClient = useQueryClient()
   const isEditing = Boolean(productId && productId !== 'new')
 
-  const createMutation = useCreateProduct()
-  const updateMutation = useUpdateProduct()
+  const createMutation = useCreateProduct({ errorMode: 'inline' })
+  const updateMutation = useUpdateProduct({ errorMode: 'inline' })
+  const [clientError, setClientError] = React.useState<string | null>(null)
 
   // Form State initialized directly from loaded product and categories
   const [name, setName] = React.useState(product?.name || '')
@@ -154,11 +197,14 @@ function ProductEditorForm({
       const numBaseVal = parseFloat(basePrice)
       const numSaleVal = parseFloat(salePrice)
       if (!isNaN(numBaseVal) && !isNaN(numSaleVal) && numSaleVal >= numBaseVal) {
-        return 'Sale price must be less than base price'
+        return t(
+          'admin:feedback.validation.salePriceLessThanBase',
+          'Sale price must be less than base price',
+        )
       }
     }
     return null
-  }, [basePrice, salePrice])
+  }, [basePrice, salePrice, t])
 
   // Price calculations
   const numBase = parseFloat(basePrice) || 0
@@ -173,29 +219,40 @@ function ProductEditorForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setClientError(null)
+    createMutation.reset()
+    updateMutation.reset()
 
     if (!name.trim()) {
-      toast.error('Product title is required')
+      setClientError(t('admin:feedback.validation.titleRequired', 'Product title is required'))
       return
     }
     if (!basePrice || numBase <= 0) {
-      toast.error('Valid base price is required')
+      setClientError(
+        t('admin:feedback.validation.basePriceRequired', 'Valid base price is required'),
+      )
       return
     }
     if (priceError) {
-      toast.error(priceError)
+      setClientError(priceError)
       return
     }
     if (!effectiveCategoryId) {
-      toast.error('Category is required')
+      setClientError(t('admin:feedback.validation.categoryRequired', 'Category is required'))
       return
     }
     if (!sku.trim()) {
-      toast.error('SKU is required')
+      setClientError(t('admin:feedback.validation.skuRequired', 'SKU is required'))
       return
     }
     if (selectedCategory && !validateSkuForCategory(sku.trim(), selectedCategory.code)) {
-      toast.error(skuError || 'Invalid SKU format for selected category')
+      setClientError(
+        skuError ||
+          t(
+            'admin:feedback.validation.skuInvalid',
+            'Invalid SKU format for selected category',
+          ),
+      )
       return
     }
 
@@ -257,9 +314,10 @@ function ProductEditorForm({
             }
           }
           setIsUploadingStaged(false)
+          await queryClient.invalidateQueries({ queryKey: adminProductKeys.all })
 
           if (hasPartialFailure) {
-            toast.error(
+            toast.warning(
               t(
                 'admin:productEditor.partialUploadError',
                 'Product created, but some images failed to upload. Click retry on failed images.',
@@ -271,7 +329,7 @@ function ProductEditorForm({
         navigate(`/${lang}/products/${newProduct.id}`)
       }
     } catch {
-      // Toast handled by mutation hooks
+      // Inline or toast error handled by MutationCache + FormErrorAlert
     }
   }
 
@@ -336,6 +394,11 @@ function ProductEditorForm({
           </Button>
         </div>
       </div>
+
+      <FormErrorAlert
+        clientError={clientError}
+        error={updateMutation.error ?? createMutation.error}
+      />
 
       {/* 2-Column Responsive Layout (Shopify style) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

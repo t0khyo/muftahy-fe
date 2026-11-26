@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useParams, useNavigate, Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { toast } from '@workspace/ui/components/sonner'
 import {
   PackageCheck,
   Plus,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import {
   useAdminProducts,
+  useBulkUpdateProductStatus,
   useUpdateProduct,
   useUpdateProductStatus,
 } from '../features/products/hooks/use-admin-products'
@@ -57,7 +59,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
-import { toast } from '@workspace/ui/components/sonner'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -77,9 +79,11 @@ export function AdminProductsRoute() {
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
   const [copiedSku, setCopiedSku] = React.useState<string | null>(null)
 
-  const { data: products, isLoading } = useAdminProducts()
+  const { data: products, isLoading, isError, error, refetch, isFetching, isPlaceholderData } =
+    useAdminProducts()
   const { data: categories = [] } = useAdminCategories()
   const statusMutation = useUpdateProductStatus()
+  const bulkStatusMutation = useBulkUpdateProductStatus()
   const updateProductMutation = useUpdateProduct()
 
   // Status metrics for tabs
@@ -229,19 +233,22 @@ export function AdminProductsRoute() {
   }
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    await statusMutation.mutateAsync({ id, is_active: !currentStatus })
-    toast.success(
-      !currentStatus
-        ? t('admin:products.publishSuccess', 'Product published to storefront')
-        : t('admin:products.unpublishSuccess', 'Product moved to draft'),
-    )
+    try {
+      await statusMutation.mutateAsync({ id, is_active: !currentStatus })
+    } catch {
+      // Handled by global MutationCache error toast
+    }
   }
 
   const handleToggleFeatured = async (id: string, currentFeatured: boolean) => {
-    await updateProductMutation.mutateAsync({
-      id,
-      data: { is_featured: !currentFeatured },
-    })
+    try {
+      await updateProductMutation.mutateAsync({
+        id,
+        data: { is_featured: !currentFeatured },
+      })
+    } catch {
+      // Handled by global MutationCache error toast
+    }
   }
 
   const handleCopySku = (sku: string) => {
@@ -278,15 +285,12 @@ export function AdminProductsRoute() {
   const handleBulkStatus = async (is_active: boolean) => {
     const ids = Array.from(selectedIds)
     if (!ids.length) return
-    for (const id of ids) {
-      await statusMutation.mutateAsync({ id, is_active })
+    try {
+      await bulkStatusMutation.mutateAsync({ ids, is_active })
+      setSelectedIds(new Set())
+    } catch {
+      // Handled by global MutationCache error toast
     }
-    toast.success(
-      is_active
-        ? t('admin:products.publishSuccess', 'Products published to storefront')
-        : t('admin:products.unpublishSuccess', 'Products moved to draft'),
-    )
-    setSelectedIds(new Set())
   }
 
   return (
@@ -424,7 +428,7 @@ export function AdminProductsRoute() {
                 size="xs"
                 onClick={() => handleBulkStatus(true)}
                 className="gap-1 cursor-pointer h-7 text-xs"
-                disabled={statusMutation.isPending}
+                disabled={bulkStatusMutation.isPending}
               >
                 <Eye className="size-3" />
                 <span>{t('admin:products.bulk.publish', 'Set as Active')}</span>
@@ -434,7 +438,7 @@ export function AdminProductsRoute() {
                 size="xs"
                 onClick={() => handleBulkStatus(false)}
                 className="gap-1 cursor-pointer h-7 text-xs"
-                disabled={statusMutation.isPending}
+                disabled={bulkStatusMutation.isPending}
               >
                 <EyeOff className="size-3" />
                 <span>{t('admin:products.bulk.unpublish', 'Set as Draft')}</span>
@@ -473,7 +477,16 @@ export function AdminProductsRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isError && (!products || isPlaceholderData) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={error}
+                  onRetry={() => refetch()}
+                  isRetrying={isFetching}
+                  variant="page"
+                />
+              </div>
+            ) : isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading catalog...')}
               </div>

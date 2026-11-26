@@ -1,15 +1,14 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { KeyUpdateDialog } from './key-update-dialog'
-import type { KeyResponse } from '@workspace/domain/schemas/inventory'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '@workspace/i18n/config'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import * as inventoryServiceModule from '@workspace/api/factory'
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, defaultValue?: string) => defaultValue ?? _key,
-  }),
-}))
+import type { KeyResponse } from '@workspace/domain/schemas/inventory'
+import { toast } from '@workspace/ui/components/sonner'
+import { createAdminQueryClient } from '../../../app/query-client'
+import { KeyUpdateDialog } from './key-update-dialog'
 
 const mockKeyRecord: KeyResponse = {
   id: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
@@ -28,13 +27,8 @@ describe('KeyUpdateDialog', () => {
   const mockUpdateKey = vi.fn()
 
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
-      },
-    })
-    vi.clearAllMocks()
+    queryClient = createAdminQueryClient()
+    vi.restoreAllMocks()
 
     vi.spyOn(inventoryServiceModule, 'getInventoryService').mockReturnValue({
       updateKey: mockUpdateKey.mockResolvedValue({
@@ -48,16 +42,23 @@ describe('KeyUpdateDialog', () => {
     } as unknown as ReturnType<typeof inventoryServiceModule.getInventoryService>)
   })
 
-  it('renders target product name and masked serial key', () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <KeyUpdateDialog
-          keyRecord={mockKeyRecord}
-          open={true}
-          onOpenChange={vi.fn()}
-        />
-      </QueryClientProvider>
+  function renderDialog(props: Partial<React.ComponentProps<typeof KeyUpdateDialog>> = {}) {
+    return render(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <KeyUpdateDialog
+            keyRecord={mockKeyRecord}
+            open={true}
+            onOpenChange={vi.fn()}
+            {...props}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>
     )
+  }
+
+  it('renders target product name and masked serial key', () => {
+    renderDialog()
 
     expect(screen.getByText('Windows 11 Pro')).toBeInTheDocument()
     expect(screen.getByText('Edit Key')).toBeInTheDocument()
@@ -65,18 +66,11 @@ describe('KeyUpdateDialog', () => {
     expect(screen.getByText('Off')).toBeInTheDocument()
   })
 
-  it('submits pool toggle mutation when saved', async () => {
+  it('submits pool toggle mutation when saved and closes immediately with one toast', async () => {
     const handleSuccess = vi.fn()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <KeyUpdateDialog
-          keyRecord={mockKeyRecord}
-          open={true}
-          onOpenChange={vi.fn()}
-          onSuccess={handleSuccess}
-        />
-      </QueryClientProvider>
-    )
+    const handleOpenChange = vi.fn()
+    const successSpy = vi.spyOn(toast, 'success')
+    renderDialog({ onOpenChange: handleOpenChange, onSuccess: handleSuccess })
 
     const poolSwitch = screen.getByRole('switch')
     fireEvent.click(poolSwitch)
@@ -92,6 +86,34 @@ describe('KeyUpdateDialog', () => {
         })
       )
     })
+
+    expect(handleSuccess).toHaveBeenCalledTimes(1)
+    expect(handleOpenChange).toHaveBeenCalledWith(false)
+    expect(successSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders inline FormErrorAlert on 422 validation failure and keeps dialog open without exposing key serial', async () => {
+    const handleOpenChange = vi.fn()
+    const errorSpy = vi.spyOn(toast, 'error')
+    mockUpdateKey.mockRejectedValueOnce(
+      new ApiClientError(422, 'VALIDATION_ERROR', 'Raw W269N-WFGWX-YVC9B-4J6C9-T83GX error', undefined, undefined, {
+        fieldErrors: [{ field: 'status', message: 'Status transition not allowed' }],
+      })
+    )
+
+    renderDialog({ onOpenChange: handleOpenChange })
+
+    fireEvent.click(screen.getByRole('switch'))
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    expect(handleOpenChange).not.toHaveBeenCalledWith(false)
+    expect(errorSpy).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert').textContent).toContain('Status transition not allowed')
+    expect(screen.getByRole('alert').textContent).not.toContain('W269N-WFGWX-YVC9B-4J6C9-T83GX')
   })
 
   it('displays terminal status notification when key is cancelled', () => {
@@ -101,15 +123,7 @@ describe('KeyUpdateDialog', () => {
       cancel_reason: 'Supplier defect',
     }
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <KeyUpdateDialog
-          keyRecord={cancelledKey}
-          open={true}
-          onOpenChange={vi.fn()}
-        />
-      </QueryClientProvider>
-    )
+    renderDialog({ keyRecord: cancelledKey })
 
     expect(
       screen.getByText(/This key is in a terminal state/i)

@@ -36,7 +36,7 @@ if (!i18n.isInitialized) {
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: SUPPORTED_LANGUAGES,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'nav', 'header', 'footer', 'search', 'cart', 'products', 'design', 'home', 'detail'],
+    ns: ['common', 'nav', 'header', 'footer', 'search', 'cart', 'products', 'design', 'home', 'detail', 'auth', 'account', 'admin'],
     interpolation: {
       escapeValue: false,
     },

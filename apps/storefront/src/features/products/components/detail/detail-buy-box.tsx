@@ -25,7 +25,6 @@ export function DetailBuyBox({
   const { t, i18n } = useTranslation(['detail', 'products', 'common'])
   const navigate = useNavigate()
 
-  const isInStock = product.stock_status === 'in_stock'
   const isPreorder = product.stock_status === 'preorder'
   const isOutOfStock = product.stock_status === 'out_of_stock'
 
@@ -54,9 +53,11 @@ export function DetailBuyBox({
     ? t('added', { ns: 'common', defaultValue: 'Added!' })
     : isInCart
       ? t('viewCart', { ns: 'common', defaultValue: 'View in Cart' })
-      : isPreorder
-        ? t('stock.preorder', { ns: 'products', defaultValue: 'Preorder Now' })
-        : t('addToCart', { ns: 'products', defaultValue: 'Add to Cart' })
+      : isOutOfStock && !product.preorder_enabled
+        ? t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of Stock' })
+        : isPreorder
+          ? t('stock.preorder', { ns: 'products', defaultValue: 'Preorder Now' })
+          : t('addToCart', { ns: 'products', defaultValue: 'Add to Cart' })
 
   return (
     <div className="flex flex-col gap-6 text-start w-full">
@@ -74,7 +75,7 @@ export function DetailBuyBox({
           })()}
         </Badge>
         {product.variant && (
-          <Badge variant="outline" className="h-7 px-3 text-xs font-semibold uppercase">
+          <Badge variant="outline" className="h-7 px-3 text-xs font-semibold">
             {t(`variants.${product.variant}`, {
               ns: 'products',
               defaultValue: product.variant,
@@ -124,39 +125,6 @@ export function DetailBuyBox({
                 maximumFractionDigits: 0,
               })}%
             </Badge>
-          )}
-        </div>
-
-        {/* Stock Status Indicator */}
-        <div className="pt-2 border-t border-border/30">
-          {isInStock && (
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>
-                {t('stock.in_stock', { ns: 'products', defaultValue: 'In Stock' })}
-                {product.available_count > 0 && ` (${product.available_count} keys available)`}
-              </span>
-            </div>
-          )}
-          {isPreorder && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
-                <span className="size-2 rounded-full bg-amber-500" />
-                <span>{t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('preorderDisclaimer', {
-                  ns: 'products',
-                  defaultValue: 'Preorder item: code will be fulfilled upon restock.',
-                })}
-              </p>
-            </div>
-          )}
-          {isOutOfStock && !product.preorder_enabled && (
-            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <span className="size-2 rounded-full bg-muted-foreground" />
-              <span>{t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of Stock' })}</span>
-            </div>
           )}
         </div>
 

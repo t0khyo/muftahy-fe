@@ -83,8 +83,18 @@ describe('SiteHeader Component', () => {
     expect(rtlLogo).toBeInTheDocument()
   })
 
+  it('does not fetch products while search panel is closed', () => {
+    const productService = getProductService()
+    const getProductsSpy = vi.spyOn(productService, 'getProducts').mockResolvedValue([])
+
+    renderSiteHeader('/en')
+
+    expect(getProductsSpy).not.toHaveBeenCalled()
+    getProductsSpy.mockRestore()
+  })
+
   it('highlights category navbar link when on matching category route and does not double-highlight all products', () => {
-    renderSiteHeader('/en/products?category=windows')
+    renderSiteHeader('/en/products?category=operating-systems')
 
     const windowsLink = screen.getByRole('link', { name: /^windows$/i })
     expect(windowsLink).toHaveClass('font-medium')

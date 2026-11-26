@@ -9,17 +9,24 @@ import {
   ImageIcon,
   Loader2,
 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@workspace/ui/lib/utils'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import { toast } from '@workspace/ui/components/sonner'
-import { resolveStorageUrl } from '@workspace/api/factory'
+import { getProductService, resolveStorageUrl } from '@workspace/api/factory'
 import type { ProductImageResponse } from '@workspace/domain/schemas/product'
 import {
   compressProductImage,
   compressThumbnail,
 } from '@workspace/domain/media/image-compression'
 import {
+  resolveApiError,
+  showFeedbackToast,
+  showResolvedErrorToast,
+} from '../../../lib/api-feedback'
+import {
+  adminProductKeys,
   useUploadProductImage,
   useDeleteProductImage,
   useSetPrimaryProductImage,
@@ -72,12 +79,15 @@ export function ProductMediaSection({
   const [isDragging, setIsDragging] = React.useState(false)
   const [isProcessing, setIsProcessing] = React.useState(false)
 
+  const queryClient = useQueryClient()
+
   // Live mutation hooks
   const uploadMutation = useUploadProductImage()
   const deleteMutation = useDeleteProductImage()
   const setPrimaryMutation = useSetPrimaryProductImage()
   const reorderMutation = useReorderProductImages()
   const uploadThumbnailMutation = useUploadProductThumbnail()
+  const autoThumbnailMutation = useUploadProductThumbnail({ suppressSuccessToast: true })
   const deleteThumbnailMutation = useDeleteProductThumbnail()
 
   const isLive = Boolean(productId)
@@ -126,25 +136,54 @@ export function ProductMediaSection({
     setIsProcessing(true)
     try {
       if (isLive && productId) {
-        for (let i = 0; i < validFiles.length; i++) {
-          const rawFile = validFiles[i]
-          const compressedFile = await compressProductImage(rawFile)
-          const isPrimary = optimisticLiveImages.length === 0 && i === 0
+        if (validFiles.length === 1 && optimisticLiveImages.length > 0) {
+          const compressedFile = await compressProductImage(validFiles[0])
           try {
             await uploadMutation.mutateAsync({
               productId,
               file: compressedFile,
-              isPrimary,
+              isPrimary: false,
             })
-            if (isPrimary) {
-              const compressedThumb = await compressThumbnail(rawFile)
-              await uploadThumbnailMutation.mutateAsync({
-                productId,
-                file: compressedThumb,
-              })
-            }
           } catch {
-            // Handled by hook error toast
+            // Handled by MutationCache
+          }
+        } else {
+          const service = getProductService('admin')
+          let succeeded = 0
+          let firstError: unknown = null
+
+          for (let i = 0; i < validFiles.length; i++) {
+            const rawFile = validFiles[i]
+            const compressedFile = await compressProductImage(rawFile)
+            const isPrimary = optimisticLiveImages.length === 0 && i === 0
+            try {
+              await service.uploadProductImage(productId, {
+                file: compressedFile,
+                is_primary: isPrimary,
+              })
+              succeeded++
+              if (isPrimary) {
+                const compressedThumb = await compressThumbnail(rawFile)
+                await service.uploadProductThumbnail(productId, compressedThumb).catch(() => {})
+              }
+            } catch (err) {
+              firstError ??= err
+            }
+          }
+
+          await queryClient.invalidateQueries({ queryKey: adminProductKeys.detail(productId) })
+          await queryClient.invalidateQueries({ queryKey: adminProductKeys.lists() })
+
+          if (succeeded === 0 && firstError) {
+            showResolvedErrorToast(resolveApiError(firstError, 'admin:errors.INVALID_IMAGE_FORMAT'))
+          } else if (succeeded < validFiles.length) {
+            showFeedbackToast({
+              key: 'admin:feedback.imagesUploadedPartial',
+              params: { succeeded, total: validFiles.length },
+              variant: 'warning',
+            })
+          } else {
+            showFeedbackToast({ key: 'admin:feedback.imageUploaded' })
           }
         }
       } else {
@@ -244,7 +283,7 @@ export function ProductMediaSection({
         type: blob.type || 'image/webp',
       })
       const compressedThumb = await compressThumbnail(sourceFile)
-      await uploadThumbnailMutation.mutateAsync({ productId, file: compressedThumb })
+      await autoThumbnailMutation.mutateAsync({ productId, file: compressedThumb })
     } catch {
       // Non-fatal: primary image was still switched even if auto-thumbnail fetch failed
     }

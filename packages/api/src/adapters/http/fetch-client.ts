@@ -1,19 +1,223 @@
 import { apiErrorResponseSchema } from '@workspace/domain/schemas/auth'
 import type { TokenStorage } from './token-storage'
 
+export interface FieldValidationError {
+  field: string
+  message: string
+  code?: string
+}
+
+export interface ApiClientErrorOptions {
+  fieldErrors?: FieldValidationError[]
+  isNetworkError?: boolean
+  isSessionExpired?: boolean
+}
+
+interface FastApiValidationEntry {
+  loc: Array<string | number>
+  msg: string
+  type?: string
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function parseFastApiValidationPayload(errJson: unknown): FastApiValidationEntry[] | null {
+  if (!isRecord(errJson) || !Array.isArray(errJson.detail)) return null
+  const entries: FastApiValidationEntry[] = []
+  for (const item of errJson.detail) {
+    if (!isRecord(item) || !Array.isArray(item.loc) || typeof item.msg !== 'string') {
+      return null
+    }
+    const validLoc = item.loc.every((seg) => typeof seg === 'string' || typeof seg === 'number')
+    if (!validLoc) return null
+    entries.push({
+      loc: item.loc as Array<string | number>,
+      msg: item.msg,
+      ...(typeof item.type === 'string' ? { type: item.type } : {}),
+    })
+  }
+  return entries
+}
+
+function parsePlainDetailPayload(errJson: unknown): string | null {
+  if (!isRecord(errJson) || typeof errJson.detail !== 'string' || errJson.detail.length === 0) {
+    return null
+  }
+  return errJson.detail
+}
+
+function clampRetryAfter(seconds: number): number {
+  if (!Number.isFinite(seconds)) return 60
+  return Math.min(300, Math.max(1, Math.ceil(seconds)))
+}
+
+function parseRetryAfterHeader(header: string | null): number | undefined {
+  if (!header) return undefined
+  const trimmed = header.trim()
+  if (/^\d+$/.test(trimmed)) {
+    return clampRetryAfter(parseInt(trimmed, 10))
+  }
+  const timestamp = Date.parse(trimmed)
+  if (!Number.isNaN(timestamp)) {
+    return clampRetryAfter((timestamp - Date.now()) / 1000)
+  }
+  return undefined
+}
+
+function mapStatusToErrorCode(status: number): string {
+  switch (status) {
+    case 400:
+      return 'BAD_REQUEST'
+    case 401:
+      return 'AUTHENTICATION_FAILED'
+    case 403:
+      return 'PERMISSION_DENIED'
+    case 404:
+      return 'ENTITY_NOT_FOUND'
+    case 409:
+      return 'CONFLICT'
+    case 422:
+      return 'VALIDATION_ERROR'
+    case 429:
+      return 'RATE_LIMIT_EXCEEDED'
+    default:
+      return status >= 500 ? 'SERVER_ERROR' : 'REQUEST_FAILED'
+  }
+}
+
+function extractFieldErrorsFromDetails(details?: Record<string, unknown>): FieldValidationError[] | undefined {
+  const raw = details?.field_errors
+  if (!raw) return undefined
+
+  if (Array.isArray(raw)) {
+    const items: FieldValidationError[] = []
+    for (const entry of raw) {
+      if (isRecord(entry) && typeof entry.field === 'string' && entry.field && typeof entry.message === 'string') {
+        items.push({
+          field: entry.field,
+          message: entry.message,
+          ...(typeof entry.code === 'string' ? { code: entry.code } : {}),
+        })
+      }
+    }
+    return items.length > 0 ? items : undefined
+  }
+
+  if (isRecord(raw)) {
+    const items: FieldValidationError[] = []
+    for (const [field, val] of Object.entries(raw)) {
+      if (typeof val === 'string' && val) {
+        items.push({ field, message: val })
+      } else if (Array.isArray(val)) {
+        const firstMsg = val.find((v): v is string => typeof v === 'string' && v.length > 0)
+        if (firstMsg) {
+          items.push({ field, message: firstMsg })
+        }
+      }
+    }
+    return items.length > 0 ? items : undefined
+  }
+
+  return undefined
+}
+
+function formatFastApiLoc(loc: Array<string | number>): string {
+  const parts = loc.map(String)
+  const trimmed =
+    parts.length > 0 && (parts[0] === 'body' || parts[0] === 'query' || parts[0] === 'path')
+      ? parts.slice(1)
+      : parts
+  return trimmed.length > 0 ? trimmed.join('.') : '_root'
+}
+
+function normalizeErrorPayload(
+  status: number,
+  statusText: string,
+  errJson: unknown,
+  headerRetryAfter?: number,
+): {
+  errorCode: string
+  message: string
+  details?: Record<string, unknown>
+  retryAfter?: number
+  fieldErrors?: FieldValidationError[]
+} {
+  const defaultMessage = statusText || `HTTP ${status}`
+  let retryAfter = headerRetryAfter
+
+  const parsedMuftahy = apiErrorResponseSchema.safeParse(errJson)
+  if (parsedMuftahy.success) {
+    if (parsedMuftahy.data.retry_after !== undefined) {
+      retryAfter = clampRetryAfter(parsedMuftahy.data.retry_after)
+    }
+    return {
+      errorCode: parsedMuftahy.data.error_code,
+      message: parsedMuftahy.data.message || defaultMessage,
+      details: parsedMuftahy.data.details,
+      retryAfter,
+      fieldErrors: extractFieldErrorsFromDetails(parsedMuftahy.data.details),
+    }
+  }
+
+  const parsedFastApi = parseFastApiValidationPayload(errJson)
+  if (parsedFastApi) {
+    const fieldErrors: FieldValidationError[] = parsedFastApi.map((entry) => ({
+      field: formatFastApiLoc(entry.loc),
+      message: entry.msg,
+      code: entry.type,
+    }))
+    return {
+      errorCode: 'VALIDATION_ERROR',
+      message: fieldErrors[0]?.message || defaultMessage,
+      retryAfter,
+      fieldErrors: fieldErrors.length > 0 ? fieldErrors : undefined,
+    }
+  }
+
+  const parsedDetail = parsePlainDetailPayload(errJson)
+  if (parsedDetail) {
+    return {
+      errorCode: mapStatusToErrorCode(status),
+      message: parsedDetail,
+      retryAfter,
+    }
+  }
+
+  return {
+    errorCode: mapStatusToErrorCode(status),
+    message: defaultMessage,
+    retryAfter,
+  }
+}
+
 export class ApiClientError extends Error {
   readonly status: number
   readonly errorCode: string
   readonly details?: Record<string, unknown>
   readonly retryAfter?: number
+  readonly fieldErrors?: FieldValidationError[]
+  readonly isNetworkError: boolean
+  readonly isSessionExpired: boolean
 
-  constructor(status: number, errorCode: string, message: string, details?: Record<string, unknown>, retryAfter?: number) {
+  constructor(
+    status: number,
+    errorCode: string,
+    message: string,
+    details?: Record<string, unknown>,
+    retryAfter?: number,
+    options?: ApiClientErrorOptions,
+  ) {
     super(message)
     this.name = 'ApiClientError'
     this.status = status
     this.errorCode = errorCode
     this.details = details
     this.retryAfter = retryAfter
+    this.fieldErrors = options?.fieldErrors
+    this.isNetworkError = options?.isNetworkError ?? false
+    this.isSessionExpired = options?.isSessionExpired ?? false
   }
 }
 
@@ -21,6 +225,7 @@ export interface FetchClientOptions {
   baseURL?: string
   tokenStorage?: TokenStorage
   onAuthRequired?: () => void
+  onRateLimited?: (retryAfter: number) => void
   fetchFn?: typeof fetch
 }
 
@@ -35,13 +240,15 @@ export class NativeFetchClient {
   private readonly baseURL: string
   private readonly tokenStorage?: TokenStorage
   private readonly onAuthRequired?: () => void
+  private readonly onRateLimited?: (retryAfter: number) => void
   private readonly customFetch?: typeof fetch
-  private refreshPromise: Promise<string | null> | null = null
+  private refreshPromise: Promise<{ accessToken: string | null; sessionExpired: boolean }> | null = null
 
   constructor(options: FetchClientOptions = {}) {
     this.baseURL = (options.baseURL ?? 'http://localhost:8000/api/v1').replace(/\/+$/, '')
     this.tokenStorage = options.tokenStorage
     this.onAuthRequired = options.onAuthRequired
+    this.onRateLimited = options.onRateLimited
     this.customFetch = options.fetchFn
   }
 
@@ -65,20 +272,22 @@ export class NativeFetchClient {
     return fn()
   }
 
-  private async performTokenRefresh(staleAccessToken: string | null): Promise<string | null> {
-    if (!this.tokenStorage) return null
+  private async performTokenRefresh(
+    staleAccessToken: string | null,
+  ): Promise<{ accessToken: string | null; sessionExpired: boolean }> {
+    if (!this.tokenStorage) return { accessToken: null, sessionExpired: false }
 
     // Check if another request or tab already refreshed the access token
     const currentToken = this.tokenStorage.getAccessToken()
     if (currentToken && currentToken !== staleAccessToken) {
-      return currentToken
+      return { accessToken: currentToken, sessionExpired: false }
     }
 
     const refreshToken = this.tokenStorage.getRefreshToken()
     if (!refreshToken) {
       this.tokenStorage.clearTokens()
       this.onAuthRequired?.()
-      return null
+      return { accessToken: null, sessionExpired: true }
     }
 
     try {
@@ -94,7 +303,7 @@ export class NativeFetchClient {
       if (!response.ok) {
         this.tokenStorage.clearTokens()
         this.onAuthRequired?.()
-        return null
+        return { accessToken: null, sessionExpired: true }
       }
 
       const data = (await response.json()) as {
@@ -111,11 +320,11 @@ export class NativeFetchClient {
         expires_in: data.expires_in,
       })
 
-      return data.access_token
+      return { accessToken: data.access_token, sessionExpired: false }
     } catch {
       this.tokenStorage.clearTokens()
       this.onAuthRequired?.()
-      return null
+      return { accessToken: null, sessionExpired: true }
     }
   }
 
@@ -140,13 +349,24 @@ export class NativeFetchClient {
       body = JSON.stringify(body)
     }
 
-    const response = await fetchImpl(url, {
-      ...options,
-      headers,
-      body: body as BodyInit | null | undefined,
-    })
+    let response: Response
+    try {
+      response = await fetchImpl(url, {
+        ...options,
+        headers,
+        body: body as BodyInit | null | undefined,
+      })
+    } catch (err) {
+      if (err && typeof err === 'object' && (err as { name?: string }).name === 'AbortError') {
+        throw err
+      }
+      throw new ApiClientError(0, 'NETWORK_ERROR', 'Network request failed', undefined, undefined, {
+        isNetworkError: true,
+      })
+    }
 
     // Handle 401 Unauthorized with single-flight latch
+    let isSessionExpired = false
     if (response.status === 401 && !options.isRetry && !path.includes('/auth/refresh') && !path.includes('/auth/login')) {
       if (!this.refreshPromise) {
         this.refreshPromise = this.executeWithLock(() => this.performTokenRefresh(accessToken)).finally(() => {
@@ -154,51 +374,50 @@ export class NativeFetchClient {
         })
       }
 
-      const newAccessToken = await this.refreshPromise
-      if (newAccessToken) {
+      const refreshResult = await this.refreshPromise
+      if (refreshResult.accessToken) {
         const retryHeaders = new Headers(headers)
-        retryHeaders.set('Authorization', `Bearer ${newAccessToken}`)
+        retryHeaders.set('Authorization', `Bearer ${refreshResult.accessToken}`)
         return this.request<T>(path, {
           ...options,
           isRetry: true,
           headers: retryHeaders,
         })
       }
+      isSessionExpired = refreshResult.sessionExpired
     }
 
     // Handle 429 Too Many Requests
-    let retryAfter: number | undefined
-    if (response.status === 429) {
-      const retryHeader = response.headers.get('Retry-After')
-      if (retryHeader) {
-        const parsed = parseInt(retryHeader, 10)
-        if (!isNaN(parsed) && parsed >= 0) {
-          retryAfter = parsed
-        }
-      }
-    }
+    const headerRetryAfter =
+      response.status === 429 ? parseRetryAfterHeader(response.headers.get('Retry-After')) : undefined
 
     if (!response.ok) {
-      let errorCode = 'REQUEST_FAILED'
-      let message = response.statusText || 'An error occurred'
-      let details: Record<string, unknown> | undefined
-
+      let errJson: unknown
       try {
-        const errJson = (await response.json()) as unknown
-        const parsedError = apiErrorResponseSchema.safeParse(errJson)
-        if (parsedError.success) {
-          errorCode = parsedError.data.error_code
-          message = parsedError.data.message
-          details = parsedError.data.details
-          if (parsedError.data.retry_after !== undefined) {
-            retryAfter = parsedError.data.retry_after
-          }
-        }
+        errJson = await response.json()
       } catch {
-        // Fallback to HTTP status defaults
+        errJson = undefined
       }
 
-      throw new ApiClientError(response.status, errorCode, message, details, retryAfter)
+      const normalized = normalizeErrorPayload(response.status, response.statusText, errJson, headerRetryAfter)
+      const finalRetryAfter =
+        response.status === 429 ? (normalized.retryAfter ?? 60) : normalized.retryAfter
+
+      if (response.status === 429 && finalRetryAfter !== undefined) {
+        this.onRateLimited?.(finalRetryAfter)
+      }
+
+      throw new ApiClientError(
+        response.status,
+        normalized.errorCode,
+        normalized.message,
+        normalized.details,
+        finalRetryAfter,
+        {
+          fieldErrors: normalized.fieldErrors,
+          isSessionExpired,
+        },
+      )
     }
 
     if (response.status === 204) {
@@ -215,7 +434,11 @@ export class NativeFetchClient {
 
     const contentType = response.headers.get('content-type')
     if (contentType && contentType.includes('application/json')) {
-      return (await response.json()) as T
+      try {
+        return (await response.json()) as T
+      } catch {
+        throw new ApiClientError(502, 'SERVER_ERROR', 'Invalid server response')
+      }
     }
 
     return (await response.text()) as unknown as T

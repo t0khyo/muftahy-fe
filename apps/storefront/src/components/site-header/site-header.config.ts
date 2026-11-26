@@ -1,13 +1,13 @@
 export type NavKey =
-  | 'allProducts'
-  | 'products'
-  | 'windows'
-  | 'office'
-  | 'games'
-  | 'software'
-  | 'giftCards'
-  | 'subscriptions'
-  | 'deals'
+  | "allProducts"
+  | "products"
+  | "windows"
+  | "office"
+  | "games"
+  | "software"
+  | "giftCards"
+  | "subscriptions"
+  | "deals"
 
 export interface HeaderNavLink {
   id: string
@@ -22,31 +22,31 @@ export interface HeaderNavLink {
 export interface SiteHeaderConfig {
   sticky: boolean
   searchEnabled: boolean
-  mobileBreakpoint: 'lg'
-  quickLinksSource: 'navLinks'
+  mobileBreakpoint: "lg"
+  quickLinksSource: "navLinks"
   navLinks: HeaderNavLink[]
 }
 
 export const SITE_HEADER_CONFIG: SiteHeaderConfig = {
   sticky: true,
   searchEnabled: true,
-  mobileBreakpoint: 'lg',
-  quickLinksSource: 'navLinks',
+  mobileBreakpoint: "lg",
+  quickLinksSource: "navLinks",
   navLinks: [
     {
-      id: 'all-products',
-      labelKey: 'nav.allProducts',
-      href: '/products',
+      id: "all-products",
+      labelKey: "nav.allProducts",
+      href: "/products",
     },
     {
-      id: 'windows',
-      labelKey: 'nav.windows',
-      href: '/products?category=windows',
+      id: "windows",
+      labelKey: "nav.windows",
+      href: "/products?category=operating-systems",
     },
     {
-      id: 'office',
-      labelKey: 'nav.office',
-      href: '/products?category=office',
+      id: "office",
+      labelKey: "nav.office",
+      href: "/products?category=office-suites",
     },
   ],
 }

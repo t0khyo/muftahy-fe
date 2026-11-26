@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { loginRequestSchema, type LoginRequest } from '@workspace/domain/schemas/auth'
+import { formatNumber } from '@workspace/domain/formatters/number'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import {
@@ -15,22 +16,22 @@ import {
   InputGroupInput,
 } from '@workspace/ui/components/input-group'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from '@workspace/ui/components/field'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
+import { resolveApiError } from '../../../lib/api-feedback'
 import { useAdminAuth } from '../hooks/use-admin-auth'
 import { getSanitizedReturnUrl } from '../lib/sanitize-return-to'
-import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import { BrandLogoMark } from '../../../components/brand-logo'
 
 export type AdminLoginFormProps = React.ComponentProps<'div'>
 
 export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
-  const { t } = useTranslation(['admin', 'auth'])
+  const { t, i18n } = useTranslation(['admin', 'auth'])
   const { lang = 'en' } = useParams<{ lang: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -74,20 +75,11 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
       await login(data)
       navigate(returnUrl, { replace: true })
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        if (err.status === 429 && err.retryAfter) {
-          setRetrySeconds(err.retryAfter)
-          setServerError(t('auth:errors.RATE_LIMIT_EXCEEDED', { seconds: err.retryAfter }))
-        } else if (err.errorCode === 'AUTHENTICATION_FAILED') {
-          setServerError(t('auth:errors.AUTHENTICATION_FAILED'))
-        } else {
-          setServerError(err.message || t('auth:errors.GENERIC_ERROR'))
-        }
-      } else if (err instanceof Error) {
-        setServerError(err.message)
-      } else {
-        setServerError(t('auth:errors.GENERIC_ERROR'))
+      const resolved = resolveApiError(err, 'auth:errors.GENERIC_ERROR')
+      if (resolved.isRateLimited) {
+        setRetrySeconds(resolved.retryAfter ?? 60)
       }
+      setServerError(resolved.message)
     } finally {
       setIsSubmitting(false)
     }
@@ -109,13 +101,7 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {serverError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{t('auth:errors.GENERIC_ERROR')}</AlertTitle>
-              <AlertDescription>{serverError}</AlertDescription>
-            </Alert>
-          )}
+          <FormErrorAlert clientError={serverError} />
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>
@@ -170,7 +156,14 @@ export function AdminLoginForm({ className, ...props }: AdminLoginFormProps) {
                       <span>{t('auth:signingIn')}</span>
                     </span>
                   ) : retrySeconds !== null ? (
-                    <span>{t('auth:resendCooldown', { seconds: retrySeconds })}</span>
+                    <span>
+                      {t('auth:resendCooldown', {
+                        seconds: formatNumber(retrySeconds, {
+                          locale: i18n.language || 'en',
+                          useGrouping: false,
+                        }),
+                      })}
+                    </span>
                   ) : (
                     <span>{t('auth:signIn')}</span>
                   )}

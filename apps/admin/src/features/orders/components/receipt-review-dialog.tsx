@@ -31,9 +31,10 @@ import {
   RotateCw,
   ZoomIn,
   ZoomOut,
-  AlertCircle,
   Loader2,
 } from 'lucide-react'
+import { AdminQueryError } from '../../../components/feedback/admin-query-error'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 
 interface ReceiptReviewDialogProps {
   order: OrderResponse | null
@@ -65,8 +66,8 @@ function ReceiptReviewDialogContent({
   onOpenChange: (open: boolean) => void
 }) {
   const { t, i18n } = useTranslation(['admin'])
-  const reviewMutation = useReviewOrder()
-  const refundMutation = useRefundOrderItem()
+  const reviewMutation = useReviewOrder({ errorMode: 'inline' })
+  const refundMutation = useRefundOrderItem({ errorMode: 'inline' })
 
   const [rejectMode, setRejectMode] = React.useState<'wrong_amount' | 'refund' | null>(null)
   const [rejectReason, setRejectReason] = React.useState('')
@@ -83,6 +84,8 @@ function ReceiptReviewDialogContent({
     data: imageBlob,
     isLoading: imageLoading,
     isError: imageError,
+    error: imageLoadError,
+    isFetching: imageFetching,
     refetch: refetchImage,
   } = useAdminReceiptImage(order.id, latestAttempt?.id, {
     enabled: Boolean(order.id && latestAttempt?.id),
@@ -102,6 +105,8 @@ function ReceiptReviewDialogContent({
   }, [imageUrl])
 
   const handleApprove = async () => {
+    reviewMutation.reset()
+    refundMutation.reset()
     try {
       const res = await reviewMutation.mutateAsync({
         orderId: order.id,
@@ -114,31 +119,43 @@ function ReceiptReviewDialogContent({
         onOpenChange(false)
       }
     } catch {
-      // Mutation error handled by TanStack
+      // Keeps dialog open; MutationCache handles toast errors and FormErrorAlert renders 400/409/422
     }
   }
 
   const handleReject = async () => {
     if (!rejectMode) return
+    reviewMutation.reset()
+    refundMutation.reset()
     const action = rejectMode === 'wrong_amount' ? 'reject_wrong_amount' : 'reject_refund'
-    await reviewMutation.mutateAsync({
-      orderId: order.id,
-      payload: { action, reason: rejectReason || undefined },
-    })
-    setRejectMode(null)
-    setRejectReason('')
-    onOpenChange(false)
+    try {
+      await reviewMutation.mutateAsync({
+        orderId: order.id,
+        payload: { action, reason: rejectReason || undefined },
+      })
+      setRejectMode(null)
+      setRejectReason('')
+      onOpenChange(false)
+    } catch {
+      // Keeps dialog open on failure
+    }
   }
 
   const handleExecuteRefund = async () => {
     if (!refundItemId) return
-    await refundMutation.mutateAsync({
-      orderId: order.id,
-      itemId: refundItemId,
-      payload: { gateway_fee_egp: parseFloat(gatewayFee) || 0 },
-    })
-    setRefundItemId(null)
-    setGatewayFee('0')
+    reviewMutation.reset()
+    refundMutation.reset()
+    try {
+      await refundMutation.mutateAsync({
+        orderId: order.id,
+        itemId: refundItemId,
+        payload: { gateway_fee_egp: parseFloat(gatewayFee) || 0 },
+      })
+      setRefundItemId(null)
+      setGatewayFee('0')
+    } catch {
+      // Keeps dialog open on failure
+    }
   }
 
   return (
@@ -153,15 +170,17 @@ function ReceiptReviewDialogContent({
             </Badge>
           </div>
           <DialogDescription>
-            {t('admin.ordersModule.receiptImage', 'Payment Receipt Verification')}
+            {t('admin:ordersModule.receiptImage', 'Payment Receipt Verification')}
           </DialogDescription>
         </DialogHeader>
 
+        <FormErrorAlert error={refundMutation.error ?? reviewMutation.error} className="mt-3" />
+
         {preorderWarning && (
-          <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200">
-            <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <Alert className="border-warning/30 bg-warning/10 text-foreground mt-3">
+            <AlertTriangle className="size-4 shrink-0 text-warning" />
             <AlertTitle className="text-xs font-semibold">
-              {t('admin.ordersModule.preorderConverted', 'Order converted to preorder backorder due to zero available stock')}
+              {t('admin:ordersModule.preorderConverted', 'Order converted to preorder backorder due to zero available stock')}
             </AlertTitle>
             <AlertAction>
               <Button
@@ -173,7 +192,7 @@ function ReceiptReviewDialogContent({
                   onOpenChange(false)
                 }}
               >
-                {t('admin.common.confirm', 'Dismiss & Close')}
+                {t('admin:common.confirm', 'Dismiss & Close')}
               </Button>
             </AlertAction>
           </Alert>
@@ -254,19 +273,13 @@ function ReceiptReviewDialogContent({
                   <span>Loading receipt image...</span>
                 </div>
               ) : imageError ? (
-                <div className="flex flex-col items-center justify-center gap-2 text-xs text-destructive text-center p-4">
-                  <AlertCircle className="size-5 text-destructive" />
-                  <span>Failed to load transfer receipt</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    onClick={() => refetchImage()}
-                    className="mt-1 gap-1 text-xs"
-                  >
-                    <RefreshCw className="size-3" />
-                    Retry
-                  </Button>
+                <div className="w-full p-2">
+                  <AdminQueryError
+                    error={imageLoadError}
+                    onRetry={() => refetchImage()}
+                    isRetrying={imageFetching}
+                    variant="compact"
+                  />
                 </div>
               ) : imageUrl ? (
                 <div className="w-full flex items-center justify-center overflow-auto max-h-[380px]">

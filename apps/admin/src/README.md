@@ -12,13 +12,14 @@ This directory is the source root of the `apps/admin` Vite application. It conta
 | Path | Status | Purpose |
 |---|---|---|
 | `main.tsx` | Implemented | Vite entry point — mounts `<App />` into `#root` under `React.StrictMode` |
-| `App.tsx` | Implemented (scaffold) | Root React component — placeholder heading for the admin dashboard |
-| `app/` | Reserved | Future location for providers, router setup, and root layout composition |
-| `features/` | Reserved | Future location for feature modules (`products`, `orders`, `inventory`, `users`) |
-| `routes/` | Reserved | Future location for React Router v7 thin route modules |
-| `components/` | Reserved | Future location for app-wide UI components |
-| `lib/` | Reserved | Future location for app-only utilities and helpers |
-| `assets/` | Static Assets | Image assets (`hero.png`, `react.svg`, `vite.svg`) — non-code resources |
+| `App.tsx` | Implemented | Root React component and router provider |
+| `app/` | Implemented | Providers, router setup, root layout (`root-layout.tsx`), `query-client.ts`, `query-meta.d.ts`, `rate-limit-context.tsx` |
+| `features/` | Implemented | Feature modules (`auth`, `audit`, `categories`, `dashboard`, `inventory`, `ledger`, `orders`, `products`, `profile`, `promos`, `tickets`) |
+| `routes/` | Implemented | Thin React Router v7 route modules (`admin-*-route.tsx`) wiring query error recovery and feature surfaces |
+| `components/` | Implemented | App-wide UI components including `components/feedback/` (`AdminQueryError`, `FormErrorAlert`, `RateLimitBanner`) |
+| `hooks/` | Implemented | Shared hooks including `use-admin-mutation.ts` and `use-rate-limit-cooldown.ts` |
+| `lib/` | Implemented | App-only utilities including `api-feedback.ts` (API error resolution and toast deduplication) |
+| `assets/` | Static Assets | Image assets — non-code resources |
 
 ## Interface
 

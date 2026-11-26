@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { useTranslation } from 'react-i18next'
+import { AdminQueryError } from '../../../components/feedback/admin-query-error'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { useResolveTicket, useTicketDetail } from '../hooks/use-tickets'
 import type { TicketDetail, TicketOutcome } from '@workspace/domain/schemas/ticket'
 
@@ -37,12 +39,26 @@ export function TicketResolveDialog({
   onOpenChange,
 }: TicketResolveDialogProps) {
   const effectiveId = ticketId ?? propTicket?.id ?? ''
-  const { data: fetchedTicket } = useTicketDetail(effectiveId)
+  const {
+    data: fetchedTicket,
+    isError,
+    error,
+    isFetching,
+    refetch,
+  } = useTicketDetail(effectiveId)
   const ticket = propTicket ?? fetchedTicket
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-6">
+        {open && !ticket && isError && (
+          <AdminQueryError
+            error={error}
+            onRetry={() => refetch()}
+            isRetrying={isFetching}
+            variant="compact"
+          />
+        )}
         {open && ticket && (
           <TicketResolveContent
             key={ticket.id}
@@ -65,8 +81,8 @@ function TicketResolveContent({
   onSuccess: () => void
   onCancel: () => void
 }) {
-  const { t } = useTranslation()
-  const resolveMutation = useResolveTicket()
+  const { t } = useTranslation(['admin'])
+  const resolveMutation = useResolveTicket({ errorMode: 'inline' })
 
   const [outcome, setOutcome] = React.useState<TicketOutcome>('replacement')
   const [replacementKeyId, setReplacementKeyId] = React.useState('')
@@ -93,6 +109,7 @@ function TicketResolveContent({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    resolveMutation.reset()
     try {
       await resolveMutation.mutateAsync({
         ticketId: ticket.id,
@@ -105,20 +122,21 @@ function TicketResolveContent({
       })
       onSuccess()
     } catch {
-      // Handled
+      // Keeps dialog open; FormErrorAlert displays 400/409/422 and MutationCache handles toast errors
     }
   }
 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t('admin.ticketsModule.resolveTicket', 'Resolve Ticket')}</DialogTitle>
+        <DialogTitle>{t('admin:ticketsModule.resolveTicket', 'Resolve Ticket')}</DialogTitle>
         <DialogDescription>
           Ticket #{ticket.id.slice(0, 8)}
         </DialogDescription>
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4 mt-4 text-xs">
+        <FormErrorAlert error={resolveMutation.error} />
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="outcome-select">{t('admin.ticketsModule.outcome', 'Resolution Action')}</FieldLabel>

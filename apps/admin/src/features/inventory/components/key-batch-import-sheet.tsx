@@ -45,6 +45,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { useKeyBatchImport } from '../hooks/use-inventory'
 import { useAdminProducts } from '../../products/hooks/use-admin-products'
 import type { KeyImportErrorItem } from '@workspace/domain/schemas/inventory'
@@ -97,7 +98,7 @@ function KeyBatchImportForm({
   const { t, i18n } = useTranslation(['admin'])
   const lang = i18n.language || 'en'
   const { data: products, isLoading: productsLoading } = useAdminProducts()
-  const importMutation = useKeyBatchImport()
+  const importMutation = useKeyBatchImport({ errorMode: 'inline' })
 
   const [selectedProductId, setSelectedProductId] = React.useState<string>(defaultProductId ?? '')
   const [totalCostUsd, setTotalCostUsd] = React.useState<string>('')
@@ -158,6 +159,7 @@ function KeyBatchImportForm({
     if (!activeProductId || batchAnalysis.effectiveKeys.length === 0) return
 
     setFailures([])
+    importMutation.reset()
     try {
       const result = await importMutation.mutateAsync({
         product_id: activeProductId,
@@ -172,7 +174,7 @@ function KeyBatchImportForm({
         setFailures(result.failures || [])
       }
     } catch {
-      // Mutation error handled by TanStack Query
+      // Keeps sheet open; FormErrorAlert shows 400/409/422 and MutationCache handles toast errors
     }
   }
 
@@ -332,7 +334,7 @@ function KeyBatchImportForm({
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
                 <Sparkles className="size-3" /> Duplicates
               </span>
-              <div className={`mt-1 font-mono text-lg font-bold tabular-nums ${batchAnalysis.duplicatesCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}`}>
+              <div className={`mt-1 font-mono text-lg font-bold tabular-nums ${batchAnalysis.duplicatesCount > 0 ? 'text-warning' : 'text-foreground'}`}>
                 {batchAnalysis.duplicatesCount}
               </div>
             </div>
@@ -354,13 +356,15 @@ function KeyBatchImportForm({
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
                 Unit Cost
               </span>
-              <div className="mt-1 font-mono text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums truncate">
+              <div className="mt-1 font-mono text-lg font-bold text-success tabular-nums truncate">
                 {unitCostUsd !== null
                   ? formatMoney(unitCostUsd, { currency: 'USD', locale: lang })
                   : '—'}
               </div>
             </div>
           </div>
+
+          <FormErrorAlert error={importMutation.error} />
 
           {/* Serials Editor & Terminal Ingestion */}
           <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-3">
@@ -405,8 +409,8 @@ function KeyBatchImportForm({
 
             {/* Duplicate Notice & 1-Click Clean */}
             {batchAnalysis.duplicatesCount > 0 && (
-              <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">
-                <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <Alert className="border-warning/30 bg-warning/10 text-foreground">
+                <AlertCircle className="size-4 shrink-0 text-warning" />
                 <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
                   <AlertDescription className="text-xs truncate">
                     {batchAnalysis.duplicatesCount} duplicate {batchAnalysis.duplicatesCount === 1 ? 'key' : 'keys'} detected in batch.
@@ -417,7 +421,7 @@ function KeyBatchImportForm({
                       variant="outline"
                       size="xs"
                       onClick={handleDeduplicate}
-                      className="h-7 text-xs border-amber-500/30 hover:bg-amber-500/20 shrink-0 cursor-pointer font-medium"
+                      className="h-7 text-xs border-warning/30 hover:bg-warning/20 shrink-0 cursor-pointer font-medium"
                     >
                       Deduplicate Batch
                     </Button>
@@ -428,7 +432,7 @@ function KeyBatchImportForm({
 
             {/* Ceiling Warning Notice */}
             {batchAnalysis.isTruncated && (
-              <Alert variant="destructive" className="border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400">
+              <Alert variant="destructive" className="border-destructive/30 bg-destructive/10 text-destructive">
                 <AlertCircle className="size-4 shrink-0" />
                 <AlertDescription className="text-xs">
                   Batch exceeds 500 keys limit. Only the first 500 unique keys will be ingested in this execution.
@@ -454,7 +458,7 @@ function KeyBatchImportForm({
                   onClick={handleCopyFailures}
                   className="h-7 text-xs gap-1.5 cursor-pointer text-destructive hover:bg-destructive/10"
                 >
-                  {copiedFailures ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                  {copiedFailures ? <Check className="size-3 text-success" /> : <Copy className="size-3" />}
                   <span>{copiedFailures ? 'Copied to Clipboard' : 'Copy Rejected Keys'}</span>
                 </Button>
               </div>

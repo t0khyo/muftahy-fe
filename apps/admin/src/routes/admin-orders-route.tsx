@@ -31,6 +31,7 @@ import {
   TableRow,
 } from '@workspace/ui/components/table'
 import { ReceiptReviewDialog } from '../features/orders/components/receipt-review-dialog'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -63,7 +64,7 @@ export function AdminOrdersRoute() {
   const [activeReviewOrder, setActiveReviewOrder] = React.useState<OrderResponse | null>(null)
   const [reviewDialogOpen, setReviewDialogOpen] = React.useState(false)
 
-  const { data, isLoading } = useAdminOrders({
+  const { data, isLoading, isError, error, refetch, isFetching, isPlaceholderData } = useAdminOrders({
     status: selectedStatus === 'all' ? undefined : selectedStatus,
     limit: 50,
   })
@@ -208,7 +209,16 @@ export function AdminOrdersRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isError && (!data || isPlaceholderData) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={error}
+                  onRetry={() => refetch()}
+                  isRetrying={isFetching}
+                  variant="page"
+                />
+              </div>
+            ) : isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading orders...')}
               </div>

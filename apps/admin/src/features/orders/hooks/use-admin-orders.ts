@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAdminOrderService } from '@workspace/api/factory'
 import type {
   AdminOrdersQueryParams,
@@ -7,6 +7,7 @@ import type {
   OrderReviewRequest,
 } from '@workspace/domain/schemas/order'
 import type { DashboardOverviewResponse } from '@workspace/domain/schemas/admin-dashboard'
+import { useAdminMutation } from '../../../hooks/use-admin-mutation'
 import { dashboardKeys } from '../../dashboard/hooks/use-admin-dashboard'
 
 export const adminOrderKeys = {
@@ -29,7 +30,7 @@ export function usePendingOrders() {
 
 export function useAdminOrders(params?: AdminOrdersQueryParams) {
   const service = getAdminOrderService()
-  const query = useQuery({
+  return useQuery({
     queryKey: adminOrderKeys.list(params),
     queryFn: async () => {
       if (typeof service.getOrders === 'function') {
@@ -45,7 +46,6 @@ export function useAdminOrders(params?: AdminOrdersQueryParams) {
       return { items: pending, total: pending.length }
     },
   })
-  return query
 }
 
 export function useAdminOrderDetail(orderId: string) {
@@ -92,10 +92,9 @@ export function useStartOrderReview() {
   const queryClient = useQueryClient()
   const service = getAdminOrderService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: (orderId: string) => service.startReview(orderId),
     onSuccess: (updatedOrder) => {
-      // Optimistically update order in pending cache
       queryClient.setQueryData<OrderResponse[]>(adminOrderKeys.pending(), (prev) => {
         if (!prev) return [updatedOrder]
         return prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
@@ -103,18 +102,20 @@ export function useStartOrderReview() {
       queryClient.setQueryData(adminOrderKeys.detail(updatedOrder.id), updatedOrder)
       queryClient.invalidateQueries({ queryKey: adminOrderKeys.all })
     },
+    feedback: {
+      successKey: 'admin:feedback.orderReviewStarted',
+    },
   })
 }
 
-export function useReviewOrder() {
+export function useReviewOrder(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getAdminOrderService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: ({ orderId, payload }: { orderId: string; payload: OrderReviewRequest }) =>
       service.reviewOrder(orderId, payload),
     onSuccess: (adjudicatedOrder) => {
-      // Remove completed / refunded / cancelled order from pending queue
       queryClient.setQueryData<OrderResponse[]>(adminOrderKeys.pending(), (prev) => {
         if (!prev) return []
         return prev.filter((o) => o.id !== adjudicatedOrder.id)
@@ -122,7 +123,6 @@ export function useReviewOrder() {
       queryClient.setQueryData(adminOrderKeys.detail(adjudicatedOrder.id), adjudicatedOrder)
       queryClient.invalidateQueries({ queryKey: adminOrderKeys.all })
 
-      // Optimistically decrement pending orders count in dashboard overview
       queryClient.setQueryData<DashboardOverviewResponse>(dashboardKeys.overview(), (prev) => {
         if (!prev) return prev
         return {
@@ -131,14 +131,26 @@ export function useReviewOrder() {
         }
       })
     },
+    feedback: {
+      errorMode: options?.errorMode,
+      getSuccessFeedback: (_data, { payload }) => {
+        if (payload.action === 'approve') {
+          return { key: 'admin:feedback.orderApproved' }
+        }
+        if (payload.action === 'reject_wrong_amount') {
+          return { key: 'admin:feedback.orderRejectedWrongAmount' }
+        }
+        return { key: 'admin:feedback.orderRejectedRefund' }
+      },
+    },
   })
 }
 
-export function useRefundOrderItem() {
+export function useRefundOrderItem(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getAdminOrderService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: ({
       orderId,
       itemId,
@@ -149,7 +161,6 @@ export function useRefundOrderItem() {
       payload: OrderItemRefundRequest
     }) => service.refundItem(orderId, itemId, payload),
     onSuccess: (_, { orderId, itemId }) => {
-      // Optimistically mark item as refunded in detail cache
       queryClient.setQueryData<OrderResponse>(adminOrderKeys.detail(orderId), (prev) => {
         if (!prev) return prev
         return {
@@ -158,6 +169,10 @@ export function useRefundOrderItem() {
         }
       })
       queryClient.invalidateQueries({ queryKey: adminOrderKeys.all })
+    },
+    feedback: {
+      successKey: 'admin:feedback.orderItemRefunded',
+      errorMode: options?.errorMode,
     },
   })
 }

@@ -5,20 +5,24 @@ import {
   type CategoryDetailResponse,
   type CategoryResponse,
   type ProductResponse,
-  type StockStatus,
 } from '@workspace/domain/schemas/product'
 
 export interface ProductCatalogFilters {
   category?: string
   variant?: 'retail' | 'oem'
-  stock_status?: StockStatus
-  inStockOnly?: boolean
   is_featured?: boolean
   search?: string
   sort?: 'featured' | 'price-asc' | 'price-desc' | 'newest'
 }
 
-export function useProducts(filters?: ProductCatalogFilters) {
+export interface UseProductsOptions {
+  enabled?: boolean
+}
+
+export function useProducts(
+  filters?: ProductCatalogFilters,
+  options?: UseProductsOptions,
+) {
   const productService = getProductService()
 
   return useQuery<ProductResponse[]>({
@@ -31,20 +35,13 @@ export function useProducts(filters?: ProductCatalogFilters) {
         category: filters?.category,
         is_featured: filters?.is_featured,
       }),
+    enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000,
     select: (products) => {
       let filtered = [...products]
 
       if (filters?.variant) {
         filtered = filtered.filter((p) => p.variant === filters.variant)
-      }
-
-      if (filters?.stock_status) {
-        filtered = filtered.filter((p) => p.stock_status === filters.stock_status)
-      }
-
-      if (filters?.inStockOnly) {
-        filtered = filtered.filter((p) => p.stock_status === 'in_stock')
       }
 
       if (filters?.search) {

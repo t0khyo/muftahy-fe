@@ -41,6 +41,7 @@ import {
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { KeyBatchImportSheet } from '../features/inventory/components/key-batch-import-sheet'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { AdminPageHeader } from '../components/admin-page-header'
 
 export function AdminDashboardRoute() {
@@ -51,10 +52,40 @@ export function AdminDashboardRoute() {
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
   const [selectedProductId, setSelectedProductId] = React.useState<string | undefined>()
 
-  const { data: overview, isLoading: overviewLoading } = useDashboardOverview()
-  const { data: sales, isLoading: salesLoading } = useSalesSummary()
-  const { data: preorders } = usePreorders()
-  const { data: recentLogs } = useAuditLogs({ limit: 5 })
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    isError: overviewError,
+    error: overviewErr,
+    refetch: refetchOverview,
+    isFetching: overviewFetching,
+    isPlaceholderData: overviewPlaceholder,
+  } = useDashboardOverview()
+  const {
+    data: sales,
+    isLoading: salesLoading,
+    isError: salesError,
+    error: salesErr,
+    refetch: refetchSales,
+    isFetching: salesFetching,
+    isPlaceholderData: salesPlaceholder,
+  } = useSalesSummary()
+  const {
+    data: preorders,
+    isError: preordersError,
+    error: preordersErr,
+    refetch: refetchPreorders,
+    isFetching: preordersFetching,
+    isPlaceholderData: preordersPlaceholder,
+  } = usePreorders()
+  const {
+    data: recentLogs,
+    isError: logsError,
+    error: logsErr,
+    refetch: refetchLogs,
+    isFetching: logsFetching,
+    isPlaceholderData: logsPlaceholder,
+  } = useAuditLogs({ limit: 5 })
 
   const lowStock = overview?.low_stock_products || []
   const todayRevenueNum = overview?.today_revenue_egp ? Number(overview.today_revenue_egp) : 0
@@ -91,12 +122,12 @@ export function AdminDashboardRoute() {
 
       {/* Low Stock Alert Banner */}
       {lowStock.length > 0 && (
-        <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 transition-colors p-4 sm:p-5">
-          <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400" />
+        <Alert className="border-warning/30 bg-warning/10 text-foreground transition-colors p-4 sm:p-5">
+          <AlertTriangle className="size-5 text-warning" />
           <AlertTitle className="text-sm font-semibold tracking-tight text-foreground">
             {t('admin:dashboard.lowStockAlert', 'Low Stock Warning: Critical Key Reserves')}
           </AlertTitle>
-          <AlertDescription className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+          <AlertDescription className="text-xs text-muted-foreground mt-0.5">
             {lowStock.length} {t('admin:dashboard.productsRunningLow', 'products have reached or breached their reserve threshold.')}
           </AlertDescription>
           <AlertAction className="top-4 end-4">
@@ -104,17 +135,17 @@ export function AdminDashboardRoute() {
               variant="outline"
               size="sm"
               onClick={() => handleOpenImport(lowStock[0]?.product_id)}
-              className="border-amber-500/40 hover:bg-amber-500/20 text-xs font-medium cursor-pointer"
+              className="border-warning/40 hover:bg-warning/20 text-xs font-medium cursor-pointer"
             >
               {t('admin:dashboard.restockFirst', 'Restock Now')}
             </Button>
           </AlertAction>
-          <div className="mt-3.5 flex flex-wrap gap-2 pt-3 border-t border-amber-500/20 col-span-full">
+          <div className="mt-3.5 flex flex-wrap gap-2 pt-3 border-t border-warning/20 col-span-full">
             {lowStock.map((prod) => (
               <Badge
                 key={prod.product_id}
                 variant="secondary"
-                className="bg-amber-500/20 text-amber-900 dark:text-amber-100 hover:bg-amber-500/30 cursor-pointer border border-amber-500/30 transition-colors py-1 px-2.5 text-xs font-medium"
+                className="bg-warning/15 text-foreground hover:bg-warning/25 cursor-pointer border border-warning/30 transition-colors py-1 px-2.5 text-xs font-medium"
                 onClick={() => handleOpenImport(prod.product_id)}
               >
                 {prod.product_name}: <span className="font-mono ms-1.5 font-bold tabular-nums">{prod.net_stock}</span>
@@ -125,7 +156,15 @@ export function AdminDashboardRoute() {
       )}
 
       {/* KPI Metric Ribbon */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {overviewError && (!overview || overviewPlaceholder) ? (
+        <AdminQueryError
+          error={overviewErr}
+          onRetry={() => refetchOverview()}
+          isRetrying={overviewFetching}
+          variant="section"
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Today's Revenue */}
         <Card className="group relative overflow-hidden border-border/80 p-5 shadow-none transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
@@ -214,7 +253,8 @@ export function AdminDashboardRoute() {
             </Link>
           </div>
         </Card>
-      </div>
+        </div>
+      )}
 
       {/* Mid Section: Daily Sales Breakdown & Preorders Queue */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -241,7 +281,14 @@ export function AdminDashboardRoute() {
             </div>
           </CardHeader>
           <CardContent className="pt-5">
-            {salesLoading ? (
+            {salesError && (!sales || salesPlaceholder) ? (
+              <AdminQueryError
+                error={salesErr}
+                onRetry={() => refetchSales()}
+                isRetrying={salesFetching}
+                variant="section"
+              />
+            ) : salesLoading ? (
               <div className="h-48 flex items-center justify-center text-muted-foreground text-sm font-mono">
                 {t('admin:common.loading', 'Loading sales trends...')}
               </div>
@@ -291,7 +338,14 @@ export function AdminDashboardRoute() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-5">
-            {!preorders || preorders.per_product_preorders.length === 0 ? (
+            {preordersError && (!preorders || preordersPlaceholder) ? (
+              <AdminQueryError
+                error={preordersErr}
+                onRetry={() => refetchPreorders()}
+                isRetrying={preordersFetching}
+                variant="compact"
+              />
+            ) : !preorders || preorders.per_product_preorders.length === 0 ? (
               <Empty className="h-48 border-0 bg-transparent py-8">
                 <EmptyTitle className="text-xs text-muted-foreground">
                   {t('admin:dashboard.noPendingPreorders', 'No pending preorders awaiting release.')}
@@ -340,6 +394,16 @@ export function AdminDashboardRoute() {
           </Link>
         </CardHeader>
         <CardContent className="p-0">
+          {logsError && (!recentLogs || logsPlaceholder) ? (
+            <div className="p-4">
+              <AdminQueryError
+                error={logsErr}
+                onRetry={() => refetchLogs()}
+                isRetrying={logsFetching}
+                variant="compact"
+              />
+            </div>
+          ) : (
           <Table>
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/60 hover:bg-transparent">
@@ -389,6 +453,7 @@ export function AdminDashboardRoute() {
               )}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
 

@@ -28,9 +28,11 @@ export function SearchPanel({
   const inputRef = externalInputRef || localInputRef
   const sheetRef = React.useRef<HTMLDivElement | null>(null)
 
-  // Live products matching query through the service layer
+  // Live products matching query through the service layer (only fetch when search is open and query is non-empty)
+  const trimmedQuery = query.trim()
   const { data: liveResults = [] } = useProducts(
-    isOpen && query.trim().length > 0 ? { search: query.trim() } : undefined,
+    trimmedQuery.length > 0 ? { search: trimmedQuery } : undefined,
+    { enabled: isOpen && trimmedQuery.length > 0 },
   )
 
   // Quick links derived from nav links

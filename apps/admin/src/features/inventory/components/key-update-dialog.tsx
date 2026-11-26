@@ -28,9 +28,9 @@ import {
   Layers,
   AlertTriangle,
   Loader2,
-  CheckCircle2,
 } from 'lucide-react'
 import type { KeyResponse } from '@workspace/domain/schemas/inventory'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { useKeyUpdate } from '../hooks/use-inventory'
 import { MaskedKeyReveal } from './masked-key-reveal'
 
@@ -79,7 +79,7 @@ function KeyUpdateForm({
   onSuccess?: () => void
 }) {
   const { t } = useTranslation(['admin'])
-  const keyUpdateMutation = useKeyUpdate()
+  const keyUpdateMutation = useKeyUpdate({ errorMode: 'inline' })
 
   const [replacementOnly, setReplacementOnly] = React.useState<boolean>(
     keyRecord.replacement_only
@@ -88,8 +88,7 @@ function KeyUpdateForm({
   const [cancelReason, setCancelReason] = React.useState<string>(
     keyRecord.cancel_reason ?? ''
   )
-  const [validationError, setValidationError] = React.useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = React.useState<boolean>(false)
+  const [clientError, setClientError] = React.useState<string | null>(null)
 
   const isTerminal = keyRecord.status === 'cancelled' || keyRecord.status === 'replaced'
 
@@ -103,11 +102,12 @@ function KeyUpdateForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setValidationError(null)
+    setClientError(null)
+    keyUpdateMutation.reset()
 
     // Validation: if status changed to cancelled, cancel_reason is required
     if (status === 'cancelled' && !cancelReason.trim()) {
-      setValidationError(
+      setClientError(
         t(
           'admin:inventoryModule.cancelReasonRequired',
           'Cancellation reason is required when marking a key as cancelled.'
@@ -125,14 +125,10 @@ function KeyUpdateForm({
           cancel_reason: status === 'cancelled' ? cancelReason.trim() : undefined,
         },
       })
-      setSuccessMessage(true)
-      setTimeout(() => {
-        onSuccess?.()
-        onOpenChange(false)
-      }, 700)
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to update key'
-      setValidationError(errorMsg)
+      onSuccess?.()
+      onOpenChange(false)
+    } catch {
+      // Inline 4xx errors render via FormErrorAlert; transient failures toast via MutationCache.
     }
   }
 
@@ -220,7 +216,7 @@ function KeyUpdateForm({
 
             {isTerminal ? (
               <Alert className="border-border/60 bg-muted/30 py-2.5">
-                <AlertTriangle className="size-3.5 text-amber-500 shrink-0" />
+                <AlertTriangle className="size-3.5 text-warning shrink-0" />
                 <AlertDescription className="text-xs text-muted-foreground">
                   {t(
                     'admin:inventoryModule.terminalStatusNotice',
@@ -276,22 +272,7 @@ function KeyUpdateForm({
         </FieldGroup>
 
         {/* Validation Feedback */}
-        {validationError && (
-          <Alert variant="destructive" className="py-2.5">
-            <AlertTriangle className="size-3.5 shrink-0" />
-            <AlertDescription className="text-xs">{validationError}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Success Notification */}
-        {successMessage && (
-          <Alert className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 py-2.5">
-            <CheckCircle2 className="size-3.5 shrink-0" />
-            <AlertDescription className="text-xs">
-              {t('admin:inventoryModule.updateSuccess', 'Key updated successfully.')}
-            </AlertDescription>
-          </Alert>
-        )}
+        <FormErrorAlert clientError={clientError} error={keyUpdateMutation.error} />
 
         <DialogFooter className="pt-2 border-t border-border/50 flex items-center justify-end gap-2">
           <Button

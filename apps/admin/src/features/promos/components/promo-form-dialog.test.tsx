@@ -1,10 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { I18nProvider } from '../../../app/i18n-provider'
-import { PromoFormDialog } from './promo-form-dialog'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import * as apiFactory from '@workspace/api/factory'
 import type { PromoService } from '@workspace/api/services/promo-service'
+import { toast } from '@workspace/ui/components/sonner'
+import { I18nProvider } from '../../../app/i18n-provider'
+import { createAdminQueryClient } from '../../../app/query-client'
+import { PromoFormDialog } from './promo-form-dialog'
 
 describe('PromoFormDialog Component', () => {
   let testQueryClient: QueryClient
@@ -26,13 +29,19 @@ describe('PromoFormDialog Component', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    testQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
-        mutations: { retry: false },
-      },
+    vi.restoreAllMocks()
+    mockPromoService.createPromo.mockReset().mockResolvedValue({
+      id: 'promo-123',
+      code: 'SUMMER50',
+      discount_percentage: 50,
+      max_total_uses: 100,
+      max_uses_per_user: 1,
+      current_uses: 0,
+      expires_at: '2026-12-31T23:59:59.000Z',
+      is_active: true,
+      created_at: '2026-11-22T00:00:00.000Z',
     })
+    testQueryClient = createAdminQueryClient()
     vi.spyOn(apiFactory, 'getPromoService').mockReturnValue(mockPromoService as unknown as PromoService)
   })
 
@@ -98,5 +107,26 @@ describe('PromoFormDialog Component', () => {
     await waitFor(() => {
       expect(screen.getAllByRole('dialog').length).toBeGreaterThanOrEqual(1)
     })
+  })
+
+  it('shows inline FormErrorAlert on 409 conflict without closing dialog or firing error toast', async () => {
+    const handleOpenChange = vi.fn()
+    const errorSpy = vi.spyOn(toast, 'error')
+    mockPromoService.createPromo.mockRejectedValueOnce(
+      new ApiClientError(409, 'DUPLICATE_PROMO', 'Promo code already exists')
+    )
+
+    renderWithProviders(
+      <PromoFormDialog open={true} onOpenChange={handleOpenChange} />
+    )
+
+    fireEvent.change(screen.getByLabelText(/promo code/i), { target: { value: 'SUMMER50' } })
+    fireEvent.change(screen.getByLabelText(/discount %/i), { target: { value: '50' } })
+    fireEvent.click(screen.getByRole('button', { name: /create discount/i }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Promo code already exists')
+    expect(handleOpenChange).not.toHaveBeenCalledWith(false)
+    expect(errorSpy).not.toHaveBeenCalled()
   })
 })

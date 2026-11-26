@@ -11,7 +11,7 @@ export interface BundlesSectionProps {
 
 export function BundlesSection({ config, className = '' }: BundlesSectionProps) {
   const { t } = useTranslation(['home', 'common'])
-  const { data: products = [], isLoading } = useProducts({ category: 'office' })
+  const { data: products = [], isLoading } = useProducts({ category: 'office-suites' })
   const headingId = `${config.id}-heading`
 
   return (

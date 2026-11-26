@@ -228,4 +228,172 @@ describe('NativeFetchClient', () => {
     const callHeaders = mockFetch.mock.calls[0][1].headers as Headers
     expect(callHeaders.get('Authorization')).toBe('Bearer binary-access-token')
   })
+
+  it('normalizes FastAPI 422 validation arrays stripping body/query/path prefixes', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({
+        detail: [
+          { loc: ['body', 'base_price'], msg: 'Input should be greater than 0', type: 'greater_than' },
+          { loc: ['query', 'limit'], msg: 'Input should be <= 100', type: 'less_than_equal' },
+        ],
+      }),
+    })
+
+    const client = new NativeFetchClient({ fetchFn: mockFetch as unknown as typeof fetch })
+    await expect(client.request('/admin/products', { method: 'POST' })).rejects.toMatchObject({
+      status: 422,
+      errorCode: 'VALIDATION_ERROR',
+      message: 'Input should be greater than 0',
+      fieldErrors: [
+        { field: 'base_price', message: 'Input should be greater than 0', code: 'greater_than' },
+        { field: 'limit', message: 'Input should be <= 100', code: 'less_than_equal' },
+      ],
+    })
+  })
+
+  it('extracts fieldErrors from Muftahy details.field_errors and maps plain detail strings', async () => {
+    const mockFetchDetails = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({
+        error_code: 'VALIDATION_ERROR',
+        message: 'Invalid payload',
+        details: {
+          field_errors: { sku: 'Duplicate SKU', title: ['Title too short'] },
+        },
+      }),
+    })
+
+    const client1 = new NativeFetchClient({ fetchFn: mockFetchDetails as unknown as typeof fetch })
+    await expect(client1.request('/admin/products')).rejects.toMatchObject({
+      status: 400,
+      errorCode: 'VALIDATION_ERROR',
+      fieldErrors: [
+        { field: 'sku', message: 'Duplicate SKU' },
+        { field: 'title', message: 'Title too short' },
+      ],
+    })
+
+    const mockFetchPlain = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      statusText: 'Conflict',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ detail: 'Order already approved' }),
+    })
+
+    const client2 = new NativeFetchClient({ fetchFn: mockFetchPlain as unknown as typeof fetch })
+    await expect(client2.request('/admin/orders/1/review')).rejects.toMatchObject({
+      status: 409,
+      errorCode: 'CONFLICT',
+      message: 'Order already approved',
+    })
+  })
+
+  it('handles non-JSON 502 HTML errors and malformed 200 JSON responses safely', async () => {
+    const mockFetch502 = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+      headers: new Headers({ 'content-type': 'text/html' }),
+      json: async () => {
+        throw new SyntaxError('Unexpected token <')
+      },
+    })
+
+    const client1 = new NativeFetchClient({ fetchFn: mockFetch502 as unknown as typeof fetch })
+    await expect(client1.request('/admin/orders')).rejects.toMatchObject({
+      status: 502,
+      errorCode: 'SERVER_ERROR',
+      message: 'Bad Gateway',
+    })
+
+    const mockFetchBad200 = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => {
+        throw new SyntaxError('Unexpected token <')
+      },
+    })
+
+    const client2 = new NativeFetchClient({ fetchFn: mockFetchBad200 as unknown as typeof fetch })
+    await expect(client2.request('/admin/orders')).rejects.toMatchObject({
+      status: 502,
+      errorCode: 'SERVER_ERROR',
+      message: 'Invalid server response',
+    })
+  })
+
+  it('normalizes network TypeError and TimeoutError while rethrowing AbortError', async () => {
+    const mockFetchNet = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+    const clientNet = new NativeFetchClient({ fetchFn: mockFetchNet as unknown as typeof fetch })
+    await expect(clientNet.request('/admin/orders')).rejects.toMatchObject({
+      status: 0,
+      errorCode: 'NETWORK_ERROR',
+      isNetworkError: true,
+    })
+
+    const timeoutErr = new DOMException('Timed out', 'TimeoutError')
+    const mockFetchTimeout = vi.fn().mockRejectedValue(timeoutErr)
+    const clientTimeout = new NativeFetchClient({ fetchFn: mockFetchTimeout as unknown as typeof fetch })
+    await expect(clientTimeout.request('/admin/orders')).rejects.toMatchObject({
+      status: 0,
+      errorCode: 'NETWORK_ERROR',
+      isNetworkError: true,
+    })
+
+    const abortErr = new DOMException('Aborted', 'AbortError')
+    const mockFetchAbort = vi.fn().mockRejectedValue(abortErr)
+    const clientAbort = new NativeFetchClient({ fetchFn: mockFetchAbort as unknown as typeof fetch })
+    await expect(clientAbort.request('/admin/orders')).rejects.toBe(abortErr)
+  })
+
+  it('clamps Retry-After headers, falls back to 60s, and invokes onRateLimited', async () => {
+    const onRateLimited = vi.fn()
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests',
+      headers: new Headers({ 'Retry-After': '9999' }),
+      json: async () => {
+        throw new Error('no json')
+      },
+    })
+
+    const client = new NativeFetchClient({
+      onRateLimited,
+      fetchFn: mockFetch as unknown as typeof fetch,
+    })
+
+    await expect(client.request('/admin/products')).rejects.toMatchObject({
+      status: 429,
+      errorCode: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: 300,
+    })
+    expect(onRateLimited).toHaveBeenCalledWith(300)
+
+    const mockFetchDefault = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests',
+      headers: new Headers(),
+      json: async () => ({ detail: 'Too many requests' }),
+    })
+    const clientDefault = new NativeFetchClient({
+      onRateLimited,
+      fetchFn: mockFetchDefault as unknown as typeof fetch,
+    })
+    await expect(clientDefault.request('/admin/products')).rejects.toMatchObject({
+      status: 429,
+      retryAfter: 60,
+    })
+    expect(onRateLimited).toHaveBeenCalledWith(60)
+  })
 })

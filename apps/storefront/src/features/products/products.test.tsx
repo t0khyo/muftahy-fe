@@ -289,6 +289,8 @@ describe("ProductsRoute (Listing Page)", () => {
 
     const sidebar = screen.getByRole("complementary", { name: /filters/i })
     expect(sidebar).toBeInTheDocument()
+    expect(screen.queryByText(/availability/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/in stock only/i)).not.toBeInTheDocument()
 
     await waitFor(() => {
       expect(
@@ -311,6 +313,11 @@ describe("ProductsRoute (Listing Page)", () => {
         screen.getAllByText("Windows 11 Professional").length
       ).toBeGreaterThan(0)
     })
+
+    expect(screen.getByText("Retail")).toBeInTheDocument()
+    expect(screen.getByText("OEM")).toBeInTheDocument()
+    expect(screen.queryByText(/تجزئة|مُصنّع/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/المتوفر فقط/i)).not.toBeInTheDocument()
   })
 })
 

@@ -49,6 +49,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -72,7 +73,8 @@ export function AdminAuditRoute() {
   const [selectedLog, setSelectedLog] = React.useState<AuditLogResponse | null>(null)
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
 
-  const { data: logs, isLoading, refetch, isFetching } = useAuditLogs({ limit: 100 })
+  const { data: logs, isLoading, isError, error, refetch, isFetching, isPlaceholderData } =
+    useAuditLogs({ limit: 100 })
   const exportMutation = useExportAuditLogs()
 
   const logsList = logs?.items
@@ -242,7 +244,16 @@ export function AdminAuditRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isError && (!logs || isPlaceholderData) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={error}
+                  onRetry={() => refetch()}
+                  isRetrying={isFetching}
+                  variant="page"
+                />
+              </div>
+            ) : isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading activity log...')}
               </div>

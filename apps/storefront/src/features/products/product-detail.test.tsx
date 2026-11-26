@@ -89,7 +89,9 @@ describe('ProductDetailPage', () => {
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toBeInTheDocument()
     expect(screen.getAllByText('Windows').length).toBeGreaterThan(0)
     expect(screen.getByText('Retail')).toBeInTheDocument()
-    expect(screen.getByText('In Stock (14 keys available)')).toBeInTheDocument()
+    expect(screen.getByText(/^SKU:/i)).toBeInTheDocument()
+    expect(screen.queryByText(/keys available/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^In Stock/i)).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: /About this license/i })).toBeInTheDocument()
 
     const askUsLink = screen.getByRole('link', { name: /Chat on WhatsApp/i })
@@ -104,6 +106,11 @@ describe('ProductDetailPage', () => {
     ).toBeInTheDocument()
 
     expect(screen.getAllByText('ويندوز').length).toBeGreaterThan(0)
+    expect(screen.getByText('Retail')).toBeInTheDocument()
+    expect(screen.queryByText(/تجزئة/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/^SKU:/i)).toBeInTheDocument()
+    expect(screen.queryByText(/رمز المنتج/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/متوفر/i)).not.toBeInTheDocument()
     expect(screen.getByText(/حول الترخيص/i)).toBeInTheDocument()
     expect(screen.getByText(/التسليم والتفعيل/i)).toBeInTheDocument()
     expect(document.documentElement.dir).toBe('rtl')
@@ -120,5 +127,20 @@ describe('ProductDetailPage', () => {
     expect(screen.getByText('Added!')).toBeInTheDocument()
     expect(useCartStore.getState().items.length).toBe(1)
     expect(useCartStore.getState().items[0].product_name).toBe('Windows 11 Professional')
+  })
+
+  it('disables CTA for out-of-stock products without showing stock indicator block, and enables preorder CTA', async () => {
+    const productService = getProductService()
+    vi.spyOn(productService, 'getProductById').mockResolvedValueOnce({
+      ...mockDetailProduct,
+      stock_status: 'out_of_stock',
+      available_count: 0,
+      preorder_enabled: false,
+    })
+
+    renderProductDetail('/en/products/00000000-0000-4000-8000-000000000001')
+
+    const disabledBtn = await screen.findByRole('button', { name: /out of stock/i })
+    expect(disabledBtn).toBeDisabled()
   })
 })

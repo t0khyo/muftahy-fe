@@ -25,8 +25,6 @@ export function ProductsRoute() {
     activeFiltersCount,
     setCategory,
     setVariant,
-    setStockStatus,
-    setInStockOnly,
     setSort,
     clearAll,
   } = useProductFilters()
@@ -157,8 +155,6 @@ export function ProductsRoute() {
           activeFiltersCount={activeFiltersCount}
           onSortChange={setSort}
           onRemoveVariant={() => setVariant(undefined)}
-          onRemoveStockStatus={() => setStockStatus(undefined)}
-          onRemoveInStockOnly={() => setInStockOnly(false)}
           onClearAll={clearAll}
           onOpenMobileFilters={() => setIsMobileFilterOpen(true)}
         />
@@ -173,8 +169,6 @@ export function ProductsRoute() {
           activeFiltersCount={activeFiltersCount}
           onSetCategory={setCategory}
           onSetVariant={setVariant}
-          onSetStockStatus={setStockStatus}
-          onSetInStockOnly={setInStockOnly}
           onClearAll={clearAll}
           className="hidden lg:flex w-64 shrink-0"
         />
@@ -187,8 +181,6 @@ export function ProductsRoute() {
             activeFiltersCount={activeFiltersCount}
             onSortChange={setSort}
             onRemoveVariant={() => setVariant(undefined)}
-            onRemoveStockStatus={() => setStockStatus(undefined)}
-            onRemoveInStockOnly={() => setInStockOnly(false)}
             onClearAll={clearAll}
             onOpenMobileFilters={() => setIsMobileFilterOpen(true)}
             className="hidden lg:flex"
@@ -275,8 +267,6 @@ export function ProductsRoute() {
         activeFiltersCount={activeFiltersCount}
         onSetCategory={setCategory}
         onSetVariant={setVariant}
-        onSetStockStatus={setStockStatus}
-        onSetInStockOnly={setInStockOnly}
         onClearAll={clearAll}
       />
     </div>

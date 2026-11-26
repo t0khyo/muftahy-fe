@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getAuthService, getUserService } from '@workspace/api/factory'
+import { getAuthService, getTokenStorage, getUserService } from '@workspace/api/factory'
 import { AuthProvider } from '../context/auth-provider'
 import { useAuth } from './use-auth'
 
@@ -81,5 +81,31 @@ describe('useAuth hook', () => {
 
     expect(result.current.isAuthenticated).toBe(false)
     expect(result.current.user).toBeNull()
+  })
+
+  it('hydrates profile only once on mount when a refresh token exists', async () => {
+    const tokenStorage = getTokenStorage('storefront')
+    const userService = getUserService('storefront')
+    vi.spyOn(tokenStorage, 'hasRefreshToken').mockReturnValue(true)
+    const getProfileSpy = vi.spyOn(userService, 'getProfile').mockResolvedValue({
+      id: '123',
+      email: 'hydrated@example.com',
+      full_name: 'Hydrated User',
+      is_active: true,
+      created_at: '2026-01-01T00:00:00Z',
+      phone: null,
+    })
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(result.current.isAuthenticated).toBe(true)
+    expect(result.current.user?.email).toBe('hydrated@example.com')
+    expect(getProfileSpy).toHaveBeenCalledTimes(1)
   })
 })

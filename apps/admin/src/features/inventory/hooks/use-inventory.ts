@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getInventoryService } from '@workspace/api/factory'
 import type {
   KeyBatchImportRequest,
@@ -6,6 +6,8 @@ import type {
   KeyUpdate,
 } from '@workspace/domain/schemas/inventory'
 import type { ListKeysParams } from '@workspace/api/services/inventory-service'
+import type { FeedbackDescriptor } from '../../../lib/api-feedback'
+import { useAdminMutation } from '../../../hooks/use-admin-mutation'
 
 export const inventoryKeys = {
   all: ['admin', 'inventory'] as const,
@@ -43,14 +45,13 @@ export function useKeyDetail(keyId: string) {
   })
 }
 
-export function useKeyBatchImport() {
+export function useKeyBatchImport(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getInventoryService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: (payload: KeyBatchImportRequest) => service.importKeys(payload),
     onSuccess: (_response, variables) => {
-      // Invalidate inventory stats for the affected product
       queryClient.invalidateQueries({
         queryKey: inventoryKeys.stats(variables.product_id),
       })
@@ -58,14 +59,35 @@ export function useKeyBatchImport() {
         queryKey: inventoryKeys.keys({ productId: variables.product_id }),
       })
     },
+    feedback: {
+      errorMode: options?.errorMode,
+      suppressRawErrorMessage: true,
+      getSuccessFeedback: (res): FeedbackDescriptor | null => {
+        if (res.failed_count === 0) {
+          return { key: 'admin:feedback.keysImportedSuccess', params: { count: res.successful_count } }
+        }
+        if (res.successful_count === 0) {
+          return {
+            key: 'admin:feedback.keysImportNone',
+            params: { failed: res.failed_count },
+            variant: 'warning',
+          }
+        }
+        return {
+          key: 'admin:feedback.keysImportedPartial',
+          params: { imported: res.successful_count, failed: res.failed_count },
+          variant: 'warning',
+        }
+      },
+    },
   })
 }
 
-export function useKeyUpdate() {
+export function useKeyUpdate(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getInventoryService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: ({ keyId, payload }: { keyId: string; payload: KeyUpdate }) =>
       service.updateKey(keyId, payload),
     onSuccess: (updatedKey) => {
@@ -80,6 +102,11 @@ export function useKeyUpdate() {
       queryClient.invalidateQueries({
         queryKey: inventoryKeys.stats(updatedKey.product_id),
       })
+    },
+    feedback: {
+      successKey: 'admin:inventoryModule.updateSuccess',
+      errorMode: options?.errorMode,
+      suppressRawErrorMessage: true,
     },
   })
 }

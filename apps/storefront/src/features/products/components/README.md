@@ -17,7 +17,7 @@ UI components, filter bars, icons, display types, and static sample data for the
 - `FeatureTile(props: FeatureTileProps)` — featured highlight tile for promotions and key catalog features.
 - `FilterGroup(props: FilterGroupProps)` — collapsible accordion group for filter facets (checkboxes, radios, range sliders).
 - `FilterSheet(props: FilterSheetProps)` — mobile slide-over drawer containing the full filter controls.
-- `FilterSidebar(props: FilterSidebarProps)` — desktop sidebar containing facet filter groups, price inputs, and stock toggles.
+- `FilterSidebar(props: FilterSidebarProps)` — desktop sidebar containing category and variant filter groups.
 - `ListingToolbar(props: ListingToolbarProps)` — sorting dropdown, result counts, and mobile filter toggle button bar.
 - `PlanPicker(props: PlanPickerProps)` — modal bottom-sheet for selecting among multiple plans before adding to cart.
 - `PlatformsRow(props: PlatformsRowProps)` — normalizes `Platform[]` to `DisplayPlatform[]` and renders icon pills with CSS tooltips.

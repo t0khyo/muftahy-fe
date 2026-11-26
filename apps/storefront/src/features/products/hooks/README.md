@@ -11,11 +11,11 @@ React Query hooks and URL search parameter synchronization hooks that form the d
 - `useRelatedProducts(slugs: string[], options?: { enabled?: boolean }): UseQueryResult<Product[]>` — fetches multiple related products by slugs using `Promise.allSettled`. Query key: `['products', 'related', slugs]`.
 - `useProductCollection(options: UseProductCollectionOptions): UseQueryResult<Product[]>` — fetches products for a named collection (e.g. `'best-sellers'`, `'deals'`, `'new'`) via `productService.listByCollection(collection)`. Query key: `['products', 'collection', collection]`.
 - `useFilterCounts(options?: UseFilterCountsOptions): UseQueryResult<ProductFilterCounts>` — retrieves facet counts for active filters via `productService.getFilterCounts(filter)`. Query key: `['product-filter-counts', filter]`.
-- `useProductFilters()` — parses and synchronizes filter state (categories, platforms, regions, price range, stock, sale, sort, page, search) with URL search parameters.
+- `useProductFilters()` — parses and synchronizes filter state (category, variant, sort, page, search) with URL search parameters.
 - `UseProductsOptions` — `{ filter?: ProductListFilter; enabled?: boolean }`.
 - `UseProductCollectionOptions` — `{ collection: ProductCollection; enabled?: boolean }`.
 - `UseFilterCountsOptions` — `{ filter?: ProductListFilter; enabled?: boolean }`.
-- `ProductFiltersState` — `{ categories, platforms, regions, priceMin?, priceMax?, inStock, onSale, sort, page, search? }`.
+- `ProductFiltersState` — `{ category?, variant?, sort, page, search? }`.
 - `ActiveFilterChip` — `{ id, type, value?, labelKey?, labelFallback }`.
 
 ## Invariants

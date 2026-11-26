@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  CheckCircle2,
   Loader2,
   LogOut,
 } from 'lucide-react'
@@ -21,13 +20,9 @@ import {
   Card,
   CardContent,
 } from '@workspace/ui/components/card'
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@workspace/ui/components/alert'
 import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { FormErrorAlert } from '../components/feedback/form-error-alert'
 import { useAdminAuth } from '../features/auth/hooks/use-admin-auth'
 import { useAdminProfile } from '../features/profile/hooks/use-admin-profile'
 import { AdminPageHeader } from '../components/admin-page-header'
@@ -37,10 +32,9 @@ export function AdminProfileRoute() {
   const { t } = useTranslation(['admin', 'common'])
   const navigate = useNavigate()
   const { logout } = useAdminAuth()
-  const { profile, isLoading, updateProfile, isUpdating } = useAdminProfile()
+  const { profile, isLoading, updateProfile, isUpdating, updateError, resetUpdateError } =
+    useAdminProfile({ errorMode: 'inline' })
 
-  const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
   const {
@@ -57,21 +51,15 @@ export function AdminProfileRoute() {
   })
 
   const handleSave = async (data: UpdateProfileRequest) => {
-    setSuccessMessage(null)
-    setErrorMessage(null)
+    resetUpdateError()
     try {
       await updateProfile({
         full_name: data.full_name?.trim(),
         phone: data.phone?.trim() || null,
       })
-      setSuccessMessage(t('admin:profile.updateSuccess', 'Profile updated successfully.'))
       reset(data)
-    } catch (err) {
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : t('common:error', 'An error occurred while updating the profile')
-      )
+    } catch {
+      // Inline 4xx errors render via FormErrorAlert; transient failures toast via MutationCache.
     }
   }
 
@@ -139,21 +127,8 @@ export function AdminProfileRoute() {
 
           <Separator className="bg-border/60" />
 
-          {/* Feedback Alerts */}
-          {successMessage && (
-            <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-              <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-              <AlertTitle>{t('common:appName', 'Muftahy')}</AlertTitle>
-              <AlertDescription>{successMessage}</AlertDescription>
-            </Alert>
-          )}
-
-          {errorMessage && (
-            <Alert variant="destructive">
-              <AlertTitle>{t('common:error', 'Error')}</AlertTitle>
-              <AlertDescription>{errorMessage}</AlertDescription>
-            </Alert>
-          )}
+          {/* Inline 4xx Validation Feedback */}
+          <FormErrorAlert error={updateError} />
 
           {/* Form */}
           <form onSubmit={handleSubmit(handleSave)} className="space-y-4">

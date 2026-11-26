@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -61,8 +62,24 @@ export function AdminLedgerRoute() {
   const [selectedType, setSelectedType] = React.useState<string>('all')
   const [searchQuery, setSearchQuery] = React.useState('')
 
-  const { data: summary, isLoading: summaryLoading } = useAdminLedgerSummary()
-  const { data: ledgerData, isLoading: entriesLoading } = useAdminLedgerEntries({
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryError,
+    error: summaryErr,
+    refetch: refetchSummary,
+    isFetching: summaryFetching,
+    isPlaceholderData: summaryPlaceholder,
+  } = useAdminLedgerSummary()
+  const {
+    data: ledgerData,
+    isLoading: entriesLoading,
+    isError: entriesError,
+    error: entriesErr,
+    refetch: refetchEntries,
+    isFetching: entriesFetching,
+    isPlaceholderData: entriesPlaceholder,
+  } = useAdminLedgerEntries({
     entryType: selectedType === 'all' ? undefined : selectedType,
     limit: 100,
   })
@@ -139,7 +156,15 @@ export function AdminLedgerRoute() {
       />
 
       {/* Financial Health & Balances Ribbon */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {summaryError && (!summary || summaryPlaceholder) ? (
+        <AdminQueryError
+          error={summaryErr}
+          onRetry={() => refetchSummary()}
+          isRetrying={summaryFetching}
+          variant="compact"
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Net EGP Cash on Hand */}
         <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-xs hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
@@ -219,7 +244,8 @@ export function AdminLedgerRoute() {
             </p>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Streamlined Toolbar & Journal Table */}
       <div className="space-y-4">
@@ -273,7 +299,16 @@ export function AdminLedgerRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {entriesLoading ? (
+            {entriesError && (!ledgerData || entriesPlaceholder) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={entriesErr}
+                  onRetry={() => refetchEntries()}
+                  isRetrying={entriesFetching}
+                  variant="section"
+                />
+              </div>
+            ) : entriesLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading transactions...')}
               </div>

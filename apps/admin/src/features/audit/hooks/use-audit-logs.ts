@@ -1,9 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { getAuditService } from '@workspace/api/factory'
 import type {
   ExportAuditLogsParams,
   GetAuditLogsParams,
 } from '@workspace/api/services/audit-service'
+import { useAdminMutation } from '../../../hooks/use-admin-mutation'
 
 export const auditKeys = {
   all: ['admin', 'audit'] as const,
@@ -20,8 +21,10 @@ export function useAuditLogs(params?: GetAuditLogsParams) {
 
 export function useExportAuditLogs() {
   const service = getAuditService()
-  return useMutation({
+  return useAdminMutation({
     mutationFn: (params?: ExportAuditLogsParams) => service.exportLogs(params),
+    feedback: {
+      successKey: 'admin:feedback.auditExported',
+    },
   })
 }
-

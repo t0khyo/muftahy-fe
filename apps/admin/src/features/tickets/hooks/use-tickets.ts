@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getTicketService } from '@workspace/api/factory'
 import type { TicketDetail, TicketResolveRequest } from '@workspace/domain/schemas/ticket'
+import { useAdminMutation } from '../../../hooks/use-admin-mutation'
 
 export const adminTicketKeys = {
   all: ['admin', 'tickets'] as const,
@@ -25,11 +26,11 @@ export function useTicketDetail(ticketId: string) {
   })
 }
 
-export function useAddTicketComment() {
+export function useAddTicketComment(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getTicketService('admin')
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: ({ ticketId, content }: { ticketId: string; content: string }) =>
       service.addComment(ticketId, content),
     onSuccess: (newComment, { ticketId }) => {
@@ -40,24 +41,25 @@ export function useAddTicketComment() {
           comments: [...prev.comments, newComment],
         }
       })
-      // Update any cached ticket list so comments count badge updates immediately
       queryClient.setQueriesData<TicketDetail[]>({ queryKey: adminTicketKeys.all }, (prev) => {
         if (!Array.isArray(prev)) return prev
         return prev.map((t) =>
-          t.id === ticketId
-            ? { ...t, comments: [...t.comments, newComment] }
-            : t
+          t.id === ticketId ? { ...t, comments: [...t.comments, newComment] } : t,
         )
       })
+    },
+    feedback: {
+      successKey: 'admin:feedback.ticketReplySent',
+      errorMode: options?.errorMode,
     },
   })
 }
 
-export function useResolveTicket() {
+export function useResolveTicket(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getTicketService('admin')
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: ({ ticketId, payload }: { ticketId: string; payload: TicketResolveRequest }) =>
       service.resolveTicket(ticketId, payload),
     onSuccess: (resolvedTicket) => {
@@ -66,7 +68,11 @@ export function useResolveTicket() {
         if (!prev) return [resolvedTicket]
         return prev.map((t) => (t.id === resolvedTicket.id ? resolvedTicket : t))
       })
+      queryClient.invalidateQueries({ queryKey: adminTicketKeys.all })
+    },
+    feedback: {
+      successKey: 'admin:feedback.ticketResolved',
+      errorMode: options?.errorMode,
     },
   })
 }
-

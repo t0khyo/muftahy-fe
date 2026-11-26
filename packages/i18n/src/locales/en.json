@@ -1023,7 +1023,7 @@
       "previous": "Previous",
       "next": "Next",
       "pageOf": "Page {{page}} of {{total}}",
-      "rateLimitExceeded": "Rate limit exceeded. Automatic retry in {{seconds}}s."
+      "rateLimitExceeded": "Rate limit reached. Please wait {{seconds}}s before retrying."
     },
     "emptyState": {
       "products": {
@@ -1142,6 +1142,11 @@
       "leaveConfirm": "You have unsaved changes. Are you sure you want to leave?"
     },
     "errors": {
+      "BAD_REQUEST": "The request could not be processed. Check your input and try again.",
+      "VALIDATION_ERROR": "Please check the highlighted fields and try again.",
+      "CONFLICT": "This action conflicts with the current state of the record.",
+      "SERVER_ERROR": "A server error occurred. Please try again in a moment.",
+      "REQUEST_FAILED": "The request failed. Please try again.",
       "ENTITY_NOT_FOUND": "The requested resource was not found.",
       "SKU_ALREADY_EXISTS": "A product with this SKU already exists.",
       "INVALID_SKU_FORMAT": "SKU must match the 4-segment format (e.g. OS-WIN11-PRO-RET).",
@@ -1157,7 +1162,59 @@
       "INVALID_IMAGE_FORMAT": "Unsupported image format. Please upload JPEG, PNG, or WebP.",
       "IMAGE_LIMIT_EXCEEDED": "Products may have at most 10 images.",
       "IMAGE_OWNERSHIP_MISMATCH": "The image does not belong to this product.",
+      "PRIMARY_IMAGE_CANNOT_BE_DELETED": "Set another image as primary before deleting this one.",
+      "PROMO_CODE_ALREADY_EXISTS": "A discount code with this code already exists.",
+      "ORDER_INVALID_STATE": "This order cannot be updated in its current status.",
+      "INSUFFICIENT_STOCK": "Not enough keys in stock to complete this operation.",
       "RATE_LIMIT_EXCEEDED": "Rate limit reached. Please wait {{seconds}} seconds before retrying."
+    },
+    "feedback": {
+      "queryErrorTitle": "Failed to load data",
+      "queryErrorDesc": "Something went wrong while fetching this section. Try again.",
+      "retry": "Retry",
+      "retrying": "Retrying...",
+      "retryIn": "Retry in {{seconds}}s",
+      "backToDashboard": "Back to Dashboard",
+      "backgroundRefreshFailed": "Could not refresh data. Showing last loaded results.",
+      "rateLimitBannerTitle": "Too many requests",
+      "rateLimitBannerDesc": "Requests are paused for {{seconds}}s to respect server limits.",
+      "productDeleted": "Product deleted",
+      "productPublished": "Product published to storefront",
+      "productUnpublished": "Product moved to draft",
+      "productBulkStatusSuccess": "Updated {{count}} products",
+      "productBulkStatusPartial": "Updated {{succeeded}} of {{total}} products; some failed.",
+      "imageUploaded": "Product image uploaded",
+      "imagesUploadedPartial": "Uploaded {{succeeded}} of {{total}} images; some failed.",
+      "imageDeleted": "Product image removed",
+      "primaryImageUpdated": "Primary product image updated",
+      "imagesReordered": "Image order saved",
+      "thumbnailUploaded": "Thumbnail updated",
+      "thumbnailDeleted": "Thumbnail removed",
+      "orderReviewStarted": "Order moved to under review",
+      "orderApproved": "Order approved and keys delivered",
+      "orderRejectedWrongAmount": "Order rejected (wrong amount)",
+      "orderRejectedRefund": "Order rejected and marked for refund",
+      "orderItemRefunded": "Order item refunded",
+      "keysImportedSuccess": "Imported {{count}} keys successfully",
+      "keysImportedPartial": "Imported {{imported}} keys; {{failed}} failed.",
+      "keysImportNone": "No keys were imported ({{failed}} failed).",
+      "promoCreated": "Discount code created",
+      "promoUpdated": "Discount code updated",
+      "promoActivated": "Discount code activated",
+      "promoDeactivated": "Discount code deactivated",
+      "ticketReplySent": "Reply sent",
+      "ticketResolved": "Ticket resolved",
+      "auditExported": "Audit log exported",
+      "validation": {
+        "titleRequired": "Product title is required",
+        "basePriceRequired": "Valid base price is required",
+        "salePriceLessThanBase": "Sale price must be less than base price",
+        "categoryRequired": "Category is required",
+        "skuRequired": "SKU is required",
+        "skuInvalid": "Invalid SKU format for selected category",
+        "categoryNameRequired": "Category name is required",
+        "categoryCodeRequired": "Category code is required"
+      }
     }
   }
 }

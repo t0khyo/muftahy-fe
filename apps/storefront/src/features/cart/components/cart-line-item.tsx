@@ -33,8 +33,6 @@ export function CartLineItem({
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
 
   const isOutOfStock = product ? product.stock_status === 'out_of_stock' : false
-  const isLowStock =
-    product && product.stock_status === 'in_stock' && product.available_count <= 3
 
   const productName = resolveLocalizedName(item.name, lang) || item.product_name
   const unitPrice =
@@ -108,7 +106,7 @@ export function CartLineItem({
             </Link>
 
             {variant && (
-              <Badge variant="outline" className="text-[11px] px-2 py-0.5 uppercase">
+              <Badge variant="outline" className="text-[11px] px-2 py-0.5">
                 {t(`variants.${variant}`, { ns: 'products', defaultValue: variant })}
               </Badge>
             )}
@@ -125,12 +123,6 @@ export function CartLineItem({
             {isOutOfStock && !item.is_preorder && (
               <Badge variant="destructive" className="text-[11px] px-2 py-0.5">
                 {t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of stock' })}
-              </Badge>
-            )}
-
-            {isLowStock && (
-              <Badge variant="outline" className="text-[11px] px-2 py-0.5 text-warning border-warning/40">
-                {t('lowStock', { count: product?.available_count ?? 0, ns: 'products' })}
               </Badge>
             )}
           </div>

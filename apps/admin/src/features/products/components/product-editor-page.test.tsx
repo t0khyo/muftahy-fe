@@ -4,9 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import * as apiFactory from '@workspace/api/factory'
 import type { CategoryResponse, ProductResponse } from '@workspace/domain/schemas/product'
 import type { ProductService } from '@workspace/api/services/product-service'
+import { createAdminQueryClient } from '../../../app/query-client'
 import { ProductEditorPage } from './product-editor-page'
 
 const mockCategories: CategoryResponse[] = [
@@ -56,11 +58,7 @@ describe('ProductEditorPage', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
-      },
-    })
+    queryClient = createAdminQueryClient()
   })
 
   function renderEditor(productId?: string) {
@@ -126,6 +124,46 @@ describe('ProductEditorPage', () => {
     const variantTrigger = screen.getByRole('combobox', { name: /Edition Variant/i })
     expect(variantTrigger).toHaveTextContent('Retail')
     expect(variantTrigger).not.toHaveTextContent('retail')
+  })
+
+  it('renders AdminQueryError in edit mode when initial product detail load fails', async () => {
+    const getProductById = vi
+      .fn()
+      .mockRejectedValueOnce(new ApiClientError(404, 'PRODUCT_NOT_FOUND', 'Product not found'))
+    vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
+      getAdminCategories: vi.fn().mockResolvedValue(mockCategories),
+      getProductById,
+    } as unknown as ProductService)
+
+    renderEditor('prod-missing')
+
+    const backButton = await screen.findByRole('button', { name: /back to dashboard/i })
+    expect(backButton).toBeInTheDocument()
+  })
+
+  it('displays inline FormErrorAlert on 409 conflict when saving edits', async () => {
+    Element.prototype.scrollIntoView = vi.fn()
+    const updateProduct = vi
+      .fn()
+      .mockRejectedValueOnce(new ApiClientError(409, 'DUPLICATE_SKU', 'SKU already exists'))
+
+    vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
+      getAdminCategories: vi.fn().mockResolvedValue(mockCategories),
+      getProductById: vi.fn().mockResolvedValue(mockProduct),
+      updateProduct,
+    } as unknown as ProductService)
+
+    renderEditor('prod-123')
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Windows 11 Professional')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save product/i }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toBeInTheDocument()
+    expect(alert).toHaveTextContent('SKU already exists')
   })
 })
 

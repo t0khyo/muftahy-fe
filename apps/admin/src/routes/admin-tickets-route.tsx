@@ -33,6 +33,7 @@ import {
 } from '@workspace/ui/components/table'
 import { TicketResolveDialog } from '../features/tickets/components/ticket-resolve-dialog'
 import { AdminTicketChatSheet } from '../features/tickets/components/admin-ticket-chat-sheet'
+import { AdminQueryError } from '../components/feedback/admin-query-error'
 import { EmptyState } from '../features/dashboard/components/empty-state'
 import { AdminPageHeader } from '../components/admin-page-header'
 import { DataTableColumnHeader } from '../components/data-table-column-header'
@@ -66,9 +67,8 @@ export function AdminTicketsRoute() {
   const [chatSheetOpen, setChatSheetOpen] = React.useState(false)
   const [activeChatTicketId, setActiveChatTicketId] = React.useState<string | null>(null)
 
-  const { data: tickets, isLoading } = useAdminTickets(
-    selectedStatus === 'all' ? undefined : selectedStatus
-  )
+  const { data: tickets, isLoading, isError, error, refetch, isFetching, isPlaceholderData } =
+    useAdminTickets(selectedStatus === 'all' ? undefined : selectedStatus)
 
   const filteredTickets = React.useMemo(() => {
     const items = tickets || []
@@ -206,7 +206,16 @@ export function AdminTicketsRoute() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isError && (!tickets || isPlaceholderData) ? (
+              <div className="p-6">
+                <AdminQueryError
+                  error={error}
+                  onRetry={() => refetch()}
+                  isRetrying={isFetching}
+                  variant="page"
+                />
+              </div>
+            ) : isLoading ? (
               <div className="py-20 text-center text-sm font-mono text-muted-foreground">
                 {t('admin:common.loading', 'Loading tickets...')}
               </div>

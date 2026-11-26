@@ -5,11 +5,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@workspace/ui/components/accordion'
-import { Switch } from '@workspace/ui/components/switch'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
 import { cn } from '@workspace/ui/lib/utils'
-import type { CategoryResponse, StockStatus } from '@workspace/domain/schemas/product'
+import type { CategoryResponse } from '@workspace/domain/schemas/product'
 import type { ProductFiltersState } from '../hooks/use-product-filters'
 import type { FilterCounts } from '../hooks/use-filter-counts'
 
@@ -20,8 +19,6 @@ export interface FilterSidebarProps {
   activeFiltersCount: number
   onSetCategory: (cat?: string) => void
   onSetVariant: (variant?: 'retail' | 'oem') => void
-  onSetStockStatus: (status?: StockStatus) => void
-  onSetInStockOnly: (val: boolean) => void
   onClearAll: () => void
   className?: string
 }
@@ -33,8 +30,6 @@ export function FilterSidebar({
   activeFiltersCount,
   onSetCategory,
   onSetVariant,
-  onSetStockStatus,
-  onSetInStockOnly,
   onClearAll,
   className,
 }: FilterSidebarProps) {
@@ -72,7 +67,7 @@ export function FilterSidebar({
       </div>
 
       <Accordion
-        defaultValue={['category', 'variant', 'availability']}
+        defaultValue={['category', 'variant']}
         className="w-full space-y-4"
       >
         {/* Category Accordion */}
@@ -190,46 +185,6 @@ export function FilterSidebar({
             >
               <span>{t('variants.oem', { defaultValue: 'OEM' })}</span>
               {counts && <span className="text-xs">{counts.oemCount}</span>}
-            </button>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Availability Accordion */}
-        <AccordionItem value="availability" className="border-border/40">
-          <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-2">
-            {t('stock.availability', { defaultValue: 'Availability' })}
-          </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-2 space-y-3">
-            <label
-              htmlFor="filter-instock-toggle"
-              className="flex min-h-[36px] cursor-pointer items-center justify-between gap-3 select-none"
-            >
-              <span className="text-sm font-normal text-foreground">
-                {t('listing.inStockOnly', { defaultValue: 'In stock only' })}
-              </span>
-              <Switch
-                id="filter-instock-toggle"
-                checked={state.inStockOnly}
-                onCheckedChange={onSetInStockOnly}
-              />
-            </label>
-
-            <button
-              type="button"
-              onClick={() =>
-                onSetStockStatus(
-                  state.stockStatus === 'preorder' ? undefined : 'preorder',
-                )
-              }
-              className={cn(
-                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm text-start transition-colors',
-                state.stockStatus === 'preorder'
-                  ? 'bg-secondary font-medium text-foreground'
-                  : 'text-muted-foreground hover:bg-secondary/50',
-              )}
-            >
-              <span>{t('stock.preorder', { defaultValue: 'Preorder Allowed' })}</span>
-              {counts && <span className="text-xs">{counts.preorderCount}</span>}
             </button>
           </AccordionContent>
         </AccordionItem>

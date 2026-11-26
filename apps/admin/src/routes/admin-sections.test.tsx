@@ -2,6 +2,10 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '@workspace/i18n/config'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
+import { createAdminQueryClient } from '../app/query-client'
 import { AdminLayout } from '../features/dashboard/components/admin-layout'
 import { AdminProductsRoute } from './admin-products-route'
 import { AdminCategoriesRoute } from './admin-categories-route'
@@ -46,14 +50,8 @@ describe('Admin Section Workstation Pages', () => {
   }
 
   beforeEach(() => {
-    testQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-        },
-      },
-    })
+    vi.restoreAllMocks()
+    testQueryClient = createAdminQueryClient()
 
     vi.spyOn(apiFactory, 'getAdminDashboardService').mockReturnValue({
       getOverview: vi.fn().mockResolvedValue({
@@ -279,5 +277,43 @@ describe('Admin Section Workstation Pages', () => {
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument()
     expect(screen.getAllByText('Lead Admin').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('admin1@souqmuftah.com').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it.each([
+    { path: '/en/products', element: <AdminProductsRoute />, setup: () => vi.spyOn(apiFactory, 'getProductService').mockReturnValue({ getProducts: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), getAdminCategories: vi.fn().mockResolvedValue([]) } as unknown as ProductService) },
+    { path: '/en/categories', element: <AdminCategoriesRoute />, setup: () => vi.spyOn(apiFactory, 'getProductService').mockReturnValue({ getAdminCategories: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')) } as unknown as ProductService) },
+    { path: '/en/orders', element: <AdminOrdersRoute />, setup: () => vi.spyOn(apiFactory, 'getAdminOrderService').mockReturnValue({ getOrders: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), getPendingOrders: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')) } as unknown as AdminOrderService) },
+    { path: '/en/inventory', element: <AdminInventoryRoute />, setup: () => vi.spyOn(apiFactory, 'getInventoryService').mockReturnValue({ getKeys: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), listKeys: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), getStats: vi.fn().mockResolvedValue([]) } as unknown as InventoryService) },
+    { path: '/en/tickets', element: <AdminTicketsRoute />, setup: () => vi.spyOn(apiFactory, 'getTicketService').mockReturnValue({ getTickets: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), listTickets: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')) } as unknown as TicketService) },
+    { path: '/en/promos', element: <AdminPromosRoute />, setup: () => vi.spyOn(apiFactory, 'getPromoService').mockReturnValue({ getPromos: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), listPromos: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')) } as unknown as PromoService) },
+    { path: '/en/ledger', element: <AdminLedgerRoute />, setup: () => vi.spyOn(apiFactory, 'getLedgerService').mockReturnValue({ getEntries: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), getSummary: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')) } as unknown as LedgerService) },
+    { path: '/en/audit', element: <AdminAuditRoute />, setup: () => vi.spyOn(apiFactory, 'getAuditService').mockReturnValue({ getLogs: vi.fn().mockRejectedValue(new ApiClientError(404, 'ENTITY_NOT_FOUND', 'missing')), exportLogs: vi.fn() } as unknown as AuditService) },
+  ])('renders AdminQueryError recovery UI on initial query failure at $path', async ({ path, element, setup }) => {
+    mockAuth()
+    setup()
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={testQueryClient}>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/:lang" element={<AdminLayout />}>
+                <Route path="products" element={path === '/en/products' ? element : <div />} />
+                <Route path="categories" element={path === '/en/categories' ? element : <div />} />
+                <Route path="orders" element={path === '/en/orders' ? element : <div />} />
+                <Route path="inventory" element={path === '/en/inventory' ? element : <div />} />
+                <Route path="tickets" element={path === '/en/tickets' ? element : <div />} />
+                <Route path="promos" element={path === '/en/promos' ? element : <div />} />
+                <Route path="ledger" element={path === '/en/ledger' ? element : <div />} />
+                <Route path="audit" element={path === '/en/audit' ? element : <div />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </I18nextProvider>
+    )
+
+    const backButtons = await screen.findAllByRole('button', { name: /back to dashboard/i })
+    expect(backButtons.length).toBeGreaterThanOrEqual(1)
   })
 })

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import type { LoginRequest, UserProfile } from '@workspace/domain/schemas/auth'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import { getAuthService, getTokenStorage, getUserService } from '@workspace/api/factory'
 import { parseJwtPayload } from '@workspace/api/adapters/http/token-storage'
 import { queryClient } from '../../../app/query-client'
@@ -130,7 +131,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
 
         if (tokenStorage.getAudience() !== 'admin') {
           tokenStorage.clearTokens()
-          throw new Error('Access denied: not an administrator token')
+          throw new ApiClientError(403, 'PERMISSION_DENIED', 'Access denied: not an administrator token')
         }
 
         try {

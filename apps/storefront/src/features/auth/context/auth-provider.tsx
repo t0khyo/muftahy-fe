@@ -32,7 +32,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [userService, tokenStorage])
 
-  // Silent session hydration on mount
+  const isAuthenticatedRef = React.useRef(isAuthenticated)
+  React.useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated
+  }, [isAuthenticated])
+
+  // Silent session hydration on mount (runs once; never re-triggered by isAuthenticated changes)
   React.useEffect(() => {
     let mounted = true
 
@@ -65,22 +70,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     hydrate()
 
-    // Listen to cross-tab storage synchronization
+    return () => {
+      mounted = false
+    }
+  }, [tokenStorage, userService])
+
+  // Listen to cross-tab storage synchronization
+  React.useEffect(() => {
     const unsubscribe = tokenStorage.onTokensChanged(({ refreshToken }) => {
       if (!refreshToken) {
         setUser(null)
         setIsAuthenticated(false)
         queryClient.clear()
-      } else if (!isAuthenticated) {
+      } else if (!isAuthenticatedRef.current) {
         refreshProfile()
       }
     })
 
     return () => {
-      mounted = false
       unsubscribe()
     }
-  }, [tokenStorage, userService, isAuthenticated, refreshProfile])
+  }, [tokenStorage, refreshProfile])
 
   const login = React.useCallback(
     async (credentials: LoginRequest): Promise<void> => {

@@ -3,11 +3,14 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { i18n } from '@workspace/i18n/config'
-import { I18nProvider } from '../app/i18n-provider'
-import { AdminProfileRoute } from './admin-profile-route'
-import * as useAdminAuthModule from '../features/auth/hooks/use-admin-auth'
+import { ApiClientError } from '@workspace/api/adapters/http/fetch-client'
 import * as apiFactory from '@workspace/api/factory'
 import type { UserService } from '@workspace/api/services/user-service'
+import { toast } from '@workspace/ui/components/sonner'
+import { createAdminQueryClient } from '../app/query-client'
+import * as useAdminAuthModule from '../features/auth/hooks/use-admin-auth'
+import { I18nProvider } from '../app/i18n-provider'
+import { AdminProfileRoute } from './admin-profile-route'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router', async () => {
@@ -42,12 +45,12 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUserService.getProfile.mockReset().mockResolvedValue(mockUser)
+    mockUserService.updateProfile
+      .mockReset()
+      .mockImplementation((payload) => Promise.resolve({ ...mockUser, ...payload }))
     i18n.changeLanguage('en')
-    testQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
-      },
-    })
+    testQueryClient = createAdminQueryClient()
 
     vi.spyOn(useAdminAuthModule, 'useAdminAuth').mockReturnValue({
       user: mockUser,
@@ -99,7 +102,8 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
     expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument()
   })
 
-  it('allows editing full name and phone number and submits form', async () => {
+  it('allows editing full name and phone number and submits form with toast confirmation', async () => {
+    const successSpy = vi.spyOn(toast, 'success')
     render(
       <I18nProvider>
         <QueryClientProvider client={testQueryClient}>
@@ -126,8 +130,38 @@ describe('AdminProfileRoute Workstation (Minimal Taste)', () => {
         phone: '+201001112222',
       })
       expect(mockRefreshProfile).toHaveBeenCalled()
-      expect(screen.getByText(/profile updated successfully/i)).toBeInTheDocument()
+      expect(successSpy).toHaveBeenCalledTimes(1)
     })
+  })
+
+  it('displays inline FormErrorAlert on 422 profile update error without firing error toast', async () => {
+    Element.prototype.scrollIntoView = vi.fn()
+    const errorSpy = vi.spyOn(toast, 'error')
+    mockUserService.updateProfile.mockRejectedValueOnce(
+      new ApiClientError(422, 'VALIDATION_ERROR', 'Invalid phone number format', undefined, undefined, {
+        fieldErrors: [{ field: 'phone', message: 'Phone must be E.164 format' }],
+      })
+    )
+
+    render(
+      <I18nProvider>
+        <QueryClientProvider client={testQueryClient}>
+          <MemoryRouter initialEntries={['/en/profile']}>
+            <Routes>
+              <Route path="/:lang/profile" element={<AdminProfileRoute />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </I18nProvider>
+    )
+
+    const phoneInput = screen.getByLabelText(/phone number/i)
+    fireEvent.change(phoneInput, { target: { value: '12345' } })
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Phone must be E.164 format')
+    expect(errorSpy).not.toHaveBeenCalled()
   })
 
   it('terminates session immediately when clicking Logout', async () => {

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { I18nextProvider } from "react-i18next"
+import { getProductService } from "@workspace/api/factory"
 import { i18n } from "@workspace/i18n/config"
 import { useCartStore } from "../features/cart/stores/cart-store"
 import { CartRoute } from "./cart-route"
@@ -135,11 +136,59 @@ describe("CartRoute (Shopping Cart Page)", () => {
     expect(document.documentElement.lang).toBe("ar")
 
     expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
+    expect(screen.getByText("Retail")).toBeInTheDocument()
+    expect(screen.queryByText(/تجزئة/i)).not.toBeInTheDocument()
     expect(
       screen.getByRole("heading", { name: /ملخص الطلب/i })
     ).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: /إتمام الشراء/i })
     ).toBeInTheDocument()
+  })
+
+  it("hides low-stock count badges while keeping quantity stepper max limit intact", async () => {
+    const productService = getProductService()
+    vi.spyOn(productService, "getProductById").mockResolvedValueOnce({
+      id: "00000000-0000-4000-8000-000000000001",
+      name: "Windows 11 Professional",
+      sku: "OS-WIN11-PRO-RET",
+      slug: "windows-11-professional",
+      category: {
+        id: "cat-1",
+        name: "Windows",
+        code: "WIN",
+        slug: "windows",
+        display_order: 0,
+        is_active: true,
+        product_count: 1,
+      },
+      variant: "retail",
+      base_price: "499.00",
+      sale_price: "349.00",
+      effective_price: "349.00",
+      discount_percentage: 30,
+      stock_status: "in_stock",
+      available_count: 2,
+      preorder_enabled: false,
+      description: "License",
+      is_active: true,
+      images: [],
+    })
+
+    act(() => {
+      useCartStore.getState().addItem({
+        product_id: "00000000-0000-4000-8000-000000000001",
+        product_name: "Windows 11 Professional",
+        unit_price: 349.0,
+        is_preorder: false,
+        category: "windows",
+        variant: "retail",
+      })
+    })
+
+    renderCartRoute("/en/cart")
+
+    expect(await screen.findByText("Windows 11 Professional")).toBeInTheDocument()
+    expect(screen.queryByText(/only 2 left/i)).not.toBeInTheDocument()
   })
 })

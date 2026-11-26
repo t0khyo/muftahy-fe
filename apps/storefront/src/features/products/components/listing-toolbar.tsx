@@ -23,8 +23,6 @@ export interface ListingToolbarProps {
   activeFiltersCount: number
   onSortChange: (sort: SortOption) => void
   onRemoveVariant?: () => void
-  onRemoveStockStatus?: () => void
-  onRemoveInStockOnly?: () => void
   onClearAll: () => void
   onOpenMobileFilters: () => void
   className?: string
@@ -36,8 +34,6 @@ export function ListingToolbar({
   activeFiltersCount,
   onSortChange,
   onRemoveVariant,
-  onRemoveStockStatus,
-  onRemoveInStockOnly,
   onClearAll,
   onOpenMobileFilters,
   className,
@@ -59,20 +55,6 @@ export function ListingToolbar({
       id: `variant-${state.variant}`,
       type: 'variant',
       labelFallback: t(`variants.${state.variant}`, { defaultValue: state.variant }),
-    })
-  }
-  if (state.stockStatus === 'preorder') {
-    chips.push({
-      id: 'stock-preorder',
-      type: 'stock',
-      labelFallback: t('stock.preorder', { defaultValue: 'Preorder' }),
-    })
-  }
-  if (state.inStockOnly) {
-    chips.push({
-      id: 'stock-instock',
-      type: 'stock',
-      labelFallback: t('listing.inStockOnly', { defaultValue: 'In stock only' }),
     })
   }
 
@@ -160,8 +142,6 @@ export function ListingToolbar({
                 type="button"
                 onClick={() => {
                   if (chip.type === 'variant') onRemoveVariant?.()
-                  else if (chip.id === 'stock-instock') onRemoveInStockOnly?.()
-                  else if (chip.id === 'stock-preorder') onRemoveStockStatus?.()
                 }}
                 className="cursor-pointer text-muted-foreground hover:text-foreground rounded-full p-0.5"
                 aria-label={t('remove', { ns: 'common', defaultValue: 'Remove' })}

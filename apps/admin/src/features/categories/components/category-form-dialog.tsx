@@ -15,6 +15,7 @@ import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { useTranslation } from 'react-i18next'
 import { slugify } from '@workspace/domain/schemas/product'
 import type { CategoryResponse } from '@workspace/domain/schemas/product'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { useCreateCategory, useUpdateCategory } from '../hooks/use-admin-categories'
 
 export interface CategoryFormDialogProps {
@@ -67,8 +68,8 @@ function CategoryFormContent({
   onCancel: () => void
 }) {
   const { t } = useTranslation(['admin'])
-  const createMutation = useCreateCategory()
-  const updateMutation = useUpdateCategory()
+  const createMutation = useCreateCategory({ errorMode: 'inline' })
+  const updateMutation = useUpdateCategory({ errorMode: 'inline' })
 
   const isEditing = Boolean(category)
   const isCodeImmutable = isEditing && (category?.product_count ?? 0) > 0
@@ -88,15 +89,21 @@ function CategoryFormContent({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg(null)
+    createMutation.reset()
+    updateMutation.reset()
 
     if (!name.trim()) {
-      setErrorMsg('Category name is required')
+      setErrorMsg(
+        t('admin:feedback.validation.categoryNameRequired', 'Category name is required'),
+      )
       return
     }
 
     const trimmedCode = code.trim().toUpperCase()
     if (!trimmedCode) {
-      setErrorMsg('Category code is required')
+      setErrorMsg(
+        t('admin:feedback.validation.categoryCodeRequired', 'Category code is required'),
+      )
       return
     }
 
@@ -125,17 +132,16 @@ function CategoryFormContent({
       }
       onSuccess()
     } catch {
-      // Toast handles server errors
+      // Keeps dialog open; MutationCache handles toast errors and FormErrorAlert shows inline conflicts
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-      {errorMsg && (
-        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
-          {errorMsg}
-        </div>
-      )}
+      <FormErrorAlert
+        clientError={errorMsg}
+        error={category ? updateMutation.error : createMutation.error}
+      />
 
       {/* Name */}
       <Field>

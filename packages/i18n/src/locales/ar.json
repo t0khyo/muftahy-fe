@@ -222,7 +222,7 @@
     "errorTitle": "تعذر تحميل تفاصيل المنتج",
     "errorSubtitle": "حدث خطأ أثناء جلب معلومات المنتج.",
     "liveAddedAnnouncement": "تمت إضافة {{product}} إلى سلتك",
-    "skuLabel": "رمز المنتج"
+    "skuLabel": "SKU"
   },
   "products": {
     "title": "مفاتيح وتراخيص رقمية",
@@ -235,8 +235,8 @@
       "office-suites": "حزم أوفيس المكتبية"
     },
     "variants": {
-      "retail": "تجزئة (Retail)",
-      "oem": "مُصنّع (OEM)"
+      "retail": "Retail",
+      "oem": "OEM"
     },
     "stock": {
       "in_stock": "متوفر",
@@ -246,8 +246,8 @@
     "preorderBadge": "طلب مسبق",
     "preorderDisclaimer": "عنصر طلب مسبق: سيتم تسليم الكود فور توفر المخزون.",
     "added": "تمت الإضافة",
-    "variantRetail": "تجزئة (Retail)",
-    "variantOem": "مُصنّع (OEM)",
+    "variantRetail": "Retail",
+    "variantOem": "OEM",
     "categoryWindows": "ويندوز",
     "categoryOffice": "أوفيس",
     "addToCart": "أضف إلى السلة",
@@ -819,7 +819,7 @@
       "title": "المنتجات",
       "subtitle": "إدارة المنتجات الرقمية، والأسعار، والفئات، والظهور في المتجر",
       "addProduct": "إضافة منتج",
-      "searchPlaceholder": "البحث باسم المنتج، أو رمز SKU، أو الفئة...",
+      "searchPlaceholder": "البحث باسم المنتج، أو SKU، أو الفئة...",
       "catalogTitle": "المنتجات",
       "catalogDesc": "المنتجات النشطة تظهر للمشترين في واجهة المتجر.",
       "product": "المنتج",
@@ -857,8 +857,8 @@
       "actions": "الإجراءات",
       "viewInventory": "إدارة المفاتيح",
       "copyId": "نسخ معرف المنتج",
-      "copySku": "نسخ رمز SKU",
-      "copiedSku": "تم نسخ رمز SKU!",
+      "copySku": "نسخ SKU",
+      "copiedSku": "تم نسخ SKU!",
       "emptyTitle": "لم يتم العثور على أي منتجات",
       "emptyDesc": "أضف منتجات رقمية أو تراخيص برامج لبدء استقبال الطلبات."
     },
@@ -1027,7 +1027,7 @@
       "previous": "السابق",
       "next": "التالي",
       "pageOf": "صفحة {{page}} من {{total}}",
-      "rateLimitExceeded": "تم تجاوز حد الطلبات. إعادة المحاولة تلقائياً خلال {{seconds}} ثانية."
+      "rateLimitExceeded": "تم تجاوز حد الطلبات. يرجى الانتظار {{seconds}} ثانية قبل المحاولة مجدداً."
     },
     "emptyState": {
       "products": {
@@ -1090,7 +1090,7 @@
     },
     "productEditor": {
       "createTitle": "إضافة منتج",
-      "createSubtitle": "إنشاء بطاقة منتج رقمي جديدة مع رمز SKU والأسعار والوسائط.",
+      "createSubtitle": "إنشاء بطاقة منتج رقمي جديدة مع SKU والأسعار والوسائط.",
       "editTitle": "تعديل المنتج",
       "editSubtitle": "تحديث تفاصيل المنتج والأسعار والتنظيم والوسائط.",
       "generalDetails": "التفاصيل العامة",
@@ -1113,18 +1113,18 @@
       "preorderHint": "السماح للعملاء بالطلب حتى في حال نفاد المخزون.",
       "stockQuantity": "المخزون المتوفر: {{count}}",
       "linkToInventory": "إدارة المفاتيح في المخزون",
-      "organization": "التنظيم ورمز SKU",
+      "organization": "التنظيم و SKU",
       "category": "التصنيف",
       "selectCategory": "اختر تصنيفاً",
       "variant": "نوع الإصدار",
       "selectVariant": "اختر الإصدار",
       "variantNone": "بدون (قياسي)",
-      "variantRetail": "تجزئة (Retail)",
-      "variantOem": "مُصنّع (OEM)",
-      "sku": "رمز المنتج (SKU)",
+      "variantRetail": "Retail",
+      "variantOem": "OEM",
+      "sku": "SKU",
       "skuPlaceholder": "مثال: OS-WIN11-PRO-RET",
       "skuHint": "صيغة من 4 أجزاء بأحرف كبيرة. يجب أن تبدأ برمز التصنيف.",
-      "skuMismatch": "يجب أن يبدأ رمز SKU بـ {{code}}-",
+      "skuMismatch": "يجب أن يبدأ SKU بـ {{code}}-",
       "media": "وسائط المنتج",
       "mediaDescription": "حمّل حتى 10 صور للمنتج (JPEG أو PNG أو WebP بحجم حتى 5 ميجابايت ودقة قصوى 3840×2160).",
       "dropzoneTitle": "اسحب وأفلت صور المنتج هنا، أو انقر للاختيار",
@@ -1146,10 +1146,15 @@
       "leaveConfirm": "لديك تغييرات غير محفوظة. هل أنت متأكد من المغادرة؟"
     },
     "errors": {
+      "BAD_REQUEST": "تعذر تنفيذ الطلب. تحقق من البيانات المدخلة وأعد المحاولة.",
+      "VALIDATION_ERROR": "يرجى التحقق من الحقول المطلوبة وإعادة المحاولة.",
+      "CONFLICT": "يتعارض هذا الإجراء مع الحالة الحالية للسجل.",
+      "SERVER_ERROR": "حدث خطأ في الخادم. يرجى المحاولة مرة أخرى بعد قليل.",
+      "REQUEST_FAILED": "فشل تنفيذ الطلب. يرجى المحاولة مرة أخرى.",
       "ENTITY_NOT_FOUND": "العنصر المطلوب غير موجود.",
-      "SKU_ALREADY_EXISTS": "يوجد منتج آخر مسجل برمز SKU هذا.",
-      "INVALID_SKU_FORMAT": "يجب أن يطابق رمز SKU الصيغة المعتمدة من 4 أجزاء (مثل OS-WIN11-PRO-RET).",
-      "SKU_CATEGORY_MISMATCH": "بادئة رمز SKU يجب أن تطابق رمز التصنيف المختار.",
+      "SKU_ALREADY_EXISTS": "يوجد منتج آخر مسجل بنفس SKU.",
+      "INVALID_SKU_FORMAT": "يجب أن يطابق SKU الصيغة المعتمدة من 4 أجزاء (مثل OS-WIN11-PRO-RET).",
+      "SKU_CATEGORY_MISMATCH": "بادئة SKU يجب أن تطابق رمز التصنيف المختار.",
       "SLUG_ALREADY_EXISTS": "يوجد منتج آخر يستخدم نفس الرابط التعريفي.",
       "SLUG_COLLISION_RETRY_EXHAUSTED": "تعذر توليد رابط تعريفي فريد تلقائياً. يرجى إدخال رابط يدوي.",
       "CATEGORY_CODE_ALREADY_EXISTS": "يوجد تصنيف آخر بنفس الرمز.",
@@ -1161,7 +1166,59 @@
       "INVALID_IMAGE_FORMAT": "صيغة الصورة غير مدعومة. يرجى رفع JPEG أو PNG أو WebP.",
       "IMAGE_LIMIT_EXCEEDED": "الحد الأقصى للصور هو 10 صور لكل منتج.",
       "IMAGE_OWNERSHIP_MISMATCH": "هذه الصورة لا تتبع هذا المنتج.",
+      "PRIMARY_IMAGE_CANNOT_BE_DELETED": "يرجى تعيين صورة أخرى كصورة رئيسية قبل حذف هذه الصورة.",
+      "PROMO_CODE_ALREADY_EXISTS": "يوجد رمز خصم مسجل بنفس الرمز مسبقاً.",
+      "ORDER_INVALID_STATE": "لا يمكن تنفيذ هذا الإجراء على الطلب في حالته الحالية.",
+      "INSUFFICIENT_STOCK": "لا تتوفر مفاتيح كافية في المخزون لإتمام هذه العملية.",
       "RATE_LIMIT_EXCEEDED": "تم تجاوز معدل الطلبات المسموح. يرجى الانتظار {{seconds}} ثانية قبل المحاولة مجدداً."
+    },
+    "feedback": {
+      "queryErrorTitle": "تعذر تحميل البيانات",
+      "queryErrorDesc": "حدث خطأ أثناء جلب هذه البيانات. يمكنك إعادة المحاولة.",
+      "retry": "إعادة المحاولة",
+      "retrying": "جاري إعادة المحاولة...",
+      "retryIn": "إعادة المحاولة خلال {{seconds}} ث",
+      "backToDashboard": "العودة إلى لوحة التحكم",
+      "backgroundRefreshFailed": "تعذر تحديث البيانات. يتم عرض آخر نتائج محمّلة.",
+      "rateLimitBannerTitle": "تم تجاوز الحد المسموح للطلبات",
+      "rateLimitBannerDesc": "تم إيقاف الطلبات مؤقتاً لمدة {{seconds}} ثانية للحفاظ على استقرار الخدمة.",
+      "productDeleted": "تم حذف المنتج",
+      "productPublished": "تم نشر المنتج في المتجر",
+      "productUnpublished": "تم تحويل المنتج إلى مسودة",
+      "productBulkStatusSuccess": "تم تحديث {{count}} منتجات",
+      "productBulkStatusPartial": "تم تحديث {{succeeded}} من أصل {{total}} منتجات؛ تعذر تحديث البقية.",
+      "imageUploaded": "تم رفع صورة المنتج",
+      "imagesUploadedPartial": "تم رفع {{succeeded}} من أصل {{total}} صور؛ تعذر رفع البقية.",
+      "imageDeleted": "تم حذف صورة المنتج",
+      "primaryImageUpdated": "تم تعيين الصورة الرئيسية للمنتج",
+      "imagesReordered": "تم حفظ ترتيب الصور",
+      "thumbnailUploaded": "تم تحديث الصورة المصغرة",
+      "thumbnailDeleted": "تمت إزالة الصورة المصغرة",
+      "orderReviewStarted": "تم نقل الطلب إلى قيد المراجعة",
+      "orderApproved": "تمت الموافقة على الطلب وتسليم المفاتيح",
+      "orderRejectedWrongAmount": "تم رفض الطلب (مبلغ غير مطابق)",
+      "orderRejectedRefund": "تم رفض الطلب وتحويله للاسترداد",
+      "orderItemRefunded": "تم استرداد قيمة عنصر الطلب",
+      "keysImportedSuccess": "تم استيراد {{count}} مفاتيح بنجاح",
+      "keysImportedPartial": "تم استيراد {{imported}} مفاتيح؛ فشل استيراد {{failed}}.",
+      "keysImportNone": "لم يتم استيراد أي مفاتيح (فشل {{failed}}).",
+      "promoCreated": "تم إنشاء رمز الخصم",
+      "promoUpdated": "تم تحديث رمز الخصم",
+      "promoActivated": "تم تفعيل رمز الخصم",
+      "promoDeactivated": "تم تعطيل رمز الخصم",
+      "ticketReplySent": "تم إرسال الرد",
+      "ticketResolved": "تم إغلاق التذكرة وحلها",
+      "auditExported": "تم تصدير سجل النشاط",
+      "validation": {
+        "titleRequired": "عنوان المنتج مطلوب",
+        "basePriceRequired": "السعر الأساسي الصحيح مطلوب",
+        "salePriceLessThanBase": "سعر التخفيض يجب أن يكون أقل من السعر الأساسي",
+        "categoryRequired": "التصنيف مطلوب",
+        "skuRequired": "SKU مطلوب",
+        "skuInvalid": "صيغة SKU غير صالحة للتصنيف المختار",
+        "categoryNameRequired": "اسم التصنيف مطلوب",
+        "categoryCodeRequired": "رمز التصنيف مطلوب"
+      }
     }
   }
 }

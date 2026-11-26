@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getPromoService } from '@workspace/api/factory'
 import type {
   PromoCreateRequest,
@@ -6,6 +6,7 @@ import type {
   PromoUpdateRequest,
 } from '@workspace/domain/schemas/promos'
 import type { ListPromosParams } from '@workspace/api/services/promo-service'
+import { useAdminMutation } from '../../../hooks/use-admin-mutation'
 
 export const promoKeys = {
   all: ['admin', 'promos'] as const,
@@ -21,7 +22,6 @@ export function usePromos(params?: ListPromosParams) {
   })
 }
 
-// Aliases for workstation routes
 export const useAdminPromos = usePromos
 
 export function usePromoDetail(promoId: string) {
@@ -33,26 +33,31 @@ export function usePromoDetail(promoId: string) {
   })
 }
 
-export function useCreatePromo() {
+export function useCreatePromo(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getPromoService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: (payload: PromoCreateRequest) => service.createPromo(payload),
     onSuccess: (newPromo) => {
       queryClient.setQueryData<PromoDetailResponse[]>(promoKeys.list(), (prev) => {
         if (!prev) return [newPromo]
         return [newPromo, ...prev]
       })
+      queryClient.invalidateQueries({ queryKey: promoKeys.all })
+    },
+    feedback: {
+      successKey: 'admin:feedback.promoCreated',
+      errorMode: options?.errorMode,
     },
   })
 }
 
-export function useUpdatePromo() {
+export function useUpdatePromo(options?: { errorMode?: 'toast' | 'inline' }) {
   const queryClient = useQueryClient()
   const service = getPromoService()
 
-  return useMutation({
+  return useAdminMutation({
     mutationFn: ({ promoId, payload }: { promoId: string; payload: PromoUpdateRequest }) =>
       service.updatePromo(promoId, payload),
     onSuccess: (updatedPromo) => {
@@ -61,14 +66,36 @@ export function useUpdatePromo() {
         if (!prev) return [updatedPromo]
         return prev.map((p) => (p.id === updatedPromo.id ? updatedPromo : p))
       })
+      queryClient.invalidateQueries({ queryKey: promoKeys.all })
+    },
+    feedback: {
+      successKey: 'admin:feedback.promoUpdated',
+      errorMode: options?.errorMode,
     },
   })
 }
 
 export function useTogglePromoStatus() {
-  const updateMutation = useUpdatePromo()
-  return useMutation({
+  const queryClient = useQueryClient()
+  const service = getPromoService()
+
+  return useAdminMutation({
     mutationFn: ({ code, is_active }: { code: string; is_active: boolean }) =>
-      updateMutation.mutateAsync({ promoId: code, payload: { is_active } }),
+      service.updatePromo(code, { is_active }),
+    onSuccess: (updatedPromo) => {
+      queryClient.setQueryData(promoKeys.detail(updatedPromo.id), updatedPromo)
+      queryClient.setQueryData<PromoDetailResponse[]>(promoKeys.list(), (prev) => {
+        if (!prev) return [updatedPromo]
+        return prev.map((p) => (p.id === updatedPromo.id ? updatedPromo : p))
+      })
+      queryClient.invalidateQueries({ queryKey: promoKeys.all })
+    },
+    feedback: {
+      getSuccessFeedback: (_data, variables) => ({
+        key: variables.is_active
+          ? 'admin:feedback.promoActivated'
+          : 'admin:feedback.promoDeactivated',
+      }),
+    },
   })
 }

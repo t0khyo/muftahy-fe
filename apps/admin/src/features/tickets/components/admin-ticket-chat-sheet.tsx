@@ -5,7 +5,6 @@ import {
   MessageSquare,
   Send,
   Loader2,
-  AlertCircle,
   FileText,
   Clock,
   ShieldCheck,
@@ -39,6 +38,8 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { formatDate } from '@workspace/domain/formatters/date'
 import type { TicketStatus } from '@workspace/domain/schemas/ticket'
+import { AdminQueryError } from '../../../components/feedback/admin-query-error'
+import { FormErrorAlert } from '../../../components/feedback/form-error-alert'
 import { useTicketDetail, useAddTicketComment } from '../hooks/use-tickets'
 import { MaskedKeyReveal } from '../../inventory/components/masked-key-reveal'
 import { AdminTicketMessageItem } from './admin-ticket-message-item'
@@ -87,13 +88,19 @@ function AdminTicketChatContent({
   onOpenResolve?: (ticketId: string) => void
   onClose: () => void
 }) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['admin'])
   const { lang = 'en' } = useParams<{ lang: string }>()
-  const { data: ticket, isLoading, isError, refetch } = useTicketDetail(ticketId)
-  const addCommentMutation = useAddTicketComment()
+  const {
+    data: ticket,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+    refetch,
+  } = useTicketDetail(ticketId)
+  const addCommentMutation = useAddTicketComment({ errorMode: 'inline' })
 
   const [message, setMessage] = React.useState('')
-  const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
 
@@ -112,7 +119,7 @@ function AdminTicketChatContent({
     const content = message.trim()
     if (!content || addCommentMutation.isPending) return
 
-    setErrorMsg(null)
+    addCommentMutation.reset()
     try {
       await addCommentMutation.mutateAsync({
         ticketId,
@@ -120,9 +127,8 @@ function AdminTicketChatContent({
       })
       setMessage('')
       setTimeout(() => scrollToBottom('smooth'), 50)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to send message.'
-      setErrorMsg(msg)
+    } catch {
+      // Keeps input intact; FormErrorAlert displays 400/409/422 and MutationCache handles toast errors
     }
   }
 
@@ -171,14 +177,13 @@ function AdminTicketChatContent({
 
   if (isError || !ticket) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
-        <AlertCircle className="size-10 text-destructive" />
-        <h3 className="font-heading text-base font-semibold text-foreground">
-          {t('common.error', 'Failed to load ticket details')}
-        </h3>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          {t('common.retry', 'Retry')}
-        </Button>
+      <div className="flex-1 flex items-center justify-center p-6">
+        <AdminQueryError
+          error={error}
+          onRetry={() => refetch()}
+          isRetrying={isFetching}
+          variant="section"
+        />
       </div>
     )
   }
@@ -406,12 +411,7 @@ function AdminTicketChatContent({
           </Button>
         </div>
 
-        {errorMsg && (
-          <Alert variant="destructive" className="py-2 text-xs">
-            <AlertCircle className="size-3.5" />
-            <AlertDescription>{errorMsg}</AlertDescription>
-          </Alert>
-        )}
+        <FormErrorAlert error={addCommentMutation.error} />
 
         {isClosed && (
           <Alert className="py-2 text-xs border-border/60 bg-muted/50">
