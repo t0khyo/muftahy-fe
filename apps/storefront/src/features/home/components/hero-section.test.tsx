@@ -133,8 +133,8 @@ describe('HeroSection', () => {
     expect(staticBadge.tagName.toLowerCase()).not.toBe('a')
   })
 
-  it('renders trust claims row as an unordered list with aria-hidden icons', () => {
-    const { container } = renderHeroSection('/en')
+  it('renders trust claims row as an unordered list with aria-hidden icons and hero visual banner', () => {
+    renderHeroSection('/en')
 
     const list = screen.getByRole('list')
     expect(list).toBeInTheDocument()
@@ -148,9 +148,14 @@ describe('HeroSection', () => {
     const icons = list.querySelectorAll('svg[aria-hidden="true"]')
     expect(icons).toHaveLength(3)
 
-    // Visual placeholder block
-    expect(screen.getByTestId('hero-visual-placeholder')).toBeInTheDocument()
-    expect(container.querySelector('#hero-logo')).toBeInTheDocument()
+    // Hero visual banner image
+    const visualContainer = screen.getByTestId('hero-visual')
+    expect(visualContainer).toBeInTheDocument()
+    const bannerImg = screen.getByRole('img', {
+      name: /save up to 70% on genuine windows 11 home/i,
+    })
+    expect(bannerImg).toBeInTheDocument()
+    expect(bannerImg.getAttribute('src')).toMatch(/hero-banner/)
   })
 
   it('renders properly under Arabic RTL without physical direction classes', () => {

@@ -253,7 +253,7 @@ describe('Home Page Skeleton', () => {
     expect(sections[7]).toHaveClass('bg-secondary/40')
   })
 
-  it('renders hero with one primary button, one quiet text link, and visual placeholder block', () => {
+  it('renders hero with one primary button, one quiet text link, and visual banner', () => {
     renderHomePage('/en')
 
     // Primary CTA button (renders with button role)
@@ -264,9 +264,13 @@ describe('Home Page Skeleton', () => {
     const quietLink = screen.getByRole('link', { name: /learn how it works/i })
     expect(quietLink).toBeInTheDocument()
 
-    // Visual placeholder block (no external images)
-    expect(screen.getByTestId('hero-visual-placeholder')).toBeInTheDocument()
-    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    // Hero visual banner
+    expect(screen.getByTestId('hero-visual')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', {
+        name: /save up to 70% on genuine windows 11 home/i,
+      }),
+    ).toBeInTheDocument()
   })
 
   it('renders unified Browse block with heading, subtitle, and category bento tiles', async () => {

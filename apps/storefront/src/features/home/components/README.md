@@ -7,7 +7,7 @@ Presentational section components that compose the storefront home page (`/:lang
 ## Interface
 
 - `HomePage(props: HomePageProps)` — root home page component; iterates `HomeConfig.sections`, filters enabled sections, and renders each by type. Accepts optional `config` and `renderProductRail` render prop.
-- `HeroSection(props: { config: HeroSectionConfig; className?: string })` — hero banner with primary CTA button, secondary link, announcement badge, micro-proof trust claims, and responsive illustration slot.
+- `HeroSection(props: { config: HeroSectionConfig; className?: string })` — hero banner with primary CTA button, secondary link, announcement badge, micro-proof trust claims, and responsive promotional hero visual banner.
 - `BrowseSection(props: BrowseSectionProps)` — product browsing catalog section showcasing featured collections.
 - `BundlesSection(props: BundlesSectionProps)` — promotional product bundle showcase section.
 - `CategoryTiles(props: { config: CategoryTilesSectionConfig; className?: string })` — category navigation tile grid.

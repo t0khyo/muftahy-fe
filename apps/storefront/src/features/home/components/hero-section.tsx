@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
-import { BrandLogoMark } from '../../../components/brand-logo'
+import heroBanner from '../../../assets/hero-banner.webp'
 import {
   DEFAULT_HERO_TRUST_CLAIMS,
   type HeroSectionConfig,
@@ -139,19 +139,19 @@ export function HeroSection({ config, className = '' }: HeroSectionProps) {
           </ul>
         )}
 
-        {/* Wide Visual Placeholder Block (bg-muted, fixed aspect ratio, brand mark emblem, no external images) */}
+        {/* Hero Visual Banner */}
         <div className="pt-4 flex justify-center">
           <div
-            data-testid="hero-visual-placeholder"
-            className="w-full aspect-16/9 sm:aspect-21/9 overflow-hidden rounded-3xl bg-muted/60 border border-border/50 flex flex-col items-center justify-center p-6 text-muted-foreground/60 transition-colors"
+            data-testid="hero-visual"
+            className="w-full overflow-hidden rounded-3xl border border-border/50 bg-muted/40 shadow-sm"
           >
-            <BrandLogoMark
-              className="h-16 sm:h-20 w-auto mb-3 opacity-90 transition-transform duration-300 hover:scale-105"
-              idPrefix="hero-logo"
+            <img
+              src={heroBanner}
+              alt={t('hero.visualAlt', { ns: 'home' })}
+              width={1024}
+              height={571}
+              className="w-full h-auto block object-cover"
             />
-            <span className="text-xs font-medium tracking-wide uppercase">
-              {t('hero.visualAlt', { ns: 'home' })}
-            </span>
           </div>
         </div>
       </div>
