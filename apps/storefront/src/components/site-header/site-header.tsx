@@ -124,10 +124,10 @@ export function SiteHeader({
           isScrolled ? 'border-b border-border/40' : 'border-b border-transparent'
         } ${className}`}
       >
-        <div className="site-container flex h-[var(--header-height-mobile,48px)] lg:h-[var(--header-height,44px)] items-center justify-between">
+        <div className="site-container flex h-[var(--header-height-mobile,48px)] items-center justify-between lg:grid lg:h-[var(--header-height,44px)] lg:grid-cols-[1fr_auto_1fr]">
           {/* 1 ── Start: Logo (Hidden on mobile when search or menu is open; visible on desktop) */}
           <div
-            className={`flex shrink-0 items-center transition-opacity duration-200 ${
+            className={`flex shrink-0 items-center lg:justify-self-start transition-opacity duration-200 ${
               isMobileMenuOpen
                 ? 'invisible opacity-0 pointer-events-none'
                 : isSearchOpen
@@ -138,13 +138,13 @@ export function SiteHeader({
             {logo ?? <SiteLogo />}
           </div>
 
-          {/* 2 ── Center: Desktop Navigation Links (Always visible on desktop) */}
-          <div className={isMobileMenuOpen ? 'hidden' : 'contents'}>
+          {/* 2 ── Center: Desktop Navigation Links (Always centered on desktop) */}
+          <div className={isMobileMenuOpen ? 'hidden' : 'hidden lg:flex lg:justify-self-center'}>
             <DesktopNav isSearchOpen={false} />
           </div>
 
           {/* 3 ── End: Actions */}
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1 lg:justify-self-end">
             {/* Optional EndActions slot on Desktop */}
             {endActions && !isMobileMenuOpen && (
               <div className="hidden lg:flex items-center me-1">
