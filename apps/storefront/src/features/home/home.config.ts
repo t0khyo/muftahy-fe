@@ -83,6 +83,7 @@ export interface ProductRailSectionConfig extends BaseSectionConfig {
   type: 'product-rail'
   collection?: string
   category?: string
+  is_featured?: boolean
   titleKey: string
   viewAllHref: string
 }
@@ -167,9 +168,10 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       id: 'best-sellers',
       type: 'product-rail',
       enabled: true,
-      category: 'operating-systems',
+      collection: 'featured',
+      is_featured: true,
       titleKey: 'bestSellers',
-      viewAllHref: '/:lang/categories/operating-systems',
+      viewAllHref: '/:lang/products',
     },
     {
       id: 'bundles',

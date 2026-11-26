@@ -23,6 +23,7 @@ export interface ProductRailProps {
   viewAllHref: string
   category?: string
   collection?: string
+  is_featured?: boolean
   products?: ProductResponse[]
   className?: string
 }
@@ -33,6 +34,7 @@ export function ProductRail({
   viewAllHref,
   category,
   collection,
+  is_featured,
   products: directProducts,
   className = '',
 }: ProductRailProps) {
@@ -41,22 +43,28 @@ export function ProductRail({
   const isRtl = currentLang === 'ar'
   const { t } = useTranslation(['home', 'common'])
 
+  const shouldFilterFeatured = is_featured ?? (collection === 'featured' ? true : undefined)
+
   const {
     data: fetchedProducts,
     isLoading,
     isError,
     refetch,
-  } = useProducts(directProducts ? undefined : { category })
+  } = useProducts(
+    directProducts
+      ? undefined
+      : { category, is_featured: shouldFilterFeatured },
+  )
 
   const products = React.useMemo(() => {
     const list = directProducts ?? fetchedProducts
     if (!list) return undefined
-    if (collection === 'bestsellers' || collection === 'featured') {
+    if (shouldFilterFeatured || collection === 'bestsellers') {
       const featuredOnly = list.filter((p) => p.is_featured === true)
       if (featuredOnly.length > 0) return featuredOnly
     }
     return list
-  }, [directProducts, fetchedProducts, collection])
+  }, [directProducts, fetchedProducts, collection, shouldFilterFeatured])
 
   const headingId = `${id}-heading`
 
