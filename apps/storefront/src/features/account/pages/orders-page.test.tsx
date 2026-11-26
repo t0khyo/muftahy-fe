@@ -152,6 +152,16 @@ describe('OrdersPage & OrderDetailPage', () => {
 
     const uploadBtn = screen.getByRole('button', { name: /upload payment receipt/i })
     expect(uploadBtn).toBeInTheDocument()
+    expect(document.querySelector('img[src*="vodafone-cash"]')).toBeInTheDocument()
+    expect(document.querySelector('img[src*="instapay"]')).toBeInTheDocument()
+
+    fireEvent.click(uploadBtn)
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+    expect(document.querySelectorAll('img[src*="vodafone-cash"]').length).toBeGreaterThanOrEqual(2)
+    expect(document.querySelectorAll('img[src*="instapay"]').length).toBeGreaterThanOrEqual(2)
   })
 })
 

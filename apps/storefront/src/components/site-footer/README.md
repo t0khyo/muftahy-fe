@@ -6,7 +6,7 @@ Global site footer rendered by `RootLayout` at the bottom of every page. Display
 
 ## Interface
 
-- `SiteFooter(props: SiteFooterProps)` — the footer landmark element with links grid and localized bottom strip. `className?: string` for additional container styling.
+- `SiteFooter(props: SiteFooterProps)` — the footer landmark element with links grid, accepted payment method logos (`Vodafone Cash`, `InstaPay`), and localized bottom strip. `className?: string` for additional container styling.
 - `ThemeSwitcher(props: ThemeSwitcherProps)` — three-button segmented control (Light / Dark / System) that reads and writes `useTheme()` context.
 - `LanguageSwitcher(props: LanguageSwitcherProps)` — ghost button that navigates to the equivalent URL in the opposite locale (`en` ↔ `ar`) while preserving the current path, search params, and hash.
 

@@ -30,6 +30,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatDate } from '@workspace/domain/formatters/date'
+import { PaymentMethodLogo } from '../../../components/payment-method-logo'
 import { useOrderDetail } from '../hooks/use-orders'
 import { OrderStatusBadge } from '../components/orders/order-status-badge'
 import { UploadReceiptDialog } from '../components/orders/upload-receipt-dialog'
@@ -287,9 +288,12 @@ export function OrderDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Vodafone Cash Box */}
               <div className="rounded-lg border border-border p-3.5 bg-muted/30 space-y-2">
-                <span className="text-xs font-semibold text-foreground">
-                  {t('orders.detail.vodafoneCash')}
-                </span>
+                <div className="flex items-center gap-2">
+                  <PaymentMethodLogo method="vodafone_cash" size="sm" decorative />
+                  <span className="text-xs font-semibold text-foreground">
+                    {t('orders.detail.vodafoneCash')}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-sm font-bold text-foreground">
                     {order.payment_instructions.vodafone_cash_number}
@@ -326,9 +330,12 @@ export function OrderDetailPage() {
 
               {/* InstaPay Box */}
               <div className="rounded-lg border border-border p-3.5 bg-muted/30 space-y-2">
-                <span className="text-xs font-semibold text-foreground">
-                  {t('orders.detail.instapay')}
-                </span>
+                <div className="flex items-center gap-2">
+                  <PaymentMethodLogo method="instapay" size="sm" decorative />
+                  <span className="text-xs font-semibold text-foreground">
+                    {t('orders.detail.instapay')}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-sm font-bold text-foreground">
                     {order.payment_instructions.instapay_ipa}

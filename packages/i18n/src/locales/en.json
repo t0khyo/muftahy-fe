@@ -96,7 +96,10 @@
     "language": "Language",
     "theme": "Theme",
     "genuineKeys": "100% Genuine Keys",
-    "instantDelivery": "Instant Digital Delivery"
+    "instantDelivery": "Instant Digital Delivery",
+    "acceptedPayments": "Accepted payment methods",
+    "vodafoneCash": "Vodafone Cash",
+    "instapay": "InstaPay"
   },
   "search": {
     "title": "Search Results",

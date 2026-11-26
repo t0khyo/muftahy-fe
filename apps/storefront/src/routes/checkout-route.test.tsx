@@ -143,6 +143,8 @@ describe('CheckoutRoute (Digital Goods Checkout)', () => {
     expect(screen.getByText('Alex Morgan')).toBeInTheDocument()
     expect(screen.getByText('customer@example.com')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /order review/i })).toBeInTheDocument()
+    expect(document.querySelector('img[src*="vodafone-cash"]')).toBeInTheDocument()
+    expect(document.querySelector('img[src*="instapay"]')).toBeInTheDocument()
 
     const submitBtn = screen.getByRole('button', { name: /confirm order & proceed to payment/i })
     expect(submitBtn).toBeInTheDocument()

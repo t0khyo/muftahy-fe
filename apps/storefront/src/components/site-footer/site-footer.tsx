@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { ShieldCheck, Zap } from "lucide-react"
 import { FaWhatsapp, FaInstagram, FaFacebook } from "react-icons/fa6"
 import { BrandHorizontalLogo, BrandLogoMark } from "../brand-logo"
+import { PaymentMethodLogo } from "../payment-method-logo"
 import { LanguageSwitcher } from "./language-switcher"
 import { ThemeToggle } from "../theme-toggle"
 import { cn } from "@workspace/ui/lib/utils"
@@ -318,11 +319,25 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
             </p>
           </div>
 
-          {/* Controls: Theme & Language */}
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <div className="h-4 w-[1px] bg-border/60" aria-hidden="true" />
-            <LanguageSwitcher />
+          {/* Controls: Accepted Payments, Theme & Language */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div
+              className="flex items-center gap-3"
+              role="group"
+              aria-label={t("acceptedPayments", {
+                ns: "footer",
+                defaultValue: isAr ? "وسائل الدفع المتاحة" : "Accepted payment methods",
+              })}
+            >
+              <PaymentMethodLogo method="vodafone_cash" size="sm" />
+              <PaymentMethodLogo method="instapay" size="sm" />
+            </div>
+            <div className="h-4 w-[1px] bg-border/60 hidden sm:block" aria-hidden="true" />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <div className="h-4 w-[1px] bg-border/60" aria-hidden="true" />
+              <LanguageSwitcher />
+            </div>
           </div>
         </div>
       </div>

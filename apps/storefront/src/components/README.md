@@ -11,6 +11,7 @@ App-wide shared UI components that appear across the storefront layout. These co
 - `Breadcrumbs(props: BreadcrumbsProps)` — accessible navigation breadcrumbs with schema-aware landmark wrapping and separator icons.
 - `BreadcrumbItem` — `{ label: string; href?: string }`.
 - `LanguageSwitcher(props?: LanguageSwitcherProps)` — standalone language toggle button swapping `/en` and `/ar` prefixes while preserving path and query.
+- `PaymentMethodLogo(props: PaymentMethodLogoProps)` — displays full-color Vodafone Cash or InstaPay logos directly (without a visual container box) with localized accessible labels.
 - `ThemeToggle(props?: ThemeToggleProps)` — cycling theme toggle button (System → Light → Dark) with sun/moon indicators.
 
 ### Subdirectories

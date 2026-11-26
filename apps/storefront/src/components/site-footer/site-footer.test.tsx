@@ -42,6 +42,13 @@ describe('SiteFooter Component', () => {
     // Single icon-only theme toggle button
     const themeBtn = screen.getByRole('button', { name: /switch to dark mode|dark/i })
     expect(themeBtn).toBeInTheDocument()
+
+    // Payment method logos with localized accessible labels
+    expect(screen.getByRole('group', { name: /accepted payment methods/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Vodafone Cash' }).getAttribute('src')).toMatch(
+      /vodafone-cash/,
+    )
+    expect(screen.getByRole('img', { name: 'InstaPay' }).getAttribute('src')).toMatch(/instapay/)
   })
 
   it('renders RTL horizontal logo in Arabic mode', () => {
@@ -123,5 +130,10 @@ describe('SiteFooter Component', () => {
       'href',
       'https://wa.me/201158172869',
     )
+
+    // Arabic payment method logos
+    expect(screen.getByRole('group', { name: /وسائل الدفع المتاحة/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'فودافون كاش' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'إنستاباي' })).toBeInTheDocument()
   })
 })

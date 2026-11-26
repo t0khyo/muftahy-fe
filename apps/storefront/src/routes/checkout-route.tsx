@@ -28,6 +28,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from '@workspace/ui/components/empty'
+import { PaymentMethodLogo } from '../components/payment-method-logo'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import {
   useApplyPromoCode,
@@ -244,14 +245,14 @@ export function CheckoutRoute() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center gap-3">
-                    <Smartphone className="size-5 text-primary shrink-0" />
+                    <PaymentMethodLogo method="vodafone_cash" decorative />
                     <div>
                       <div className="text-xs font-semibold text-foreground">{isRtl ? 'فودافون كاش' : 'Vodafone Cash'}</div>
                       <div className="text-[11px] text-muted-foreground">{isRtl ? 'محافظ الهاتف المحمول' : 'Mobile Wallets'}</div>
                     </div>
                   </div>
                   <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center gap-3">
-                    <Smartphone className="size-5 text-primary shrink-0" />
+                    <PaymentMethodLogo method="instapay" decorative />
                     <div>
                       <div className="text-xs font-semibold text-foreground">{isRtl ? 'إنستاباي' : 'InstaPay'}</div>
                       <div className="text-[11px] text-muted-foreground">{isRtl ? 'تحويل بنكي لحظي' : 'Instant Bank Transfer'}</div>

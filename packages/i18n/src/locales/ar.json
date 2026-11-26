@@ -100,7 +100,10 @@
     "language": "اللغة",
     "theme": "المظهر",
     "genuineKeys": "مفاتيح أصلية 100%",
-    "instantDelivery": "تسليم فوري ومباشر"
+    "instantDelivery": "تسليم فوري ومباشر",
+    "acceptedPayments": "وسائل الدفع المتاحة",
+    "vodafoneCash": "فودافون كاش",
+    "instapay": "إنستاباي"
   },
   "search": {
     "title": "نتائج البحث",

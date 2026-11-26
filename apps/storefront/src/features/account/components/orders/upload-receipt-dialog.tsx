@@ -25,6 +25,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@workspace/ui/components/toggle-group'
+import { PaymentMethodLogo } from '../../../../components/payment-method-logo'
 import { useUploadReceipt } from '../../hooks/use-orders'
 
 interface UploadReceiptDialogProps {
@@ -141,14 +142,16 @@ export function UploadReceiptDialog({
               >
                 <ToggleGroupItem
                   value="vodafone_cash"
-                  className="h-auto py-3 flex flex-col items-center justify-center text-xs font-medium"
+                  className="h-auto py-3 flex flex-col items-center justify-center gap-1.5 text-xs font-medium"
                 >
+                  <PaymentMethodLogo method="vodafone_cash" size="sm" decorative />
                   <span>{t('orders.detail.vodafoneCash')}</span>
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="instapay"
-                  className="h-auto py-3 flex flex-col items-center justify-center text-xs font-medium"
+                  className="h-auto py-3 flex flex-col items-center justify-center gap-1.5 text-xs font-medium"
                 >
+                  <PaymentMethodLogo method="instapay" size="sm" decorative />
                   <span>{t('orders.detail.instapay')}</span>
                 </ToggleGroupItem>
               </ToggleGroup>
