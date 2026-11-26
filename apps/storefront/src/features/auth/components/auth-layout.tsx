@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, ShieldCheck, Zap } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
-import { BrandLogoMark } from '../../../components/brand-logo'
+import { BrandHorizontalLogo, BrandLogoMark } from '../../../components/brand-logo'
 
 export interface AuthLayoutProps {
   children: React.ReactNode
@@ -82,9 +82,12 @@ export function AuthLayout({
       <div className="flex flex-col items-center justify-center px-4 py-8 sm:px-6 md:px-10 lg:py-16">
         {/* Mobile brand mark */}
         <div className="mb-6 flex lg:hidden items-center justify-center">
-          <Link to={`/${lang}`} className="flex items-center gap-2.5 font-medium">
-            <BrandLogoMark className="h-8 w-auto shrink-0" idPrefix="auth-layout-mobile-logo" />
-            <span className="font-heading font-bold text-lg tracking-tight">Muftahy</span>
+          <Link
+            to={`/${lang}`}
+            aria-label={t('appName', { ns: 'common', defaultValue: 'Muftahy' })}
+            className="flex items-center font-medium"
+          >
+            <BrandHorizontalLogo lang={lang} alt="" className="h-9 w-auto shrink-0" />
           </Link>
         </div>
 

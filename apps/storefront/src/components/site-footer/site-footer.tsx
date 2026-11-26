@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router"
 import { useTranslation } from "react-i18next"
 import { ShieldCheck, Zap } from "lucide-react"
 import { FaWhatsapp, FaInstagram, FaFacebook } from "react-icons/fa6"
-import { BrandLogoMark } from "../brand-logo"
+import { BrandHorizontalLogo, BrandLogoMark } from "../brand-logo"
 import { LanguageSwitcher } from "./language-switcher"
 import { ThemeToggle } from "../theme-toggle"
 import { cn } from "@workspace/ui/lib/utils"
@@ -89,19 +89,17 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
             {/* Logo & Name */}
             <Link
               to={`/${currentLang}`}
-              className="inline-flex w-fit items-center gap-2 rounded-md text-foreground transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="inline-flex w-fit items-center rounded-md text-foreground transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               aria-label={t("appName", {
                 ns: "common",
                 defaultValue: "Muftahy",
               })}
             >
-              <BrandLogoMark
-                className="h-6 w-auto shrink-0"
-                idPrefix="footer-logo"
+              <BrandHorizontalLogo
+                lang={currentLang}
+                alt=""
+                className="h-9 w-auto shrink-0"
               />
-              <span className="font-heading text-lg font-bold tracking-tight text-foreground">
-                {t("appName", { ns: "common", defaultValue: "Muftahy" })}
-              </span>
             </Link>
 
             {/* Tagline */}

@@ -62,7 +62,9 @@ describe('SiteHeader Component', () => {
     renderSiteHeader('/en/products')
 
     // Logo
-    expect(screen.getByRole('link', { name: /muftahy/i })).toBeInTheDocument()
+    const logoLink = screen.getByRole('link', { name: /muftahy/i })
+    expect(logoLink).toBeInTheDocument()
+    expect(logoLink.querySelector('img')).toHaveAttribute('src', '/logo-horizontal-ltr.svg')
 
     // Nav links configured in site-header.config.ts
     for (const link of SITE_HEADER_CONFIG.navLinks) {
@@ -72,6 +74,13 @@ describe('SiteHeader Component', () => {
       })
       expect(linkElements.length).toBeGreaterThan(0)
     }
+  })
+
+  it('renders RTL horizontal brand logo on Arabic routes', () => {
+    renderSiteHeader('/ar/products')
+
+    const rtlLogo = document.querySelector('img[src="/logo-horizontal-rtl.svg"]')
+    expect(rtlLogo).toBeInTheDocument()
   })
 
   it('highlights category navbar link when on matching category route and does not double-highlight all products', () => {
@@ -229,9 +238,11 @@ describe('SiteHeader Component', () => {
       },
       variant: 'retail',
       base_price: '500',
+      sale_price: null,
       effective_price: '450',
       discount_percentage: null,
       stock_status: 'in_stock',
+      preorder_enabled: false,
       available_count: 10,
       is_featured: false,
       is_active: true,

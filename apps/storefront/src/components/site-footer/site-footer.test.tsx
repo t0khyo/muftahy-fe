@@ -28,6 +28,9 @@ describe('SiteFooter Component', () => {
   it('renders copyright and theme & language controls in English', () => {
     renderSiteFooter('/en/products')
 
+    // Horizontal LTR logo
+    expect(document.querySelector('img[src="/logo-horizontal-ltr.svg"]')).toBeInTheDocument()
+
     // Copyright
     expect(screen.getByText(/all rights reserved/i)).toBeInTheDocument()
 
@@ -39,6 +42,11 @@ describe('SiteFooter Component', () => {
     // Single icon-only theme toggle button
     const themeBtn = screen.getByRole('button', { name: /switch to dark mode|dark/i })
     expect(themeBtn).toBeInTheDocument()
+  })
+
+  it('renders RTL horizontal logo in Arabic mode', () => {
+    renderSiteFooter('/ar/products')
+    expect(document.querySelector('img[src="/logo-horizontal-rtl.svg"]')).toBeInTheDocument()
   })
 
   it('updates theme selection when theme button is clicked', () => {
