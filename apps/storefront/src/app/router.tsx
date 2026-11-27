@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate } from 'react-router'
+import { createBrowserRouter } from 'react-router'
 import { CatchAllRedirect } from './catch-all-redirect'
+import { NotFoundRoute } from '../routes/not-found-route'
 import { AccountIndexRoute } from '../routes/account-index-route'
 import { AccountLayoutRoute } from '../routes/account-layout-route'
 import { OrdersRoute } from '../routes/orders-route'
@@ -24,7 +25,7 @@ import { RootLayout } from './root-layout'
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/en" replace />,
+    element: <CatchAllRedirect />,
   },
   {
     path: '/:lang',
@@ -110,12 +111,12 @@ export const router = createBrowserRouter([
       },
       {
         path: '*',
-        element: <CatchAllRedirect />,
+        element: <NotFoundRoute />,
       },
     ],
   },
   {
     path: '*',
-    element: <Navigate to="/en/products" replace />,
+    element: <CatchAllRedirect />,
   },
 ])

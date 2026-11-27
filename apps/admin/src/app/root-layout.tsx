@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { isSupportedLanguage, type SupportedLanguage } from '@workspace/i18n/config'
+import { detectDeviceLanguage, isSupportedLanguage, type SupportedLanguage } from '@workspace/i18n/config'
 import { Toaster } from '@workspace/ui/components/sonner'
 import { useTheme } from './theme-context'
 
@@ -24,7 +24,7 @@ export function RootLayout() {
   }, [isValidLang, currentLang, i18n])
 
   if (!isValidLang) {
-    return <Navigate to="/en" replace />
+    return <Navigate to={`/${detectDeviceLanguage()}`} replace />
   }
 
   return (

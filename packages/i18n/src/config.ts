@@ -17,6 +17,25 @@ export const isSupportedLanguage = (lang: string): lang is SupportedLanguage => 
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)
 }
 
+export const detectDeviceLanguage = (): SupportedLanguage => {
+  if (typeof navigator !== 'undefined') {
+    const candidates =
+      Array.isArray(navigator.languages) && navigator.languages.length > 0
+        ? navigator.languages
+        : navigator.language
+          ? [navigator.language]
+          : []
+
+    for (const tag of candidates) {
+      const primary = tag.split('-')[0]?.toLowerCase()
+      if (primary && isSupportedLanguage(primary)) {
+        return primary
+      }
+    }
+  }
+  return 'ar'
+}
+
 export const getInitialLanguage = (): SupportedLanguage => {
   if (typeof window !== 'undefined') {
     const segment = window.location.pathname.split('/')[1]
@@ -36,7 +55,7 @@ if (!i18n.isInitialized) {
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: SUPPORTED_LANGUAGES,
     defaultNS: DEFAULT_NAMESPACE,
-    ns: ['common', 'nav', 'header', 'footer', 'search', 'cart', 'products', 'design', 'home', 'detail', 'auth', 'account', 'admin'],
+    ns: ['common', 'nav', 'header', 'footer', 'search', 'cart', 'products', 'design', 'home', 'detail', 'auth', 'account', 'admin', 'notFound'],
     interpolation: {
       escapeValue: false,
     },

@@ -6,6 +6,7 @@ import { Button } from '@workspace/ui/components/button'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatNumber } from '@workspace/domain/formatters/number'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
+import { DetailShareButton } from './detail-share-button'
 
 export interface DetailBuyBoxProps {
   product: ProductResponse
@@ -97,9 +98,15 @@ export function DetailBuyBox({
 
       {/* 2. Product Title & Short Description */}
       <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
-          {product.name}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
+            {product.name}
+          </h1>
+          <DetailShareButton
+            productName={product.name}
+            productDescription={product.description}
+          />
+        </div>
         {product.description && (
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
             {product.description}

@@ -221,7 +221,10 @@
     "errorTitle": "Unable to load product details",
     "errorSubtitle": "Something went wrong while retrieving product information.",
     "liveAddedAnnouncement": "{{product}} added to your cart",
-    "skuLabel": "SKU"
+    "skuLabel": "SKU",
+    "share": "Share product",
+    "shareCopied": "Product link copied",
+    "shareFailed": "Could not copy link"
   },
   "products": {
     "title": "Digital Keys & Licenses",
@@ -1256,6 +1259,49 @@
         "skuInvalid": "Invalid SKU format for selected category",
         "categoryNameRequired": "Category name is required",
         "categoryCodeRequired": "Category code is required"
+      }
+    }
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Page not found",
+    "description": "The page you are looking for may have moved or no longer exists.",
+    "primaryCta": "Browse products",
+    "secondaryCta": "Return home",
+    "quickLinksTitle": "Popular destinations",
+    "links": {
+      "search": {
+        "title": "Search catalog",
+        "description": "Find games, licenses, and subscriptions."
+      },
+      "deals": {
+        "title": "Current offers",
+        "description": "Explore active discounts and bundles."
+      },
+      "support": {
+        "title": "Customer support",
+        "description": "Get help with an order or activation."
+      }
+    },
+    "admin": {
+      "title": "Page not found",
+      "description": "This admin route does not exist or may have been moved.",
+      "primaryCta": "Return to dashboard",
+      "secondaryCta": "View products",
+      "quickLinksTitle": "Quick navigation",
+      "links": {
+        "orders": {
+          "title": "Orders",
+          "description": "Review and process customer orders."
+        },
+        "inventory": {
+          "title": "Inventory",
+          "description": "Manage digital keys and stock levels."
+        },
+        "tickets": {
+          "title": "Customer Support",
+          "description": "Respond to open customer tickets."
+        }
       }
     }
   }

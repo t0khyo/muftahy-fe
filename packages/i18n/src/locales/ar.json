@@ -225,7 +225,10 @@
     "errorTitle": "تعذر تحميل تفاصيل المنتج",
     "errorSubtitle": "حدث خطأ أثناء جلب معلومات المنتج.",
     "liveAddedAnnouncement": "تمت إضافة {{product}} إلى سلتك",
-    "skuLabel": "SKU"
+    "skuLabel": "SKU",
+    "share": "مشاركة المنتج",
+    "shareCopied": "تم نسخ رابط المنتج",
+    "shareFailed": "تعذر نسخ الرابط"
   },
   "products": {
     "title": "مفاتيح وتراخيص رقمية",
@@ -1260,6 +1263,49 @@
         "skuInvalid": "صيغة SKU غير صالحة للتصنيف المختار",
         "categoryNameRequired": "اسم التصنيف مطلوب",
         "categoryCodeRequired": "رمز التصنيف مطلوب"
+      }
+    }
+  },
+  "notFound": {
+    "code": "404",
+    "title": "الصفحة غير موجودة",
+    "description": "قد تكون الصفحة التي تبحث عنها قد نُقلت أو لم تعد موجودة.",
+    "primaryCta": "تصفح المنتجات",
+    "secondaryCta": "العودة للرئيسية",
+    "quickLinksTitle": "وجهات شائعة",
+    "links": {
+      "search": {
+        "title": "ابحث في المتجر",
+        "description": "اعثر على الألعاب والتراخيص والاشتراكات."
+      },
+      "deals": {
+        "title": "العروض الحالية",
+        "description": "تصفح الخصومات والباقات المتاحة."
+      },
+      "support": {
+        "title": "دعم العملاء",
+        "description": "احصل على مساعدة في طلبك أو التفعيل."
+      }
+    },
+    "admin": {
+      "title": "الصفحة غير موجودة",
+      "description": "مسار لوحة التحكم هذا غير موجود أو ربما تم نقله.",
+      "primaryCta": "العودة إلى لوحة التحكم",
+      "secondaryCta": "عرض المنتجات",
+      "quickLinksTitle": "تنقل سريع",
+      "links": {
+        "orders": {
+          "title": "الطلبات",
+          "description": "مراجعة طلبات العملاء ومعالجتها."
+        },
+        "inventory": {
+          "title": "المخزون",
+          "description": "إدارة المفاتيح الرقمية ومستويات المخزون."
+        },
+        "tickets": {
+          "title": "دعم العملاء",
+          "description": "الرد على تذاكر الدعم المفتوحة."
+        }
       }
     }
   }

@@ -1,63 +1,82 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '@workspace/i18n/config'
 import { CatchAllRedirect } from './catch-all-redirect'
+import { NotFoundRoute } from '../routes/not-found-route'
 
 function LocationDisplay() {
   const location = useLocation()
   return <div data-testid="location-display">{location.pathname}</div>
 }
 
-describe('CatchAllRedirect', () => {
-  it('redirects /ar/admin to /ar/products cleanly without appending /products infinitely', () => {
-    render(
-      <MemoryRouter initialEntries={['/ar/admin']}>
-        <Routes>
-          <Route path="/:lang/*" element={<CatchAllRedirect />} />
-          <Route path="/:lang/products" element={<LocationDisplay />} />
-        </Routes>
-      </MemoryRouter>,
-    )
-
-    expect(screen.getByTestId('location-display')).toHaveTextContent('/ar/products')
+describe('Storefront routing fallback & 404', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  it('redirects /en/admin to /en/products cleanly', () => {
+  it('renders 404 page for unmatched /en/* routes', async () => {
+    await i18n.changeLanguage('en')
     render(
-      <MemoryRouter initialEntries={['/en/admin']}>
-        <Routes>
-          <Route path="/:lang/*" element={<CatchAllRedirect />} />
-          <Route path="/:lang/products" element={<LocationDisplay />} />
-        </Routes>
-      </MemoryRouter>,
+      <I18nextProvider i18n={i18n}>
+        <MemoryRouter initialEntries={['/en/unknown-page']}>
+          <Routes>
+            <Route path="/:lang/*" element={<NotFoundRoute />} />
+          </Routes>
+        </MemoryRouter>
+      </I18nextProvider>,
     )
 
-    expect(screen.getByTestId('location-display')).toHaveTextContent('/en/products')
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Browse products' })).toHaveAttribute('href', '/en/products')
   })
 
-  it('redirects deep unknown nested paths under /ar to /ar/products', () => {
+  it('renders 404 page in Arabic for unmatched /ar/* routes', async () => {
+    await i18n.changeLanguage('ar')
     render(
-      <MemoryRouter initialEntries={['/ar/admin/products/products/something']}>
-        <Routes>
-          <Route path="/:lang/*" element={<CatchAllRedirect />} />
-          <Route path="/:lang/products" element={<LocationDisplay />} />
-        </Routes>
-      </MemoryRouter>,
+      <I18nextProvider i18n={i18n}>
+        <MemoryRouter initialEntries={['/ar/unknown-page']}>
+          <Routes>
+            <Route path="/:lang/*" element={<NotFoundRoute />} />
+          </Routes>
+        </MemoryRouter>
+      </I18nextProvider>,
     )
 
-    expect(screen.getByTestId('location-display')).toHaveTextContent('/ar/products')
+    expect(screen.getByRole('heading', { level: 1, name: 'الصفحة غير موجودة' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'تصفح المنتجات' })).toHaveAttribute('href', '/ar/products')
   })
 
-  it('falls back to /en/products when lang parameter is unsupported', () => {
+  it('redirects unsupported language to device language when supported (en)', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US', 'en'])
+
     render(
-      <MemoryRouter initialEntries={['/fr/admin']}>
+      <MemoryRouter initialEntries={['/fr/something']}>
         <Routes>
           <Route path="/:lang/*" element={<CatchAllRedirect />} />
-          <Route path="/:lang/products" element={<LocationDisplay />} />
+          <Route path="/en" element={<LocationDisplay />} />
+          <Route path="/ar" element={<LocationDisplay />} />
         </Routes>
       </MemoryRouter>,
     )
 
-    expect(screen.getByTestId('location-display')).toHaveTextContent('/en/products')
+    expect(screen.getByTestId('location-display')).toHaveTextContent('/en')
+  })
+
+  it('defaults to Arabic when device language is unsupported', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['fr-FR', 'de-DE'])
+
+    render(
+      <MemoryRouter initialEntries={['/fr/something']}>
+        <Routes>
+          <Route path="/:lang/*" element={<CatchAllRedirect />} />
+          <Route path="/en" element={<LocationDisplay />} />
+          <Route path="/ar" element={<LocationDisplay />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByTestId('location-display')).toHaveTextContent('/ar')
   })
 })

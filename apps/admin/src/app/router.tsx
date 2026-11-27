@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { RootLayout } from './root-layout'
 import { CatchAllRedirect } from './catch-all-redirect'
+import { AdminNotFoundRoute } from '../routes/admin-not-found-route'
 import { AdminLoginRoute } from '../routes/admin-login-route'
 import { AdminDashboardRoute } from '../routes/admin-dashboard-route'
 import { AdminProductsRoute } from '../routes/admin-products-route'
@@ -20,7 +21,7 @@ import { AdminRouteError } from '../components/admin-route-error'
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/en" replace />,
+    element: <CatchAllRedirect />,
   },
   {
     path: '/:lang',
@@ -95,12 +96,12 @@ export const router = createBrowserRouter([
       },
       {
         path: '*',
-        element: <CatchAllRedirect />,
+        element: <AdminNotFoundRoute />,
       },
     ],
   },
   {
     path: '*',
-    element: <Navigate to="/en" replace />,
+    element: <CatchAllRedirect />,
   },
 ])
