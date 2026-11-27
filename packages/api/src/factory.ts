@@ -107,11 +107,11 @@ class ServiceRegistry {
     })
   }
 
-  getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService
-  getProductService(app: AppScope, options?: { useMock?: boolean; baseURL?: string }): ProductService
+  getProductService(options?: { baseURL?: string }): ProductService
+  getProductService(app: AppScope, options?: { baseURL?: string }): ProductService
   getProductService(
-    appOrOptions?: AppScope | { useMock?: boolean; baseURL?: string },
-    options?: { useMock?: boolean; baseURL?: string },
+    appOrOptions?: AppScope | { baseURL?: string },
+    options?: { baseURL?: string },
   ): ProductService {
     const isApp = typeof appOrOptions === 'string'
     const app: AppScope = isApp ? (appOrOptions as AppScope) : 'storefront'
@@ -142,7 +142,7 @@ class ServiceRegistry {
     return storage
   }
 
-  getAuthService(app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): AuthService {
+  getAuthService(app: AppScope = 'storefront', options?: { baseURL?: string }): AuthService {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.authServices.get(key)
     if (!service) {
@@ -153,7 +153,7 @@ class ServiceRegistry {
     return service
   }
 
-  getUserService(app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): UserService {
+  getUserService(app: AppScope = 'storefront', options?: { baseURL?: string }): UserService {
     const key = `${app}_${options?.baseURL ?? 'default'}`
     let service = this.userServices.get(key)
     if (!service) {
@@ -270,18 +270,18 @@ export const services = new ServiceRegistry()
 export const setAdminRateLimitHandler = (handler?: (retryAfter: number) => void): void =>
   services.setAdminRateLimitHandler(handler)
 
-export function getProductService(options?: { useMock?: boolean; baseURL?: string }): ProductService
-export function getProductService(app: AppScope, options?: { useMock?: boolean; baseURL?: string }): ProductService
+export function getProductService(options?: { baseURL?: string }): ProductService
+export function getProductService(app: AppScope, options?: { baseURL?: string }): ProductService
 export function getProductService(
-  appOrOptions?: AppScope | { useMock?: boolean; baseURL?: string },
-  options?: { useMock?: boolean; baseURL?: string },
+  appOrOptions?: AppScope | { baseURL?: string },
+  options?: { baseURL?: string },
 ): ProductService {
   return services.getProductService(appOrOptions as any, options)
 }
 
-export const getAuthService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): AuthService =>
+export const getAuthService = (app: AppScope = 'storefront', options?: { baseURL?: string }): AuthService =>
   services.getAuthService(app, options)
-export const getUserService = (app: AppScope = 'storefront', options?: { useMock?: boolean; baseURL?: string }): UserService =>
+export const getUserService = (app: AppScope = 'storefront', options?: { baseURL?: string }): UserService =>
   services.getUserService(app, options)
 export const getOrderService = (app: AppScope = 'storefront', options?: { baseURL?: string }): OrderService =>
   services.getOrderService(app, options)

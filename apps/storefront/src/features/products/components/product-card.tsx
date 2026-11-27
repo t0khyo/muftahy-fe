@@ -5,34 +5,21 @@ import { Box } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatNumber } from '@workspace/domain/formatters/number'
-import type { CategoryResponse, ProductResponse } from '@workspace/domain/schemas/product'
+import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { getProductThumbnailUrl } from '@workspace/api/factory'
 import { useAddToCart } from '../../cart/hooks/use-cart'
 import { AddToCartButton } from './add-to-cart-button'
 
 export interface ProductCardProps {
-  product?: ProductResponse
-  card?: Record<string, unknown>
+  product: ProductResponse
   locale?: string
   priority?: boolean
   className?: string
   onAddToCart?: (product: ProductResponse) => void
 }
 
-const DEFAULT_MOCK_CATEGORY: CategoryResponse = {
-  id: '00000000-0000-4000-8000-000000000000',
-  name: 'Operating Systems',
-  code: 'OS',
-  slug: 'operating-systems',
-  description: 'Operating systems licenses',
-  display_order: 1,
-  is_active: true,
-  product_count: 1,
-}
-
 export function ProductCard({
-  product: productProp,
-  card: cardProp,
+  product,
   locale,
   className,
   onAddToCart,
@@ -40,61 +27,6 @@ export function ProductCard({
   const { t, i18n } = useTranslation(['products', 'common'])
   const currentLang = locale ?? (i18n.language === 'ar' ? 'ar' : 'en')
   const [failedUrl, setFailedUrl] = React.useState<string | null>(null)
-
-  // Support both product and fallback card
-  const product: ProductResponse = React.useMemo(() => {
-    if (productProp) return productProp
-    if (cardProp) {
-      const c = cardProp as Record<string, unknown>
-      return {
-        id:
-          (typeof c.id === 'string' ? c.id : undefined) ??
-          (typeof c.slug === 'string' ? c.slug : undefined) ??
-          '00000000-0000-4000-8000-000000000001',
-        name: typeof c.name === 'string' ? c.name : 'Software License',
-        category: DEFAULT_MOCK_CATEGORY,
-        sku: 'OS-MOCK-SKU-001',
-        slug: (typeof c.slug === 'string' ? c.slug : undefined) ?? 'mock-software-license',
-        variant: c.variant === 'oem' ? 'oem' : 'retail',
-        base_price:
-          (typeof c.originalPrice === 'string' ? c.originalPrice : undefined) ??
-          (typeof c.startingPrice === 'string' ? c.startingPrice : undefined) ??
-          '499.00',
-        sale_price: c.originalPrice ? (typeof c.startingPrice === 'string' ? c.startingPrice : null) : null,
-        effective_price:
-          (typeof c.startingPrice === 'string' ? c.startingPrice : undefined) ?? '499.00',
-        discount_percentage: typeof c.discountPercent === 'number' ? c.discountPercent : null,
-        stock_status: 'in_stock',
-        available_count: 10,
-        preorder_enabled: true,
-        description: typeof c.trustNote === 'string' ? c.trustNote : null,
-        is_active: true,
-        thumbnail_url: null,
-        primary_image_url: null,
-        images: [],
-      }
-    }
-    return {
-      id: '00000000-0000-4000-8000-000000000001',
-      name: 'Product',
-      category: DEFAULT_MOCK_CATEGORY,
-      sku: 'OS-MOCK-SKU-001',
-      slug: 'mock-product',
-      variant: 'retail',
-      base_price: '499.00',
-      sale_price: null,
-      effective_price: '499.00',
-      discount_percentage: null,
-      stock_status: 'in_stock',
-      available_count: 10,
-      preorder_enabled: true,
-      description: null,
-      is_active: true,
-      thumbnail_url: null,
-      primary_image_url: null,
-      images: [],
-    } as ProductResponse
-  }, [productProp, cardProp])
 
   const isPreorder = product.stock_status === 'preorder'
   const isOutOfStock = product.stock_status === 'out_of_stock'
