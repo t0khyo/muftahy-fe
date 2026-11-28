@@ -315,7 +315,10 @@
       "region": "المنطقة",
       "noResults": "لا توجد منتجات تطابق التصفية",
       "noResultsHint": "حاول مسح بعض التصفيات أو تصفح حسب الفئة",
-      "errorRetry": "حدث خطأ. حاول مرة أخرى."
+      "errorRetry": "حدث خطأ. حاول مرة أخرى.",
+      "searchPlaceholder": "ابحث باسم المنتج أو رمز SKU...",
+      "searchAriaLabel": "البحث في المنتجات",
+      "clearSearch": "مسح البحث"
     },
     "gallery": {
       "previousImage": "الصورة السابقة",

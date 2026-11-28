@@ -28,6 +28,7 @@ export function ProductsRoute() {
     setCategory,
     setVariant,
     setSort,
+    setSearch,
     clearAll,
   } = useProductFilters()
 
@@ -74,7 +75,7 @@ export function ProductsRoute() {
         defaultValue: 'Office Suites',
       }),
     }),
-    [t, currentLang],
+    [t],
   )
 
   const activeCategoryLabel = selectedCategory
@@ -143,7 +144,7 @@ export function ProductsRoute() {
         defaultValue: 'Instant digital delivery for genuine Microsoft Windows and Office licenses',
       }),
     }
-  }, [queryFilter.search, currentCategory, selectedCategory, activeCategoryLabel, total, t, currentLang])
+  }, [queryFilter.search, currentCategory, selectedCategory, activeCategoryLabel, total, t])
 
   return (
     <div className="site-container py-6 lg:py-10">
@@ -170,19 +171,6 @@ export function ProductsRoute() {
 
       <CategoryRow activeCategory={selectedCategory} />
 
-      {/* Mobile Toolbar */}
-      <div className="lg:hidden mb-6">
-        <ListingToolbar
-          totalResults={total}
-          state={state}
-          activeFiltersCount={activeFiltersCount}
-          onSortChange={setSort}
-          onRemoveVariant={() => setVariant(undefined)}
-          onClearAll={clearAll}
-          onOpenMobileFilters={() => setIsMobileFilterOpen(true)}
-        />
-      </div>
-
       <div className="flex items-start gap-8">
         {/* Desktop Sidebar */}
         <FilterSidebar
@@ -203,10 +191,11 @@ export function ProductsRoute() {
             state={state}
             activeFiltersCount={activeFiltersCount}
             onSortChange={setSort}
+            onSearchChange={setSearch}
             onRemoveVariant={() => setVariant(undefined)}
+            onRemoveSearch={() => setSearch(undefined)}
             onClearAll={clearAll}
             onOpenMobileFilters={() => setIsMobileFilterOpen(true)}
-            className="hidden lg:flex"
           />
 
           {isLoading && (

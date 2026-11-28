@@ -311,7 +311,10 @@
       "region": "Region",
       "noResults": "No products match your filters",
       "noResultsHint": "Try clearing some filters or browse by category",
-      "errorRetry": "Something went wrong. Try again."
+      "errorRetry": "Something went wrong. Try again.",
+      "searchPlaceholder": "Search by product name or SKU...",
+      "searchAriaLabel": "Search products",
+      "clearSearch": "Clear search"
     },
     "gallery": {
       "previousImage": "Previous image",

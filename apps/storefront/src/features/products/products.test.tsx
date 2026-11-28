@@ -319,6 +319,49 @@ describe("ProductsRoute (Listing Page)", () => {
     expect(screen.queryByText(/تجزئة|مُصنّع/)).not.toBeInTheDocument()
     expect(screen.queryByText(/المتوفر فقط/i)).not.toBeInTheDocument()
   })
+
+  it("filters products via the search bar and clears search with the clear button", async () => {
+    renderWithProviders(<ProductsRoute />, { lang: "en" })
+
+    await waitFor(() => {
+      expect(screen.getByText("Office 2021 Professional Plus")).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByRole("searchbox", { name: /search products/i })
+    fireEvent.change(searchInput, { target: { value: "OFF-OFF21" } })
+
+    await waitFor(() => {
+      expect(screen.getByText("Office 2021 Professional Plus")).toBeInTheDocument()
+      expect(screen.queryByText("Windows 11 Professional")).not.toBeInTheDocument()
+    })
+
+    const clearBtn = screen.getByRole("button", { name: /clear search/i })
+    fireEvent.click(clearBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
+      expect(screen.getByText("Office 2021 Professional Plus")).toBeInTheDocument()
+    })
+  })
+
+  it("renders Arabic searchbar label and filters products in Arabic", async () => {
+    renderWithProviders(<ProductsRoute />, {
+      lang: "ar",
+      initialEntries: ["/ar/products"],
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("Windows 11 Professional")).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByRole("searchbox", { name: "البحث في المنتجات" })
+    fireEvent.change(searchInput, { target: { value: "Office" } })
+
+    await waitFor(() => {
+      expect(screen.getByText("Office 2021 Professional Plus")).toBeInTheDocument()
+      expect(screen.queryByText("Windows 11 Professional")).not.toBeInTheDocument()
+    })
+  })
 })
 
 describe("CategoryRow", () => {

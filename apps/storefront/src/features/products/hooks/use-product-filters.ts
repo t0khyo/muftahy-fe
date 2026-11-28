@@ -14,7 +14,7 @@ export interface ProductFiltersState {
 
 export interface ActiveFilterChip {
   id: string
-  type: 'category' | 'variant'
+  type: 'category' | 'variant' | 'search'
   value?: string
   labelFallback: string
 }
@@ -51,8 +51,8 @@ export function useProductFilters() {
   )
 
   const activeFiltersCount = React.useMemo(() => {
-    return variant ? 1 : 0
-  }, [variant])
+    return (variant ? 1 : 0) + (search ? 1 : 0)
+  }, [variant, search])
 
   const updateParams = React.useCallback(
     (updates: Record<string, string | null | undefined>, resetPage = true) => {
@@ -97,6 +97,13 @@ export function useProductFilters() {
     [updateParams],
   )
 
+  const setSearch = React.useCallback(
+    (q?: string) => {
+      updateParams({ q: q ?? null })
+    },
+    [updateParams],
+  )
+
   const setPage = React.useCallback(
     (newPage: number) => {
       setSearchParams(
@@ -119,8 +126,6 @@ export function useProductFilters() {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams()
-        const q = prev.get('q')
-        if (q) next.set('q', q)
         const cat = prev.get('category')
         if (cat) next.set('category', cat)
         return next
@@ -146,6 +151,7 @@ export function useProductFilters() {
     setCategory,
     setVariant,
     setSort,
+    setSearch,
     setPage,
     clearAll,
   }
