@@ -61,4 +61,12 @@ describe('SiteHeader Breadcrumbs', () => {
     expect(screen.getByText('المنتجات')).toBeInTheDocument()
     await i18n.changeLanguage('en')
   })
+
+  it('preserves the current sub-route in the language switcher link', async () => {
+    await i18n.changeLanguage('en')
+    renderWithProviders('/en/settings?tab=social')
+
+    const switcher = screen.getByRole('button', { name: 'العربية' })
+    expect(switcher).toHaveAttribute('href', '/ar/settings?tab=social')
+  })
 })

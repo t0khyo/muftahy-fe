@@ -46,6 +46,16 @@ export const getInitialLanguage = (): SupportedLanguage => {
   return DEFAULT_LANGUAGE
 }
 
+export const applyLanguage = (lang: SupportedLanguage): void => {
+  if (i18n.language !== lang) {
+    void i18n.changeLanguage(lang)
+  }
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  }
+}
+
 const initialLang = getInitialLanguage()
 
 if (!i18n.isInitialized) {
@@ -55,6 +65,7 @@ if (!i18n.isInitialized) {
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: SUPPORTED_LANGUAGES,
     defaultNS: DEFAULT_NAMESPACE,
+    initImmediate: false,
     ns: ['common', 'nav', 'header', 'footer', 'search', 'cart', 'products', 'design', 'home', 'detail', 'auth', 'account', 'admin', 'notFound'],
     interpolation: {
       escapeValue: false,

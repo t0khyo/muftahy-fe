@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { LayoutGrid } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
@@ -13,8 +13,9 @@ export interface CategoryRowProps {
 }
 
 export function CategoryRow({ activeCategory, categories: propCategories, className }: CategoryRowProps) {
+  const { lang } = useParams<{ lang: string }>()
   const { t, i18n } = useTranslation(['products', 'common'])
-  const currentLang = i18n.language === 'ar' ? 'ar' : 'en'
+  const currentLang = lang === 'ar' || (!lang && i18n.language === 'ar') ? 'ar' : 'en'
   const location = useLocation()
 
   const { data: fetchedCategories = [] } = usePublicCategories()
@@ -77,7 +78,9 @@ export function CategoryRow({ activeCategory, categories: propCategories, classN
               )}
             >
               <Icon className="size-4 shrink-0" aria-hidden="true" />
-              <span>{cat.name}</span>
+              <span>
+                {t(`categories.${cat.slug}`, { ns: 'products', defaultValue: cat.name })}
+              </span>
             </Link>
           )
         })}

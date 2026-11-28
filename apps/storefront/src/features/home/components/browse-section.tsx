@@ -134,11 +134,13 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
               className="text-h3 font-bold tracking-tight text-foreground"
             >
               {t(config.titleKey ?? 'browse.title', {
+                ns: 'home',
                 defaultValue: isRtl ? 'تصفح حسب الفئة' : 'Browse by Category',
               })}
             </h2>
             <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-xl leading-relaxed">
               {t(config.subtitleKey ?? 'browse.subtitle', {
+                ns: 'home',
                 defaultValue: isRtl
                   ? 'اختر من أنظمة التشغيل وحزم البرامج المكتبية وحلول الأمان الأصلية مع تسليم فوري'
                   : 'Choose genuine operating systems, productivity suites, and security software with instant digital delivery',
@@ -150,7 +152,12 @@ export function BrowseSection({ config, className = '' }: BrowseSectionProps) {
             to={`/${currentLang}/products`}
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group inline-flex items-center gap-1 self-start md:self-auto"
           >
-            <span>{t('browse.viewAll', { defaultValue: 'View all products' })}</span>
+            <span>
+              {t('browse.viewAll', {
+                ns: 'home',
+                defaultValue: isRtl ? 'عرض جميع المنتجات' : 'View all products',
+              })}
+            </span>
             <ChevronRight
               aria-hidden="true"
               className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"

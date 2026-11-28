@@ -1,6 +1,7 @@
 import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Globe, Moon, Sun } from 'lucide-react'
+import { applyLanguage, type SupportedLanguage } from '@workspace/i18n/config'
 import { Button } from '@workspace/ui/components/button'
 import { Separator } from '@workspace/ui/components/separator'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
@@ -16,12 +17,15 @@ import { useTheme } from '../../../app/theme-context'
 
 export function SiteHeader() {
   const { lang = 'en' } = useParams<{ lang: string }>()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
   const { t } = useTranslation(['admin'])
   const { theme, setTheme } = useTheme()
 
-  const otherLang = lang === 'ar' ? 'en' : 'ar'
+  const otherLang: SupportedLanguage = lang === 'ar' ? 'en' : 'ar'
   const otherLangLabel = lang === 'ar' ? 'English' : 'العربية'
+  const pathWithoutLang = location.pathname.replace(/^\/(?:ar|en)/, '')
+  const otherLangPath = `/${otherLang}${pathWithoutLang || ''}${location.search}${location.hash}`
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -34,6 +38,7 @@ export function SiteHeader() {
     if (pathname.includes('/inventory')) return t('admin:nav.inventory', 'Inventory')
     if (pathname.includes('/customers')) return t('admin:nav.customers', 'Customer Accounts')
     if (pathname.includes('/audit')) return t('admin:nav.audit', 'Audit Log')
+    if (pathname.includes('/settings')) return t('admin:nav.settings', 'Store Settings')
     if (pathname.includes('/profile')) return t('admin:nav.profile', 'Profile')
     return t('admin:nav.dashboard', 'Dashboard')
   }
@@ -92,7 +97,7 @@ export function SiteHeader() {
             variant="ghost"
             size="sm"
             nativeButton={false}
-            render={<Link to={`/${otherLang}`} />}
+            render={<Link to={otherLangPath} onClick={() => applyLanguage(otherLang)} />}
             className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <Globe className="size-3.5" />

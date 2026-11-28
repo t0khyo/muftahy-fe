@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { Box } from 'lucide-react'
 import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
@@ -24,8 +24,9 @@ export function ProductCard({
   className,
   onAddToCart,
 }: ProductCardProps) {
+  const { lang } = useParams<{ lang: string }>()
   const { t, i18n } = useTranslation(['products', 'common'])
-  const currentLang = locale ?? (i18n.language === 'ar' ? 'ar' : 'en')
+  const currentLang = locale ?? (lang === 'ar' || (!lang && i18n.language === 'ar') ? 'ar' : 'en')
   const [failedUrl, setFailedUrl] = React.useState<string | null>(null)
 
   const isPreorder = product.stock_status === 'preorder'

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PackageOpen } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
@@ -15,8 +16,9 @@ import { ProductCard } from '../features/products/components/product-card'
 import { ProductCardSkeleton } from '../features/products/components/product-card-skeleton'
 
 export function ProductsRoute() {
-  const { t, i18n } = useTranslation(['products', 'breadcrumb', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { lang } = useParams<{ lang: string }>()
+  const { t, i18n } = useTranslation(['products', 'breadcrumb', 'common', 'home'])
+  const isRtl = lang ? lang === 'ar' : i18n.language === 'ar'
   const currentLang = isRtl ? 'ar' : 'en'
 
   const {
@@ -59,11 +61,29 @@ export function ProductsRoute() {
     () => ({
       windows: t('categories.windows', { ns: 'products', defaultValue: 'Windows' }),
       office: t('categories.office', { ns: 'products', defaultValue: 'Office' }),
+      'operating-systems': t('categories.operating-systems', {
+        ns: 'products',
+        defaultValue: 'Operating Systems',
+      }),
+      'security-antivirus': t('categories.security-antivirus', {
+        ns: 'products',
+        defaultValue: 'Security & Antivirus',
+      }),
+      'office-suites': t('categories.office-suites', {
+        ns: 'products',
+        defaultValue: 'Office Suites',
+      }),
     }),
-    [t],
+    [t, currentLang],
   )
 
-  const activeCategoryLabel = currentCategory?.name || (selectedCategory ? (categoryLabels[selectedCategory] || selectedCategory) : '')
+  const activeCategoryLabel = selectedCategory
+    ? t(`categories.${selectedCategory}`, {
+        ns: 'products',
+        defaultValue:
+          currentCategory?.name || categoryLabels[selectedCategory] || selectedCategory,
+      })
+    : ''
 
   const breadcrumbItems: BreadcrumbItem[] = React.useMemo(() => {
     const items: BreadcrumbItem[] = [
@@ -101,8 +121,11 @@ export function ProductsRoute() {
 
     if (currentCategory) {
       return {
-        heading: currentCategory.name,
-        subline: currentCategory.description || t('subtitle', { ns: 'products' }),
+        heading: activeCategoryLabel,
+        subline: t(`browse.categories.${currentCategory.slug}Desc`, {
+          ns: 'home',
+          defaultValue: currentCategory.description || t('subtitle', { ns: 'products' }),
+        }),
       }
     }
 
@@ -120,7 +143,7 @@ export function ProductsRoute() {
         defaultValue: 'Instant digital delivery for genuine Microsoft Windows and Office licenses',
       }),
     }
-  }, [queryFilter.search, currentCategory, selectedCategory, activeCategoryLabel, total, t])
+  }, [queryFilter.search, currentCategory, selectedCategory, activeCategoryLabel, total, t, currentLang])
 
   return (
     <div className="site-container py-6 lg:py-10">

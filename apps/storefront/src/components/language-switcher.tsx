@@ -1,7 +1,7 @@
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
-import type { SupportedLanguage } from '@workspace/i18n/config'
+import { applyLanguage, type SupportedLanguage } from '@workspace/i18n/config'
 
 export interface LanguageSwitcherProps {
   className?: string
@@ -18,6 +18,7 @@ export function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
   const accessibleLabel = currentLang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'
 
   const handleSwitch = () => {
+    applyLanguage(nextLang)
     // Replace the language segment at the start of the path
     const pathWithoutLang = location.pathname.replace(/^\/(?:ar|en)/, '')
     const targetPath = `/${nextLang}${pathWithoutLang || ''}${location.search}${location.hash}`

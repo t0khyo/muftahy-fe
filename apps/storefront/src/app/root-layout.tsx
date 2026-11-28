@@ -1,7 +1,12 @@
 import * as React from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { detectDeviceLanguage, isSupportedLanguage, type SupportedLanguage } from '@workspace/i18n/config'
+import {
+  applyLanguage,
+  detectDeviceLanguage,
+  isSupportedLanguage,
+  type SupportedLanguage,
+} from '@workspace/i18n/config'
 import { Toaster } from '@workspace/ui/components/sonner'
 import { useTheme } from './theme-context'
 import { SiteFooter } from '../components/site-footer/site-footer'
@@ -12,18 +17,18 @@ export function RootLayout() {
   const { i18n } = useTranslation()
   const { theme } = useTheme()
 
-  const isValidLang = lang && isSupportedLanguage(lang)
+  const isValidLang = Boolean(lang && isSupportedLanguage(lang))
   const currentLang: SupportedLanguage = isValidLang ? (lang as SupportedLanguage) : 'en'
+
+  if (isValidLang && i18n.language !== currentLang) {
+    applyLanguage(currentLang)
+  }
 
   React.useEffect(() => {
     if (isValidLang) {
-      if (i18n.language !== currentLang) {
-        i18n.changeLanguage(currentLang)
-      }
-      document.documentElement.lang = currentLang
-      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr'
+      applyLanguage(currentLang)
     }
-  }, [isValidLang, currentLang, i18n])
+  }, [isValidLang, currentLang])
 
   if (!isValidLang) {
     return <Navigate to={`/${detectDeviceLanguage()}`} replace />

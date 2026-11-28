@@ -16,13 +16,20 @@ export function CategoryCatalogPage() {
 
   const { data: category, isLoading, isError, refetch } = useCategoryBySlug(currentSlug)
 
+  const localizedCategoryName = currentSlug
+    ? t(`categories.${currentSlug}`, {
+        ns: 'products',
+        defaultValue: category?.name || currentSlug,
+      })
+    : category?.name || ''
+
   const breadcrumbItems: BreadcrumbItem[] = React.useMemo(() => {
     return [
       { label: t('breadcrumb:home', 'Home'), href: `/${currentLang}` },
       { label: t('breadcrumb:products', 'Products'), href: `/${currentLang}/products` },
-      { label: category?.name || currentSlug },
+      { label: localizedCategoryName },
     ]
-  }, [category?.name, currentLang, currentSlug, t])
+  }, [currentLang, localizedCategoryName, t])
 
   return (
     <div className="site-container py-6 lg:py-8 space-y-6 lg:space-y-8">
@@ -30,7 +37,7 @@ export function CategoryCatalogPage() {
 
       <header className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          {category?.name || (isLoading ? '...' : currentSlug)}
+          {localizedCategoryName || (isLoading ? '...' : currentSlug)}
         </h1>
         {category?.description && (
           <p className="text-muted-foreground text-sm max-w-2xl">

@@ -104,7 +104,9 @@ export function FilterSidebar({
                         : 'text-muted-foreground hover:bg-secondary/50',
                     )}
                   >
-                    <span>{cat.name}</span>
+                    <span>
+                      {t(`categories.${cat.slug}`, { ns: 'products', defaultValue: cat.name })}
+                    </span>
                     {typeof count === 'number' && <span className="text-xs">{count}</span>}
                   </button>
                 )
