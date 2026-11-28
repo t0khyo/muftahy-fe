@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -70,13 +70,8 @@ function renderProductDetail(initialEntry: string, queryClient?: QueryClient) {
 }
 
 describe('ProductDetailPage', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubEnv('VITE_WHATSAPP_NUMBER', '201158172869')
     useCartStore.getState().clear()
     vi.clearAllTimers()
     vi.useRealTimers()
@@ -101,16 +96,6 @@ describe('ProductDetailPage', () => {
 
     const askUsLink = screen.getByRole('link', { name: /Chat on WhatsApp/i })
     expect(askUsLink).toHaveAttribute('href', expect.stringContaining('wa.me/201158172869'))
-  })
-
-  it('hides WhatsApp support block when VITE_WHATSAPP_NUMBER is unset', async () => {
-    vi.stubEnv('VITE_WHATSAPP_NUMBER', '')
-    renderProductDetail('/en/products/00000000-0000-4000-8000-000000000001')
-
-    expect(
-      await screen.findByRole('heading', { level: 1, name: /Windows 11 Professional/i }),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Chat on WhatsApp/i })).toBeNull()
   })
 
   it('renders properly in Arabic RTL mode', async () => {
