@@ -5,12 +5,14 @@ import { QueryClient, QueryClientProvider, type UseQueryResult } from '@tanstack
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
+import type { PublicSettingsResponse } from '@workspace/domain/schemas/settings'
 import type { ProductService } from '@workspace/api/services/product-service'
 import { ThemeProvider } from '../../app/theme-provider'
 import { HomePage } from './components/home-page'
 import { ProductRail } from '../products/components/product-rail'
 import { DEFAULT_HOME_CONFIG, type HomeConfig } from './home.config'
 import * as useProductsModule from '../products/hooks/use-products'
+import * as usePublicSettingsModule from '../settings/hooks/use-public-settings'
 import * as apiFactory from '@workspace/api/factory'
 
 const mockProducts: ProductResponse[] = [
@@ -165,6 +167,25 @@ function renderHomePage(
 describe('Home Page Skeleton', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.spyOn(usePublicSettingsModule, 'usePublicSettings').mockReturnValue({
+      data: {
+        whatsapp_number: '1234567890',
+        support_email: 'support@muftahy.com',
+        social_handle: '@muftahy',
+        social_links: {
+          instagram: 'https://instagram.com/muftahy',
+          facebook: 'https://facebook.com/muftahy',
+          x: null,
+          tiktok: null,
+          youtube: null,
+          discord: null,
+        },
+        google_client_id: null,
+        updated_at: '2026-11-28T10:00:00Z',
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as UseQueryResult<PublicSettingsResponse>)
     vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
       getProducts: vi.fn().mockResolvedValue(mockProducts),
       getPublicCategories: vi.fn().mockResolvedValue([
@@ -538,6 +559,25 @@ describe('Home Page Skeleton', () => {
   })
 
   it('does not render support section when whatsappNumber is not configured', () => {
+    vi.spyOn(usePublicSettingsModule, 'usePublicSettings').mockReturnValue({
+      data: {
+        whatsapp_number: null,
+        support_email: null,
+        social_handle: null,
+        social_links: {
+          instagram: null,
+          facebook: null,
+          x: null,
+          tiktok: null,
+          youtube: null,
+          discord: null,
+        },
+        google_client_id: null,
+        updated_at: '2026-11-28T10:00:00Z',
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as UseQueryResult<PublicSettingsResponse>)
     const customConfig: HomeConfig = {
       sections: [
         {

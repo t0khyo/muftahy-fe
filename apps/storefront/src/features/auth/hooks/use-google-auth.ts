@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePublicSettings } from '../../settings/hooks/use-public-settings'
 import { isInAppBrowser } from '../lib/in-app-browser'
 
 declare global {
@@ -30,8 +31,9 @@ export function useGoogleAuth({ onSuccess, onError }: UseGoogleAuthOptions) {
   const [isLoading, setIsLoading] = useState(false)
   const [scriptLoaded, setScriptLoaded] = useState(false)
   const codeClientRef = useRef<{ requestCode: () => void } | null>(null)
+  const { data: settings } = usePublicSettings()
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+  const clientId = settings?.google_client_id || import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
   const isAvailable = Boolean(clientId) && !isInAppBrowser()
   const isInApp = isInAppBrowser()
 

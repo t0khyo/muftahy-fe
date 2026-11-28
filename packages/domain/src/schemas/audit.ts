@@ -11,6 +11,7 @@ export const AUDIT_TARGET_TYPES = [
   'ticket',
   'promo',
   'ledger',
+  'settings',
 ] as const
 
 export const auditFilterIdentifierSchema = z

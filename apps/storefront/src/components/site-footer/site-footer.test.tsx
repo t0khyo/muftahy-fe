@@ -1,10 +1,29 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { I18nextProvider } from 'react-i18next'
+import type { UseQueryResult } from '@tanstack/react-query'
 import { i18n } from '@workspace/i18n/config'
+import type { PublicSettingsResponse } from '@workspace/domain/schemas/settings'
 import { ThemeProvider } from '../../app/theme-provider'
+import * as usePublicSettingsModule from '../../features/settings/hooks/use-public-settings'
 import { SiteFooter } from './site-footer'
+
+const defaultMockSettings: PublicSettingsResponse = {
+  whatsapp_number: '201158172869',
+  support_email: 'support@muftahy.com',
+  social_handle: '@muftahy',
+  social_links: {
+    instagram: 'https://instagram.com/muftahy',
+    facebook: 'https://facebook.com/muftahy',
+    x: null,
+    tiktok: null,
+    youtube: null,
+    discord: null,
+  },
+  google_client_id: null,
+  updated_at: '2026-11-28T10:00:00Z',
+}
 
 function renderSiteFooter(initialRoute = '/en/products') {
   i18n.changeLanguage(initialRoute.startsWith('/ar') ? 'ar' : 'en')
@@ -25,6 +44,14 @@ function renderSiteFooter(initialRoute = '/en/products') {
 }
 
 describe('SiteFooter Component', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(usePublicSettingsModule, 'usePublicSettings').mockReturnValue({
+      data: defaultMockSettings,
+      isLoading: false,
+      isError: false,
+    } as unknown as UseQueryResult<PublicSettingsResponse>)
+  })
   it('renders copyright and theme & language controls in English', () => {
     renderSiteFooter('/en/products')
 

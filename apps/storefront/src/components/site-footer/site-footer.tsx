@@ -1,12 +1,22 @@
 import { Link, useParams } from "react-router"
 import { useTranslation } from "react-i18next"
 import { ShieldCheck, Zap } from "lucide-react"
-import { FaWhatsapp, FaInstagram, FaFacebook } from "react-icons/fa6"
+import {
+  FaDiscord,
+  FaFacebook,
+  FaInstagram,
+  FaTiktok,
+  FaWhatsapp,
+  FaXTwitter,
+  FaYoutube,
+} from "react-icons/fa6"
+import { buildWhatsAppUrl } from "@workspace/domain/schemas/settings"
+import { cn } from "@workspace/ui/lib/utils"
+import { usePublicSettings } from "../../features/settings/hooks/use-public-settings"
 import { BrandHorizontalLogo, BrandLogoMark } from "../brand-logo"
 import { PaymentMethodLogo } from "../payment-method-logo"
-import { LanguageSwitcher } from "./language-switcher"
 import { ThemeToggle } from "../theme-toggle"
-import { cn } from "@workspace/ui/lib/utils"
+import { LanguageSwitcher } from "./language-switcher"
 
 export interface SiteFooterProps {
   className?: string
@@ -17,10 +27,72 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
   const currentLang = lang || "en"
   const isAr = currentLang === "ar"
   const { t } = useTranslation(["footer", "common", "nav"])
+  const { data: settings } = usePublicSettings()
   const currentYear = new Date().getFullYear()
 
-  const phoneRaw = "201158172869"
-  const socialHandle = "@muftahy"
+  const whatsappUrl = buildWhatsAppUrl(settings?.whatsapp_number)
+  const supportEmail = settings?.support_email ?? null
+  const socialHandle = settings?.social_handle ?? null
+  const socialLinks = settings?.social_links
+
+  const activeSocialItems = [
+    socialLinks?.instagram
+      ? {
+          key: "instagram",
+          href: socialLinks.instagram,
+          label: socialHandle ? `Instagram ${socialHandle}` : "Instagram",
+          icon: FaInstagram,
+        }
+      : null,
+    socialLinks?.facebook
+      ? {
+          key: "facebook",
+          href: socialLinks.facebook,
+          label: socialHandle ? `Facebook ${socialHandle}` : "Facebook",
+          icon: FaFacebook,
+        }
+      : null,
+    socialLinks?.x
+      ? {
+          key: "x",
+          href: socialLinks.x,
+          label: socialHandle ? `X ${socialHandle}` : "X",
+          icon: FaXTwitter,
+        }
+      : null,
+    socialLinks?.tiktok
+      ? {
+          key: "tiktok",
+          href: socialLinks.tiktok,
+          label: socialHandle ? `TikTok ${socialHandle}` : "TikTok",
+          icon: FaTiktok,
+        }
+      : null,
+    socialLinks?.youtube
+      ? {
+          key: "youtube",
+          href: socialLinks.youtube,
+          label: socialHandle ? `YouTube ${socialHandle}` : "YouTube",
+          icon: FaYoutube,
+        }
+      : null,
+    socialLinks?.discord
+      ? {
+          key: "discord",
+          href: socialLinks.discord,
+          label: socialHandle ? `Discord ${socialHandle}` : "Discord",
+          icon: FaDiscord,
+        }
+      : null,
+    whatsappUrl
+      ? {
+          key: "whatsapp",
+          href: whatsappUrl,
+          label: "WhatsApp",
+          icon: FaWhatsapp,
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null)
 
   const categoryLinks = [
     {
@@ -50,7 +122,12 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
     },
   ]
 
-  const supportLinks = [
+  const supportLinks: Array<{
+    labelKey: string
+    href: string
+    fallback: string
+    isExternal?: boolean
+  }> = [
     {
       labelKey: "footer.howItWorks",
       href: `/${currentLang}#how-it-works`,
@@ -66,12 +143,26 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
       href: `/${currentLang}#faq`,
       fallback: isAr ? "الأسئلة الشائعة" : "FAQ",
     },
-    {
-      labelKey: "footer.contact",
-      href: `https://wa.me/${phoneRaw}`,
-      fallback: isAr ? "تواصل معنا" : "Contact Us",
-      isExternal: true,
-    },
+    ...(whatsappUrl
+      ? [
+          {
+            labelKey: "footer.contact",
+            href: whatsappUrl,
+            fallback: isAr ? "تواصل معنا" : "Contact Us",
+            isExternal: true,
+          },
+        ]
+      : []),
+    ...(supportEmail
+      ? [
+          {
+            labelKey: "footer.emailUs",
+            href: `mailto:${supportEmail}`,
+            fallback: isAr ? "راسلنا عبر البريد" : "Email Support",
+            isExternal: true,
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -114,83 +205,73 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
             </p>
 
             {/* Direct WhatsApp Contact Button */}
-            <div className="pt-0.5">
-              <a
-                href={`https://wa.me/${phoneRaw}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label={t("footer.chatOnWhatsApp", {
-                  ns: "footer",
-                  defaultValue: isAr ? "راسلنا عبر واتساب" : "Chat on WhatsApp",
-                })}
-              >
-                <FaWhatsapp
-                  className="size-3.5 shrink-0 text-success"
-                  aria-hidden="true"
-                />
-                <span>
-                  {t("footer.chatOnWhatsApp", {
+            {whatsappUrl && (
+              <div className="pt-0.5">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  aria-label={t("footer.chatOnWhatsApp", {
                     ns: "footer",
-                    defaultValue: isAr
-                      ? "راسلنا عبر واتساب"
-                      : "Chat on WhatsApp",
+                    defaultValue: isAr ? "راسلنا عبر واتساب" : "Chat on WhatsApp",
                   })}
-                </span>
-              </a>
-            </div>
+                >
+                  <FaWhatsapp
+                    className="size-3.5 shrink-0 text-success"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t("footer.chatOnWhatsApp", {
+                      ns: "footer",
+                      defaultValue: isAr
+                        ? "راسلنا عبر واتساب"
+                        : "Chat on WhatsApp",
+                    })}
+                  </span>
+                </a>
+              </div>
+            )}
 
             {/* Social Media Row */}
-            <div className="flex items-center gap-2 pt-0.5">
-              <span className="me-1 text-xs font-medium text-muted-foreground">
-                {t("footer.socialMedia", {
-                  ns: "footer",
-                  defaultValue: isAr ? "تابعنا" : "Follow Us",
+            {(activeSocialItems.length > 0 || socialHandle) && (
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                {activeSocialItems.length > 0 && (
+                  <span className="me-1 text-xs font-medium text-muted-foreground">
+                    {t("footer.socialMedia", {
+                      ns: "footer",
+                      defaultValue: isAr ? "تابعنا" : "Follow Us",
+                    })}
+                    :
+                  </span>
+                )}
+
+                {activeSocialItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <a
+                      key={item.key}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      aria-label={item.label}
+                    >
+                      <Icon className="size-3.5" aria-hidden="true" />
+                    </a>
+                  )
                 })}
-                :
-              </span>
 
-              {/* Instagram */}
-              <a
-                href="https://instagram.com/muftahy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label={`Instagram ${socialHandle}`}
-              >
-                <FaInstagram className="size-3.5" aria-hidden="true" />
-              </a>
-
-              {/* Facebook */}
-              <a
-                href="https://facebook.com/muftahy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label={`Facebook ${socialHandle}`}
-              >
-                <FaFacebook className="size-3.5" aria-hidden="true" />
-              </a>
-
-              {/* WhatsApp icon */}
-              <a
-                href={`https://wa.me/${phoneRaw}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label="WhatsApp"
-              >
-                <FaWhatsapp className="size-3.5" aria-hidden="true" />
-              </a>
-
-              {/* Handle Tag */}
-              <span
-                dir="ltr"
-                className="ms-1 text-xs font-medium text-muted-foreground select-all"
-              >
-                {socialHandle}
-              </span>
-            </div>
+                {socialHandle && (
+                  <span
+                    dir="ltr"
+                    className="ms-1 text-xs font-medium text-muted-foreground select-all"
+                  >
+                    {socialHandle}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 2-Column Grid on Mobile for Categories & Support */}

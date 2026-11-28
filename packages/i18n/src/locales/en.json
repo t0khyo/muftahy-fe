@@ -99,7 +99,8 @@
     "instantDelivery": "Instant Digital Delivery",
     "acceptedPayments": "Accepted payment methods",
     "vodafoneCash": "Vodafone Cash",
-    "instapay": "InstaPay"
+    "instapay": "InstaPay",
+    "emailUs": "Email Support"
   },
   "search": {
     "title": "Search Results",
@@ -1250,6 +1251,7 @@
       "ticketReplySent": "Reply sent",
       "ticketResolved": "Ticket resolved",
       "auditExported": "Audit log exported",
+      "settingsUpdated": "Store settings saved",
       "validation": {
         "titleRequired": "Product title is required",
         "basePriceRequired": "Valid base price is required",
@@ -1260,6 +1262,31 @@
         "categoryNameRequired": "Category name is required",
         "categoryCodeRequired": "Category code is required"
       }
+    },
+    "settings": {
+      "title": "Store Settings",
+      "subtitle": "Manage public contact channels and social media links shown on the storefront.",
+      "contactTitle": "Contact Channels",
+      "contactDescription": "Customer support contact details displayed in the footer, home page, and product pages. Leave blank to hide a channel.",
+      "whatsappLabel": "WhatsApp Number",
+      "whatsappPlaceholder": "201158172869",
+      "whatsappHint": "International format with country code, digits only (no + or leading 0).",
+      "supportEmailLabel": "Support Email",
+      "supportEmailPlaceholder": "support@muftahy.com",
+      "socialHandleLabel": "Social Handle",
+      "socialHandlePlaceholder": "@muftahy",
+      "socialTitle": "Social Media Links",
+      "socialDescription": "Full https:// URLs for your official social profiles. Leave blank to hide an icon.",
+      "instagramLabel": "Instagram URL",
+      "facebookLabel": "Facebook URL",
+      "xLabel": "X (Twitter) URL",
+      "tiktokLabel": "TikTok URL",
+      "youtubeLabel": "YouTube URL",
+      "discordLabel": "Discord URL",
+      "saveChanges": "Save Settings",
+      "saving": "Saving...",
+      "lastUpdated": "Last updated {{date}}",
+      "lastUpdatedBy": "Last updated {{date}} by {{name}} ({{email}})"
     }
   },
   "notFound": {

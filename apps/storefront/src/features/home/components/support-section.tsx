@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { FaWhatsapp } from 'react-icons/fa'
 import { cn } from '@workspace/ui/lib/utils'
+import { usePublicSettings } from '../../settings/hooks/use-public-settings'
 import type { SupportSectionConfig } from '../home.config'
 
 export interface SupportSectionProps {
@@ -34,10 +35,11 @@ const TOPIC_CHIPS: TopicChip[] = [
 
 export function SupportSection({ config, className = '' }: SupportSectionProps) {
   const { t, i18n } = useTranslation(['home', 'common'])
+  const { data: settings } = usePublicSettings()
   const headingId = `${config.id}-heading`
   const isRtl = i18n.dir() === 'rtl'
 
-  const rawNumber = config.whatsappNumber?.trim()
+  const rawNumber = (config.whatsappNumber ?? settings?.whatsapp_number)?.trim()
   const cleanNumber = rawNumber ? rawNumber.replace(/[^0-9]/g, '') : null
 
   // If WhatsApp is not configured, do not render an empty shell

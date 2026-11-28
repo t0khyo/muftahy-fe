@@ -14,6 +14,7 @@ import { AdminPromosRoute } from '../routes/admin-promos-route'
 import { AdminLedgerRoute } from '../routes/admin-ledger-route'
 import { AdminAuditRoute } from '../routes/admin-audit-route'
 import { AdminProfileRoute } from '../routes/admin-profile-route'
+import { AdminSettingsRoute } from '../routes/admin-settings-route'
 import { AdminGuard } from '../features/auth/components/admin-guard'
 import { AdminLayout } from '../features/dashboard/components/admin-layout'
 import { AdminRouteError } from '../components/admin-route-error'
@@ -87,6 +88,10 @@ export const router = createBrowserRouter([
           {
             path: 'audit',
             element: <AdminAuditRoute />,
+          },
+          {
+            path: 'settings',
+            element: <AdminSettingsRoute />,
           },
           {
             path: 'profile',

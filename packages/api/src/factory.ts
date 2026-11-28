@@ -12,6 +12,7 @@ import type { AdminOrderService } from './services/admin-order-service'
 import type { AuditService } from './services/audit-service'
 import type { PromoService } from './services/promo-service'
 import type { LedgerService } from './services/ledger-service'
+import type { SettingsService } from './services/settings-service'
 import { TokenStorage } from './adapters/http/token-storage'
 import { NativeFetchClient } from './adapters/http/fetch-client'
 import { HttpAuthAdapter } from './adapters/http/http-auth-adapter'
@@ -27,6 +28,7 @@ import { HttpAdminOrderAdapter } from './adapters/http/http-admin-order-adapter'
 import { HttpAuditAdapter } from './adapters/http/http-audit-adapter'
 import { HttpPromoAdapter } from './adapters/http/http-promo-adapter'
 import { HttpLedgerAdapter } from './adapters/http/http-ledger-adapter'
+import { HttpSettingsAdapter } from './adapters/http/http-settings-adapter'
 
 export interface ApiServices {
   products: ProductService
@@ -91,6 +93,7 @@ class ServiceRegistry {
   private readonly auditServices = new Map<string, AuditService>()
   private readonly promoServices = new Map<string, PromoService>()
   private readonly ledgerServices = new Map<string, LedgerService>()
+  private readonly settingsServices = new Map<string, SettingsService>()
   private readonly tokenStorages = new Map<string, TokenStorage>()
   private adminRateLimitHandler?: (retryAfter: number) => void
 
@@ -263,6 +266,20 @@ class ServiceRegistry {
     }
     return service
   }
+
+  getSettingsService(app: AppScope = 'storefront', options?: { baseURL?: string }): SettingsService {
+    const key = `${app}_${options?.baseURL ?? 'default'}`
+    let service = this.settingsServices.get(key)
+    if (!service) {
+      const client =
+        app === 'admin'
+          ? this.createClient('admin', options?.baseURL)
+          : new NativeFetchClient({ baseURL: options?.baseURL ?? getApiBaseUrl() })
+      service = new HttpSettingsAdapter(client)
+      this.settingsServices.set(key, service)
+    }
+    return service
+  }
 }
 
 export const services = new ServiceRegistry()
@@ -303,6 +320,8 @@ export const getPromoService = (options?: { baseURL?: string }): PromoService =>
   services.getPromoService(options)
 export const getLedgerService = (options?: { baseURL?: string }): LedgerService =>
   services.getLedgerService(options)
+export const getSettingsService = (app: AppScope = 'storefront', options?: { baseURL?: string }): SettingsService =>
+  services.getSettingsService(app, options)
 export const getTokenStorage = (app: AppScope = 'storefront'): TokenStorage => services.getTokenStorage(app)
 
 /**

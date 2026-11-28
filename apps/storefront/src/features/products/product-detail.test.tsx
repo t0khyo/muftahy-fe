@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
-import { getProductService } from '@workspace/api/factory'
+import { getProductService, getSettingsService } from '@workspace/api/factory'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
 import { ProductDetailPage } from './pages/product-detail-page'
 import { useCartStore } from '../cart/stores/cart-store'
@@ -77,6 +77,22 @@ describe('ProductDetailPage', () => {
     vi.useRealTimers()
     const productService = getProductService()
     vi.spyOn(productService, 'getProductById').mockResolvedValue(mockDetailProduct)
+    const settingsService = getSettingsService('storefront')
+    vi.spyOn(settingsService, 'getPublicSettings').mockResolvedValue({
+      whatsapp_number: '201158172869',
+      support_email: 'support@muftahy.com',
+      social_handle: '@muftahy',
+      social_links: {
+        instagram: 'https://instagram.com/muftahy',
+        facebook: 'https://facebook.com/muftahy',
+        x: null,
+        tiktok: null,
+        youtube: null,
+        discord: null,
+      },
+      google_client_id: null,
+      updated_at: '2026-11-28T10:00:00Z',
+    })
   })
 
   it('renders product detail sections, title, price, and WhatsApp support', async () => {
@@ -94,7 +110,7 @@ describe('ProductDetailPage', () => {
     expect(screen.queryByText(/^In Stock/i)).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: /About this license/i })).toBeInTheDocument()
 
-    const askUsLink = screen.getByRole('link', { name: /Chat on WhatsApp/i })
+    const askUsLink = await screen.findByRole('link', { name: /Chat on WhatsApp/i })
     expect(askUsLink).toHaveAttribute('href', expect.stringContaining('wa.me/201158172869'))
   })
 

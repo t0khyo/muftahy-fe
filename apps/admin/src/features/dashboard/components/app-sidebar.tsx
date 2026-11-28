@@ -11,6 +11,7 @@ import {
   BookOpen,
   ShieldAlert,
   FolderTree,
+  Settings,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -121,6 +122,12 @@ export function AppSidebar({
           url: `/${lang}/audit`,
           icon: ShieldAlert,
           isActive: pathname.startsWith(`/${lang}/audit`),
+        },
+        {
+          title: t('admin:nav.settings', 'Store Settings'),
+          url: `/${lang}/settings`,
+          icon: Settings,
+          isActive: pathname.startsWith(`/${lang}/settings`),
         },
       ],
     },

@@ -103,7 +103,8 @@
     "instantDelivery": "تسليم فوري ومباشر",
     "acceptedPayments": "وسائل الدفع المتاحة",
     "vodafoneCash": "فودافون كاش",
-    "instapay": "إنستاباي"
+    "instapay": "إنستاباي",
+    "emailUs": "راسلنا عبر البريد"
   },
   "search": {
     "title": "نتائج البحث",
@@ -1254,6 +1255,7 @@
       "ticketReplySent": "تم إرسال الرد",
       "ticketResolved": "تم إغلاق التذكرة وحلها",
       "auditExported": "تم تصدير سجل النشاط",
+      "settingsUpdated": "تم حفظ إعدادات المتجر",
       "validation": {
         "titleRequired": "عنوان المنتج مطلوب",
         "basePriceRequired": "السعر الأساسي الصحيح مطلوب",
@@ -1264,6 +1266,31 @@
         "categoryNameRequired": "اسم التصنيف مطلوب",
         "categoryCodeRequired": "رمز التصنيف مطلوب"
       }
+    },
+    "settings": {
+      "title": "إعدادات المتجر",
+      "subtitle": "إدارة قنوات التواصل وروابط شبكات التواصل الاجتماعي المعروضة في المتجر.",
+      "contactTitle": "قنوات التواصل",
+      "contactDescription": "بيانات تواصل خدمة العملاء المعروضة في التذييل والصفحة الرئيسية وصفحات المنتجات. اترك الحقل فارغاً لإخفاء القناة.",
+      "whatsappLabel": "رقم واتساب",
+      "whatsappPlaceholder": "201158172869",
+      "whatsappHint": "بالصيغة الدولية مع رمز الدولة، أرقام فقط (بدون + أو صفر في البداية).",
+      "supportEmailLabel": "بريد الدعم الفني",
+      "supportEmailPlaceholder": "support@muftahy.com",
+      "socialHandleLabel": "معرّف الحساب الاجتماعي",
+      "socialHandlePlaceholder": "@muftahy",
+      "socialTitle": "روابط التواصل الاجتماعي",
+      "socialDescription": "روابط https:// الكاملة لحساباتك الرسمية. اترك الحقل فارغاً لإخفاء الأيقونة.",
+      "instagramLabel": "رابط إنستغرام",
+      "facebookLabel": "رابط فيسبوك",
+      "xLabel": "رابط إكس (تويتر)",
+      "tiktokLabel": "رابط تيك توك",
+      "youtubeLabel": "رابط يوتيوب",
+      "discordLabel": "رابط ديسكورد",
+      "saveChanges": "حفظ الإعدادات",
+      "saving": "جارٍ الحفظ...",
+      "lastUpdated": "آخر تحديث {{date}}",
+      "lastUpdatedBy": "آخر تحديث {{date}} بواسطة {{name}} ({{email}})"
     }
   },
   "notFound": {
