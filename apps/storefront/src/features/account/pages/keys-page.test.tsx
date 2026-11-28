@@ -1,5 +1,5 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { act, render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { I18nextProvider } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -63,6 +63,10 @@ describe('KeysPage', () => {
     })
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders key vault with active license count and masked serials', async () => {
     renderKeysView('/en/account/keys')
 
@@ -75,17 +79,47 @@ describe('KeysPage', () => {
     expect(screen.queryByText('X229N-48FGX-YVC9B-4J6C9-AAAAA')).not.toBeInTheDocument()
   })
 
-  it('reveals key when reveal button is clicked', async () => {
+  it('reveals key with scramble animation when reveal button is clicked and hides again on toggle', async () => {
     renderKeysView('/en/account/keys')
 
     await waitFor(() => {
       expect(screen.getByText('Microsoft Office 2024 Home & Business')).toBeInTheDocument()
     })
 
+    vi.useFakeTimers()
     const revealButtons = screen.getAllByRole('button', { name: /reveal/i })
     fireEvent.click(revealButtons[0])
 
-    expect(screen.getByText('X229N-48FGX-YVC9B-4J6C9-AAAAA')).toBeInTheDocument()
+    // Screen-reader live region announces serial immediately; visual span scrambles first
+    const srOnlySpan = screen.getByText('X229N-48FGX-YVC9B-4J6C9-AAAAA')
+    expect(srOnlySpan).toHaveClass('sr-only')
+    const visualSpan = srOnlySpan.previousElementSibling
+    expect(visualSpan).not.toBeNull()
+    expect(visualSpan).toHaveAttribute('aria-hidden', 'true')
+    expect(visualSpan?.textContent).not.toBe('X229N-48FGX-YVC9B-4J6C9-AAAAA')
+    expect(visualSpan?.textContent?.length).toBe('X229N-48FGX-YVC9B-4J6C9-AAAAA'.length)
+
+    act(() => {
+      vi.advanceTimersByTime(1200)
+    })
+
+    expect(visualSpan?.textContent).toBe('X229N-48FGX-YVC9B-4J6C9-AAAAA')
+
+    // Hide clears plaintext immediately and reverse-scrambles back to bullet mask
+    fireEvent.click(screen.getByRole('button', { name: /hide/i }))
+    expect(screen.queryByText('X229N-48FGX-YVC9B-4J6C9-AAAAA')).not.toBeInTheDocument()
+
+    const hideSr = screen.getByText('Digital key hidden')
+    expect(hideSr).toHaveClass('sr-only')
+    const hideVisual = hideSr.previousElementSibling
+    expect(hideVisual).toHaveAttribute('aria-hidden', 'true')
+    expect(hideVisual?.textContent).not.toBe('•••••-•••••-•••••-•••••-•••••')
+
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+
+    expect(hideVisual?.textContent).toBe('•••••-•••••-•••••-•••••-•••••')
   })
 
   it('copies key serial to clipboard with feedback', async () => {

@@ -217,7 +217,7 @@ describe("ProductCard", () => {
     expect(button).toBeDisabled()
   })
 
-  it("renders preorder button when item is preorder", () => {
+  it("renders Add to cart button (not Preorder) when item is preorder", () => {
     const preorderProduct: ProductResponse = {
       ...mockProduct,
       stock_status: "preorder",
@@ -227,8 +227,8 @@ describe("ProductCard", () => {
       lang: "en",
     })
 
-    expect(screen.getAllByText("Preorder").length).toBeGreaterThan(0)
-    const button = screen.getByRole("button", { name: /preorder/i })
+    expect(screen.queryByText("Preorder")).not.toBeInTheDocument()
+    const button = screen.getByRole("button", { name: /add to cart/i })
     expect(button).toBeEnabled()
   })
 

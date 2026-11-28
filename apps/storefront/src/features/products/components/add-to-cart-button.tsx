@@ -1,6 +1,7 @@
 import * as React from 'react'
-import { cn } from '@workspace/ui/lib/utils'
 import { Check, ShoppingBag } from 'lucide-react'
+import { Button } from '@workspace/ui/components/button'
+import { cn } from '@workspace/ui/lib/utils'
 
 export interface AddToCartButtonProps {
   productName: string
@@ -20,6 +21,15 @@ export function AddToCartButton({
   onClick,
 }: AddToCartButtonProps) {
   const [justAdded, setJustAdded] = React.useState(false)
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
 
   const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -29,11 +39,14 @@ export function AddToCartButton({
 
     onClick?.(e)
     setJustAdded(true)
-    setTimeout(() => setJustAdded(false), 1500)
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+    timerRef.current = setTimeout(() => setJustAdded(false), 1500)
   }
 
   return (
-    <button
+    <Button
       type="button"
       disabled={disabled}
       onClick={handleButtonClick}
@@ -42,7 +55,6 @@ export function AddToCartButton({
         'relative z-10 cursor-pointer flex h-11 lg:h-10 w-full items-center justify-center gap-2 rounded-full px-4',
         'bg-primary text-primary-foreground font-medium text-xs sm:text-sm shadow-none',
         'transition-all duration-150 hover:bg-primary/90 active:scale-[0.98]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
         justAdded && 'bg-primary/90',
         className,
@@ -59,6 +71,6 @@ export function AddToCartButton({
           <ShoppingBag className="size-4 shrink-0 transition-transform duration-150" />
         </>
       )}
-    </button>
+    </Button>
   )
 }

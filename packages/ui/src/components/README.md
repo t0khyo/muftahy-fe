@@ -19,6 +19,7 @@ shadcn/ui components built on Base UI primitives, configured with the `base-nova
 - `[label.tsx:Label]` `Label` — accessible input label
 - `[navigation-menu.tsx:NavigationMenu]` `NavigationMenu`, `NavigationMenuList`, `NavigationMenuItem`, `NavigationMenuTrigger`, `NavigationMenuContent`, `NavigationMenuLink`, `NavigationMenuIndicator`, `NavigationMenuPositioner`, `navigationMenuTriggerStyle` — top-level site navigation (Base UI `NavigationMenu`)
 - `[radio-group.tsx:RadioGroup]` `RadioGroup`, `RadioGroupItem` — accessible radio group selection controls (Base UI `RadioGroup`)
+- `[scramble-text.tsx:ScrambleText]` `ScrambleText`, `ScrambleMaskText`, `type ScrambleTextProps`, `type ScrambleMaskTextProps`, `type ScrambleDirection` — accessible character-scramble reveal and reverse-scramble hide animation honoring `prefers-reduced-motion`
 - `[select.tsx:Select]` `Select`, `SelectGroup`, `SelectValue`, `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectLabel`, `SelectSeparator`, `SelectScrollUpButton`, `SelectScrollDownButton` — accessible dropdown (Base UI `Select`)
 - `[separator.tsx:Separator]` `Separator` — horizontal or vertical rule (Base UI `Separator`)
 - `[sheet.tsx:Sheet]` `Sheet`, `SheetTrigger`, `SheetClose`, `SheetContent`, `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription` — slide-in panel (Base UI `Dialog`) with `top`, `right`, `bottom`, `left` sides

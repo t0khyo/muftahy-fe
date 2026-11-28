@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { User } from 'lucide-react'
+import { Blobatar } from '@workspace/ui/components/blobatar'
 import { getLocalizedNavLinks, getNavKey } from './nav-links'
 import { LanguageSwitcher } from '../language-switcher'
 import { ThemeToggle } from '../theme-toggle'
@@ -115,13 +117,27 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
         {/* Mobile Account Section */}
         <div className="border-t border-border/40 pt-4 space-y-2">
           {isAuthenticated ? (
-            <div className="space-y-1 text-start">
+            <div className="flex items-center justify-between gap-3 text-start">
               <Link
                 to={`/${currentLang}/account/profile`}
                 onClick={onClose}
-                className="block text-lg font-semibold text-foreground hover:text-primary transition-colors"
+                className="flex items-center gap-3 min-w-0 group"
               >
-                {user?.full_name || user?.email || (isAr ? 'حسابي' : 'My Account')}
+                <Blobatar
+                  name={user?.full_name || user?.email || (isAr ? 'حسابي' : 'My Account')}
+                  className="size-9 shrink-0"
+                  blobatar={{ animate: 'hover' }}
+                />
+                <div className="min-w-0">
+                  <span className="block truncate text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {user?.full_name || user?.email || (isAr ? 'حسابي' : 'My Account')}
+                  </span>
+                  {user?.full_name && user?.email && (
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
+                  )}
+                </div>
               </Link>
               <button
                 type="button"
@@ -129,13 +145,19 @@ export function MobileMenu({ isOpen, onClose, id = 'mobile-menu' }: MobileMenuPr
                   onClose()
                   logout()
                 }}
-                className="block text-sm font-medium text-destructive hover:underline cursor-pointer"
+                className="shrink-0 text-sm font-medium text-destructive hover:underline cursor-pointer"
               >
                 {isAr ? 'تسجيل الخروج' : 'Sign Out'}
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-3">
+              <div
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                aria-hidden="true"
+              >
+                <User className="size-4" />
+              </div>
               <Link
                 to={`/${currentLang}/login`}
                 onClick={onClose}

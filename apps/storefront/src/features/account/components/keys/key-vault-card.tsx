@@ -14,6 +14,7 @@ import {
 import { Card } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
+import { ScrambleMaskText } from '@workspace/ui/components/scramble-text'
 import {
   Tooltip,
   TooltipTrigger,
@@ -91,11 +92,17 @@ export function KeyVaultCard({ userKey, onReportIssue }: KeyVaultCardProps) {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-xl border border-primary/20 bg-muted/50 p-3 sm:px-4">
           <div className="flex items-center gap-2 overflow-x-auto py-1">
             <span
+              dir="ltr"
               className={`font-mono text-sm sm:text-base font-semibold tracking-wider select-all transition-colors ${
                 isRevealed ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              {isRevealed ? userKey.serial : maskedSerial}
+              <ScrambleMaskText
+                value={userKey.serial}
+                mask={maskedSerial}
+                revealed={isRevealed}
+                hiddenAriaText={t('keys.keyHiddenAria')}
+              />
             </span>
           </div>
 

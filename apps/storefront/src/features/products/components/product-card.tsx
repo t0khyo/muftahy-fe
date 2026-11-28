@@ -2,6 +2,8 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { Box } from 'lucide-react'
+import { Badge } from '@workspace/ui/components/badge'
+import { Card, CardContent, CardFooter } from '@workspace/ui/components/card'
 import { cn } from '@workspace/ui/lib/utils'
 import { formatMoney } from '@workspace/domain/formatters/money'
 import { formatNumber } from '@workspace/domain/formatters/number'
@@ -70,18 +72,17 @@ export function ProductCard({
 
   const addToCartLabel = isOutOfStock && !product.preorder_enabled
     ? t('stock.out_of_stock', { ns: 'products', defaultValue: 'Out of stock' })
-    : isPreorder
-      ? t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })
-      : t('addToCart', { ns: 'products', defaultValue: 'Add to cart' })
+    : t('addToCart', { ns: 'products', defaultValue: 'Add to cart' })
 
   const productUrl = `/${currentLang}/products/${product.slug || product.id}`
 
   return (
-    <article
+    <Card
+      role="article"
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-2xl',
+        'group relative flex flex-col gap-0 overflow-hidden rounded-2xl ring-0',
         'bg-card border border-border/40 hover:border-border/80 text-card-foreground',
-        'p-3 sm:p-3.5 lg:p-4 h-full',
+        'p-3 sm:p-3.5 lg:p-4 has-data-[slot=card-footer]:pb-3 sm:has-data-[slot=card-footer]:pb-3.5 lg:has-data-[slot=card-footer]:pb-4 h-full',
         'transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs',
         'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40 has-[:focus-visible]:border-border',
         isOutOfStock && !product.preorder_enabled && 'opacity-70',
@@ -113,18 +114,21 @@ export function ProductCard({
         {/* Sale Badge */}
         {product.discount_percentage != null && Number(product.discount_percentage) > 0 && (
           <div className="absolute end-2 top-2 z-10">
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 backdrop-blur-xs">
+            <Badge
+              variant="outline"
+              className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 backdrop-blur-xs"
+            >
               -{formatNumber(Number(product.discount_percentage), {
                 locale: currentLang,
                 maximumFractionDigits: 0,
               })}%
-            </span>
+            </Badge>
           </div>
         )}
       </div>
 
       {/* 2 ── Content */}
-      <div className="flex flex-1 flex-col justify-between text-start">
+      <CardContent className="flex flex-1 flex-col justify-between p-0 text-start">
         <div className="space-y-1 mb-3">
           <h3 className="font-semibold text-foreground text-sm sm:text-base leading-snug line-clamp-2">
             <Link
@@ -140,29 +144,29 @@ export function ProductCard({
             </p>
           )}
         </div>
+      </CardContent>
 
-        {/* 3 ── Price & CTA */}
-        <div className="pt-2 border-t border-border/30 space-y-2.5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
-              {formattedEffectivePrice}
+      {/* 3 ── Price & CTA */}
+      <CardFooter className="flex-col items-stretch gap-2.5 rounded-none border-t border-border/30 bg-transparent p-0 pt-2">
+        <div className="flex items-baseline gap-2">
+          <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
+            {formattedEffectivePrice}
+          </span>
+          {formattedBasePrice && (
+            <span className="text-xs sm:text-sm text-muted-foreground line-through tabular-nums">
+              {formattedBasePrice}
             </span>
-            {formattedBasePrice && (
-              <span className="text-xs sm:text-sm text-muted-foreground line-through tabular-nums">
-                {formattedBasePrice}
-              </span>
-            )}
-          </div>
-
-          <AddToCartButton
-            productName={product.name}
-            label={addToCartLabel}
-            addedLabel={t('added', { ns: 'products', defaultValue: 'Added' })}
-            disabled={isOutOfStock && !product.preorder_enabled}
-            onClick={handleAddToCart}
-          />
+          )}
         </div>
-      </div>
-    </article>
+
+        <AddToCartButton
+          productName={product.name}
+          label={addToCartLabel}
+          addedLabel={t('added', { ns: 'products', defaultValue: 'Added' })}
+          disabled={isOutOfStock && !product.preorder_enabled}
+          onClick={handleAddToCart}
+        />
+      </CardFooter>
+    </Card>
   )
 }

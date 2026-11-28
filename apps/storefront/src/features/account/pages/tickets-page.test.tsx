@@ -1,5 +1,5 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { act, render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { I18nextProvider } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -109,6 +109,10 @@ describe('TicketsPage & TicketThreadPage', () => {
     })
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders support tickets list with badges in English', async () => {
     renderTicketsView('/en/account/support')
 
@@ -149,10 +153,36 @@ describe('TicketsPage & TicketThreadPage', () => {
       screen.getByText(/this ticket is resolved and locked for further replies/i),
     ).toBeInTheDocument()
 
-    // Key reveal in thread
+    // Key reveal in thread scrambles first then settles to plaintext
+    vi.useFakeTimers()
     const revealBtn = screen.getByRole('button', { name: /reveal/i })
     fireEvent.click(revealBtn)
-    expect(screen.getByText('NEW-REPLACEMENT-KEY-999')).toBeInTheDocument()
+    const srOnlySpan = screen.getByText('NEW-REPLACEMENT-KEY-999')
+    expect(srOnlySpan).toHaveClass('sr-only')
+
+    const visualSpan = srOnlySpan.previousElementSibling
+    expect(visualSpan).not.toBeNull()
+    expect(visualSpan).toHaveAttribute('aria-hidden', 'true')
+    expect(visualSpan?.textContent).not.toBe('NEW-REPLACEMENT-KEY-999')
+
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+
+    expect(visualSpan?.textContent).toBe('NEW-REPLACEMENT-KEY-999')
+
+    // Hide clears replacement plaintext immediately and scrambles back to mask
+    fireEvent.click(screen.getByRole('button', { name: /hide/i }))
+    expect(screen.queryByText('NEW-REPLACEMENT-KEY-999')).not.toBeInTheDocument()
+    const hideSr = screen.getByText('Digital key hidden')
+    const hideVisual = hideSr.previousElementSibling
+    expect(hideVisual?.textContent).not.toBe('•••••-•••••-•••••-•••••-•••••')
+
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+
+    expect(hideVisual?.textContent).toBe('•••••-•••••-•••••-•••••-•••••')
   })
 
   it('allows posting a comment on an open ticket', async () => {

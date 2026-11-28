@@ -1,15 +1,14 @@
-import * as React from 'react'
-import { Link, useLocation, useParams } from 'react-router'
-import { useTranslation } from 'react-i18next'
+import * as React from "react"
+import { Link, useLocation, useParams } from "react-router"
+import { useTranslation } from "react-i18next"
+import { KeyRound, ShoppingBag, X } from "lucide-react"
+import { formatMoney } from "@workspace/domain/formatters/money"
 import {
-  KeyRound,
-  ShoppingBag,
-  X,
-} from 'lucide-react'
-import { formatMoney } from '@workspace/domain/formatters/money'
-import { getProductThumbnailUrl, resolveStorageUrl } from '../../features/products/utils/asset-resolver'
-import { useProduct } from '../../features/products/hooks/use-products'
-import { Button } from '@workspace/ui/components/button'
+  getProductThumbnailUrl,
+  resolveStorageUrl,
+} from "../../features/products/utils/asset-resolver"
+import { useProduct } from "../../features/products/hooks/use-products"
+import { Button } from "@workspace/ui/components/button"
 import {
   Empty,
   EmptyHeader,
@@ -17,19 +16,23 @@ import {
   EmptyTitle,
   EmptyDescription,
   EmptyContent,
-} from '@workspace/ui/components/empty'
+} from "@workspace/ui/components/empty"
 import {
   Sheet,
   SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@workspace/ui/components/sheet'
-import { CART_CONFIG } from '../../features/cart/cart.config'
-import { QuantityStepper } from '../../features/cart/components/quantity-stepper'
-import { resolveLocalizedName } from '../../features/cart/lib/cart-selectors'
-import type { UnifiedCartItem } from '../../features/cart/hooks/use-cart'
-import { useCart, useRemoveCartItem, useUpdateCartItemQuantity } from '../../features/cart/hooks/use-cart'
+} from "@workspace/ui/components/sheet"
+import { CART_CONFIG } from "../../features/cart/cart.config"
+import { QuantityStepper } from "../../features/cart/components/quantity-stepper"
+import { resolveLocalizedName } from "../../features/cart/lib/cart-selectors"
+import type { UnifiedCartItem } from "../../features/cart/hooks/use-cart"
+import {
+  useCart,
+  useRemoveCartItem,
+  useUpdateCartItemQuantity,
+} from "../../features/cart/hooks/use-cart"
 
 interface BagDrawerItemProps {
   item: UnifiedCartItem
@@ -46,28 +49,28 @@ function BagDrawerItem({
   onUpdateQuantity,
   onRemove,
 }: BagDrawerItemProps) {
-  const { t } = useTranslation(['header', 'products'])
-  const { data: product } = useProduct(item.coverImage ? '' : item.product_id)
+  const { t } = useTranslation(["header", "products"])
+  const { data: product } = useProduct(item.coverImage ? "" : item.product_id)
   const [failedUrl, setFailedUrl] = React.useState<string | null>(null)
 
   const productName = item.name
-    ? (resolveLocalizedName(item.name, currentLang) || item.product_name)
+    ? resolveLocalizedName(item.name, currentLang) || item.product_name
     : item.product_name
-  const lineTotal = formatMoney(
-    item.unit_price * item.quantity,
-    { currency: 'EGP', locale: currentLang },
-  )
+  const lineTotal = formatMoney(item.unit_price * item.quantity, {
+    currency: "EGP",
+    locale: currentLang,
+  })
   const resolvedCover = item.coverImage
-    ? (resolveStorageUrl(item.coverImage) || item.coverImage)
+    ? resolveStorageUrl(item.coverImage) || item.coverImage
     : null
   const thumbnailUrl = resolvedCover || getProductThumbnailUrl(product)
   const showImage = Boolean(thumbnailUrl && failedUrl !== thumbnailUrl)
   const productSlug = product?.slug || item.slug || item.product_id
 
   return (
-    <div className="flex gap-4 pb-5 border-b border-border/30 last:border-b-0 last:pb-0">
+    <div className="flex gap-4 border-b border-border/30 pb-5 last:border-b-0 last:pb-0">
       {/* 4:3 Thumbnail with KeyRound fallback */}
-      <div className="w-20 lg:w-24 aspect-[4/3] shrink-0 rounded-xl overflow-hidden bg-secondary/60 border border-border/40 flex items-center justify-center">
+      <div className="flex aspect-[4/3] w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-secondary/60 lg:w-24">
         {showImage && thumbnailUrl ? (
           <img
             src={thumbnailUrl}
@@ -77,50 +80,53 @@ function BagDrawerItem({
           />
         ) : (
           <KeyRound
-            className="size-7 lg:size-8 text-muted-foreground/80"
+            className="size-7 text-muted-foreground/80 lg:size-8"
             aria-hidden="true"
           />
         )}
       </div>
 
       {/* Content Column */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between text-start">
+      <div className="flex min-w-0 flex-1 flex-col justify-between text-start">
         <div className="space-y-0.5">
           <Link
             to={`/${currentLang}/products/${productSlug}`}
             onClick={onClose}
-            className="text-[15px] font-semibold text-foreground line-clamp-2 leading-snug hover:text-primary transition-colors"
+            className="line-clamp-2 text-[15px] leading-snug font-semibold text-foreground transition-colors hover:text-primary"
           >
             {productName}
           </Link>
 
           {item.variant && (
-            <div className="text-[12px] text-muted-foreground uppercase font-medium">
+            <div className="text-[12px] font-medium text-muted-foreground uppercase">
               {item.variant}
             </div>
           )}
           {item.is_preorder && (
-            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-              {t('stock.preorder', { ns: 'products', defaultValue: 'Preorder' })}
+            <div className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+              {t("stock.preorder", {
+                ns: "products",
+                defaultValue: "Preorder",
+              })}
             </div>
           )}
         </div>
 
         {/* Interactive Quantity Stepper + Remove Link */}
-        <div className="pt-2 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 pt-2">
           <QuantityStepper
             size="sm"
             quantity={item.quantity}
             min={1}
-            decreaseLabel={t('decreaseQuantity', {
-              ns: 'header',
-              defaultValue: 'Decrease quantity',
+            decreaseLabel={t("decreaseQuantity", {
+              ns: "header",
+              defaultValue: "Decrease quantity",
             })}
-            increaseLabel={t('increaseQuantity', {
-              ns: 'header',
-              defaultValue: 'Increase quantity',
+            increaseLabel={t("increaseQuantity", {
+              ns: "header",
+              defaultValue: "Increase quantity",
             })}
-            quantityLabel={`${t('quantity', { ns: 'header', defaultValue: 'Quantity' })}: ${item.quantity}`}
+            quantityLabel={`${t("quantity", { ns: "header", defaultValue: "Quantity" })}: ${item.quantity}`}
             onDecrease={() => onUpdateQuantity(item.id, item.quantity - 1)}
             onIncrease={() => onUpdateQuantity(item.id, item.quantity + 1)}
           />
@@ -128,15 +134,15 @@ function BagDrawerItem({
           <button
             type="button"
             onClick={() => onRemove(item.id)}
-            className="cursor-pointer text-xs text-muted-foreground hover:text-destructive underline underline-offset-4 decoration-border/60 hover:decoration-destructive transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="cursor-pointer text-xs text-muted-foreground underline decoration-border/60 underline-offset-4 transition-colors hover:text-destructive hover:decoration-destructive focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {t('remove', { ns: 'header', defaultValue: 'Remove' })}
+            {t("remove", { ns: "header", defaultValue: "Remove" })}
           </button>
         </div>
       </div>
 
       {/* End Price Column */}
-      <div className="text-end shrink-0 pt-0.5">
+      <div className="shrink-0 pt-0.5 text-end">
         <span className="text-[15px] font-semibold text-foreground tabular-nums">
           {lineTotal}
         </span>
@@ -153,16 +159,16 @@ export interface CartButtonProps {
 }
 
 export function CartButton({
-  className = '',
+  className = "",
   isOpen: controlledIsOpen,
   onToggle: controlledOnToggle,
   onClose: controlledOnClose,
 }: CartButtonProps) {
   const { lang } = useParams<{ lang: string }>()
-  const currentLang = lang || 'en'
+  const currentLang = lang || "en"
   const location = useLocation()
-  const { t, i18n } = useTranslation(['header', 'cart', 'common'])
-  const isRtl = currentLang === 'ar' || i18n.dir() === 'rtl'
+  const { t, i18n } = useTranslation(["header", "cart", "common"])
+  const isRtl = currentLang === "ar" || i18n.dir() === "rtl"
 
   // Internal open state if uncontrolled
   const [internalIsOpen, setInternalIsOpen] = React.useState(false)
@@ -206,13 +212,16 @@ export function CartButton({
   }, [count])
 
   // Polite live region status announcement
-  const [liveAnnouncement, setLiveAnnouncement] = React.useState('')
+  const [liveAnnouncement, setLiveAnnouncement] = React.useState("")
 
   // Trigger ref for focus return
   const triggerRef = React.useRef<HTMLButtonElement | null>(null)
 
   const formattedSubtotal = React.useMemo(() => {
-    return formatMoney(cart.subtotal_egp, { currency: 'EGP', locale: currentLang })
+    return formatMoney(cart.subtotal_egp, {
+      currency: "EGP",
+      locale: currentLang,
+    })
   }, [cart.subtotal_egp, currentLang])
 
   // Close panel on route change
@@ -232,38 +241,42 @@ export function CartButton({
   React.useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.preventDefault()
         handleClose()
       }
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isOpen, handleClose])
 
   const handleRemove = (id: string) => {
     removeItemMutation(id)
     setLiveAnnouncement(
-      t('itemRemoved', { ns: 'header', defaultValue: 'Item removed' }),
+      t("itemRemoved", { ns: "header", defaultValue: "Item removed" })
     )
   }
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
     updateQuantityMutation({ itemId: id, quantity })
     setLiveAnnouncement(
-      t('quantityUpdated', { ns: 'header', defaultValue: 'Quantity updated' }),
+      t("quantityUpdated", { ns: "header", defaultValue: "Quantity updated" })
     )
   }
 
   const ariaLabel =
     count === 0
-      ? t('cartEmpty', { ns: 'header', defaultValue: 'Cart is empty' })
-      : t('cartAria', { ns: 'header', count, defaultValue: `Cart, ${count} items` })
+      ? t("cartEmpty", { ns: "header", defaultValue: "Cart is empty" })
+      : t("cartAria", {
+          ns: "header",
+          count,
+          defaultValue: `Cart, ${count} items`,
+        })
 
-  const badgeText = count > 9 ? '9+' : String(count)
+  const badgeText = count > 9 ? "9+" : String(count)
 
-  const itemsCountText = t('items', {
-    ns: 'header',
+  const itemsCountText = t("items", {
+    ns: "header",
     count,
     defaultValue: `${count} items`,
   })
@@ -279,12 +292,12 @@ export function CartButton({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-controls="cart-panel"
-        className={`cursor-pointer relative inline-flex items-center justify-center text-foreground/80 transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-11 w-11 lg:h-11 lg:w-9 ${className}`}
+        className={`relative inline-flex h-11 w-11 cursor-pointer items-center justify-center text-foreground/80 transition-colors duration-150 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none lg:h-11 lg:w-9 ${className}`}
       >
         <svg
           aria-hidden="true"
           className={`h-[17px] w-[17px] shrink-0 transition-transform duration-200 ${
-            isPulsing ? 'scale-110 text-primary' : ''
+            isPulsing ? "scale-110 text-primary" : ""
           }`}
           viewBox="0 0 24 24"
           fill="none"
@@ -301,8 +314,8 @@ export function CartButton({
         {count > 0 && (
           <span
             aria-hidden="true"
-            className={`absolute end-1 top-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-foreground px-0.5 text-[10px] font-bold leading-none text-background tabular-nums transition-all duration-200 ${
-              isPulsing ? 'scale-125 bg-primary text-primary-foreground' : ''
+            className={`absolute end-1 top-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-foreground px-0.5 text-[10px] leading-none font-bold text-background tabular-nums transition-all duration-200 ${
+              isPulsing ? "scale-125 bg-primary text-primary-foreground" : ""
             }`}
           >
             {badgeText}
@@ -321,19 +334,19 @@ export function CartButton({
       >
         <SheetContent
           id="cart-panel"
-          side={isRtl ? 'left' : 'right'}
+          side={isRtl ? "left" : "right"}
           showCloseButton={false}
-          className="w-full sm:max-w-none lg:w-[420px] lg:max-w-[420px] max-w-full p-0 gap-0 h-full border-s border-border/40 bg-background text-foreground shadow-2xl flex flex-col justify-between"
-          aria-label={t('bag', { ns: 'header', defaultValue: 'Bag' })}
+          className="flex h-full !w-full !max-w-full flex-col justify-between gap-0 border-s border-border/40 bg-background p-0 text-foreground shadow-2xl sm:!w-[620px] sm:!max-w-[620px]"
+          aria-label={t("bag", { ns: "header", defaultValue: "Bag" })}
         >
           {/* 1 ── Header: "Bag" + count at start, Close X at end */}
-          <SheetHeader className="h-14 lg:h-16 px-5 lg:px-6 flex flex-row items-center justify-between border-b border-border/40 shrink-0">
+          <SheetHeader className="flex h-14 shrink-0 flex-row items-center justify-between border-b border-border/40 px-5 lg:h-16 lg:px-6">
             <div className="flex items-baseline gap-2">
-              <SheetTitle className="text-lg lg:text-xl font-semibold text-foreground tracking-tight">
-                {t('bag', { ns: 'header', defaultValue: 'Bag' })}
+              <SheetTitle className="text-lg font-semibold tracking-tight text-foreground lg:text-xl">
+                {t("bag", { ns: "header", defaultValue: "Bag" })}
               </SheetTitle>
               {count > 0 && (
-                <span className="text-xs sm:text-sm font-normal text-muted-foreground tabular-nums">
+                <span className="text-xs font-normal text-muted-foreground tabular-nums sm:text-sm">
                   ({itemsCountText})
                 </span>
               )}
@@ -344,8 +357,11 @@ export function CartButton({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="size-8 rounded-full cursor-pointer text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
-                  aria-label={t('close', { ns: 'header', defaultValue: 'Close' })}
+                  className="size-8 cursor-pointer rounded-full text-muted-foreground transition-transform hover:text-foreground active:scale-95"
+                  aria-label={t("close", {
+                    ns: "header",
+                    defaultValue: "Close",
+                  })}
                 />
               }
             >
@@ -356,38 +372,44 @@ export function CartButton({
           {/* 2 ── Body: Scrollable Item List OR Empty State */}
           {items.length === 0 ? (
             /* Empty State (no footer) */
-            <Empty className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 border-none">
+            <Empty className="flex flex-1 flex-col items-center justify-center border-none px-6 py-12 text-center">
               <EmptyHeader>
-                <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-secondary/60 border border-border/40 mb-2">
-                  <ShoppingBag className="size-8 text-muted-foreground" aria-hidden="true" />
+                <EmptyMedia
+                  variant="icon"
+                  className="mb-2 size-16 rounded-2xl border border-border/40 bg-secondary/60"
+                >
+                  <ShoppingBag
+                    className="size-8 text-muted-foreground"
+                    aria-hidden="true"
+                  />
                 </EmptyMedia>
 
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('nothingSelectedYet', {
-                    ns: 'header',
-                    defaultValue: 'Nothing selected yet',
+                <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  {t("nothingSelectedYet", {
+                    ns: "header",
+                    defaultValue: "Nothing selected yet",
                   })}
                 </span>
 
-                <EmptyTitle className="text-[26px] lg:text-[28px] font-semibold text-foreground leading-tight">
+                <EmptyTitle className="text-[26px] leading-tight font-semibold text-foreground lg:text-[28px]">
                   <h2>
-                    {t('yourBagIsEmpty', {
-                      ns: 'header',
-                      defaultValue: 'Your bag is empty',
+                    {t("yourBagIsEmpty", {
+                      ns: "header",
+                      defaultValue: "Your bag is empty",
                     })}
                   </h2>
                 </EmptyTitle>
 
-                <EmptyDescription className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                  {t('findNext', {
-                    ns: 'header',
+                <EmptyDescription className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+                  {t("findNext", {
+                    ns: "header",
                     defaultValue:
-                      'Find your next game, license, or subscription.',
+                      "Find your next game, license, or subscription.",
                   })}
                 </EmptyDescription>
               </EmptyHeader>
 
-              <EmptyContent className="pt-4 flex flex-col items-center w-full max-w-[280px] gap-2.5">
+              <EmptyContent className="flex w-full max-w-[280px] flex-col items-center gap-2.5 pt-4">
                 <Button
                   nativeButton={false}
                   render={
@@ -397,11 +419,11 @@ export function CartButton({
                     />
                   }
                   variant="default"
-                  className="w-full h-12 rounded-full font-medium text-sm active:scale-[0.98] transition-transform"
+                  className="h-12 w-full rounded-full text-sm font-medium transition-transform active:scale-[0.98]"
                 >
-                  {t('exploreProducts', {
-                    ns: 'header',
-                    defaultValue: 'Explore products',
+                  {t("exploreProducts", {
+                    ns: "header",
+                    defaultValue: "Explore products",
                   })}
                 </Button>
 
@@ -414,18 +436,18 @@ export function CartButton({
                     />
                   }
                   variant="outline"
-                  className="w-full h-12 rounded-full font-medium text-sm border-border/80 hover:bg-secondary/60 active:scale-[0.98] transition-transform"
+                  className="h-12 w-full rounded-full border-border/80 text-sm font-medium transition-transform hover:bg-secondary/60 active:scale-[0.98]"
                 >
-                  {t('browseBundles', {
-                    ns: 'header',
-                    defaultValue: 'Browse bundles',
+                  {t("browseBundles", {
+                    ns: "header",
+                    defaultValue: "Browse bundles",
                   })}
                 </Button>
               </EmptyContent>
             </Empty>
           ) : (
             /* Populated Scrollable List (only this scrolls) */
-            <div className="flex-1 overflow-y-auto px-5 lg:px-6 py-4 space-y-5">
+            <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4 lg:px-6">
               {items.map((item) => (
                 <BagDrawerItem
                   key={item.id}
@@ -441,11 +463,11 @@ export function CartButton({
 
           {/* 3 ── Sticky Footer (Items > 0 only) */}
           {items.length > 0 && (
-            <div className="border-t border-border/40 bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] lg:p-6 shrink-0 space-y-4">
+            <div className="shrink-0 space-y-4 border-t border-border/40 bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] lg:p-6">
               {/* Total Row */}
               <div className="flex items-center justify-between text-start">
                 <span className="text-sm font-normal text-muted-foreground">
-                  {t('total', { ns: 'header', defaultValue: 'Total' })}
+                  {t("total", { ns: "header", defaultValue: "Total" })}
                 </span>
                 <span className="text-lg font-semibold text-foreground tabular-nums">
                   {formattedSubtotal}
@@ -464,26 +486,23 @@ export function CartButton({
                     />
                   }
                   variant="default"
-                  className="w-full h-12 rounded-full font-medium text-sm active:scale-[0.98] transition-transform"
+                  className="h-12 w-full rounded-full text-sm font-medium transition-transform active:scale-[0.98]"
                 >
-                  {t('checkout', { ns: 'header', defaultValue: 'Checkout' })}
+                  {t("checkout", { ns: "header", defaultValue: "Checkout" })}
                 </Button>
 
                 {/* 44px Underlined Ghost "View full bag" */}
                 <Button
                   nativeButton={false}
                   render={
-                    <Link
-                      to={`/${currentLang}/cart`}
-                      onClick={handleClose}
-                    />
+                    <Link to={`/${currentLang}/cart`} onClick={handleClose} />
                   }
                   variant="ghost"
-                  className="w-full min-h-[44px] text-center text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-border/60 hover:decoration-foreground transition-colors"
+                  className="min-h-[44px] w-full text-center text-sm text-muted-foreground underline decoration-border/60 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
                 >
-                  {t('viewFullBag', {
-                    ns: 'header',
-                    defaultValue: 'View full bag',
+                  {t("viewFullBag", {
+                    ns: "header",
+                    defaultValue: "View full bag",
                   })}
                 </Button>
               </div>

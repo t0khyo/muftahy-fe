@@ -1,5 +1,5 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { act, render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { I18nextProvider } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -94,6 +94,15 @@ describe('OrdersPage & OrderDetailPage', () => {
     const orderService = getOrderService('storefront')
     vi.spyOn(orderService, 'listUserOrders').mockResolvedValue(mockOrdersList)
     vi.spyOn(orderService, 'getOrder').mockResolvedValue(mockOrderDetail)
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('renders order list with summary metrics and badges in English', async () => {
@@ -162,6 +171,66 @@ describe('OrdersPage & OrderDetailPage', () => {
     })
     expect(document.querySelectorAll('img[src*="vodafone-cash"]').length).toBeGreaterThanOrEqual(2)
     expect(document.querySelectorAll('img[src*="instapay"]').length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('reveals delivered item key with scramble animation and copies cleanly on completed order', async () => {
+    const orderService = getOrderService('storefront')
+    vi.spyOn(orderService, 'getOrder').mockResolvedValue({
+      ...mockOrderDetail,
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      reference_code: 'SM-20261120-002',
+      status: 'completed',
+      items: [
+        {
+          ...mockOrderDetail.items[0],
+          key_serial: 'ORD11-KEY22-KEY33-KEY44-KEY55',
+        },
+      ],
+    })
+
+    renderOrdersView('/en/account/orders/550e8400-e29b-41d4-a716-446655440002')
+
+    await waitFor(() => {
+      expect(screen.getByText('•••••-•••••-•••••-•••••-•••••')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('ORD11-KEY22-KEY33-KEY44-KEY55')).not.toBeInTheDocument()
+
+    vi.useFakeTimers()
+    fireEvent.click(screen.getByRole('button', { name: /reveal key/i }))
+
+    const srOnlySpan = screen.getByText('ORD11-KEY22-KEY33-KEY44-KEY55')
+    expect(srOnlySpan).toHaveClass('sr-only')
+    const visualSpan = srOnlySpan.previousElementSibling
+    expect(visualSpan).not.toBeNull()
+    expect(visualSpan).toHaveAttribute('aria-hidden', 'true')
+    expect(visualSpan?.textContent).not.toBe('ORD11-KEY22-KEY33-KEY44-KEY55')
+
+    act(() => {
+      vi.advanceTimersByTime(1200)
+    })
+
+    expect(visualSpan?.textContent).toBe('ORD11-KEY22-KEY33-KEY44-KEY55')
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^copy$/i }))
+      await Promise.resolve()
+    })
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('ORD11-KEY22-KEY33-KEY44-KEY55')
+
+    fireEvent.click(screen.getByRole('button', { name: /hide key/i }))
+    expect(screen.queryByText('ORD11-KEY22-KEY33-KEY44-KEY55')).not.toBeInTheDocument()
+
+    const hideSr = screen.getByText('Digital key hidden')
+    expect(hideSr).toHaveClass('sr-only')
+    const hideVisual = hideSr.previousElementSibling
+    expect(hideVisual).toHaveAttribute('aria-hidden', 'true')
+    expect(hideVisual?.textContent).not.toBe('•••••-•••••-•••••-•••••-•••••')
+
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+
+    expect(hideVisual?.textContent).toBe('•••••-•••••-•••••-•••••-•••••')
   })
 })
 

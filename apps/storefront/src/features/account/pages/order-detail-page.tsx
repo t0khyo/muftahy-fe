@@ -17,6 +17,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@workspace/ui/components/card'
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { ScrambleMaskText } from '@workspace/ui/components/scramble-text'
 import {
   Alert,
   AlertTitle,
@@ -411,11 +412,17 @@ export function OrderDetailPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3">
                       <div className="flex items-center gap-2 overflow-x-auto">
                         <span
+                          dir="ltr"
                           className={`font-mono text-xs sm:text-sm font-semibold tracking-wider select-all ${
                             isRevealed ? 'text-primary' : 'text-muted-foreground'
                           }`}
                         >
-                          {isRevealed ? item.key_serial : '•••••-•••••-•••••-•••••-•••••'}
+                          <ScrambleMaskText
+                            value={item.key_serial}
+                            mask="•••••-•••••-•••••-•••••-•••••"
+                            revealed={isRevealed}
+                            hiddenAriaText={t('keys.keyHiddenAria')}
+                          />
                         </span>
                       </div>
 

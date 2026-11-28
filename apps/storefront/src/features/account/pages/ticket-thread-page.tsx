@@ -34,6 +34,7 @@ import {
   TooltipContent,
 } from '@workspace/ui/components/tooltip'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { ScrambleMaskText } from '@workspace/ui/components/scramble-text'
 import { formatDate } from '@workspace/domain/formatters/date'
 import { useTicketDetail, useAddTicketComment } from '../hooks/use-tickets'
 import { TicketStatusBadge } from '../components/support/ticket-status-badge'
@@ -171,13 +172,17 @@ export function TicketThreadPage() {
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-background p-3">
               <span
+                dir="ltr"
                 className={`font-mono text-sm sm:text-base font-bold tracking-wider select-all ${
                   isReplacementRevealed ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                {isReplacementRevealed
-                  ? ticket.replacement_key_serial
-                  : '•••••-•••••-•••••-•••••-•••••'}
+                <ScrambleMaskText
+                  value={ticket.replacement_key_serial}
+                  mask="•••••-•••••-•••••-•••••-•••••"
+                  revealed={isReplacementRevealed}
+                  hiddenAriaText={t('keys.keyHiddenAria')}
+                />
               </span>
 
               <div className="flex items-center gap-2 shrink-0">
