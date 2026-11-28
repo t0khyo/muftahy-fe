@@ -7,6 +7,12 @@ import { PaymentMethodLogo } from "../payment-method-logo"
 import { LanguageSwitcher } from "./language-switcher"
 import { ThemeToggle } from "../theme-toggle"
 import { cn } from "@workspace/ui/lib/utils"
+import {
+  buildSupportEmailUrl,
+  buildWhatsAppUrl,
+  getSocialLinks,
+  getSupportEmail,
+} from "../../lib/env"
 
 export interface SiteFooterProps {
   className?: string
@@ -19,8 +25,11 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
   const { t } = useTranslation(["footer", "common", "nav"])
   const currentYear = new Date().getFullYear()
 
-  const phoneRaw = "201158172869"
-  const socialHandle = "@muftahy"
+  const whatsappUrl = buildWhatsAppUrl()
+  const supportEmail = getSupportEmail()
+  const supportEmailUrl = buildSupportEmailUrl()
+  const { instagramUrl, facebookUrl, handle: socialHandle } = getSocialLinks()
+  const hasSocialRow = Boolean(instagramUrl || facebookUrl || whatsappUrl || socialHandle)
 
   const categoryLinks = [
     {
@@ -66,12 +75,26 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
       href: `/${currentLang}#faq`,
       fallback: isAr ? "الأسئلة الشائعة" : "FAQ",
     },
-    {
-      labelKey: "footer.contact",
-      href: `https://wa.me/${phoneRaw}`,
-      fallback: isAr ? "تواصل معنا" : "Contact Us",
-      isExternal: true,
-    },
+    ...(whatsappUrl
+      ? [
+          {
+            labelKey: "footer.contact",
+            href: whatsappUrl,
+            fallback: isAr ? "تواصل معنا" : "Contact Us",
+            isExternal: true,
+          },
+        ]
+      : []),
+    ...(supportEmail && supportEmailUrl
+      ? [
+          {
+            labelKey: "footer.email",
+            href: supportEmailUrl,
+            fallback: supportEmail,
+            isExternal: true,
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -114,83 +137,95 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
             </p>
 
             {/* Direct WhatsApp Contact Button */}
-            <div className="pt-0.5">
-              <a
-                href={`https://wa.me/${phoneRaw}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label={t("footer.chatOnWhatsApp", {
-                  ns: "footer",
-                  defaultValue: isAr ? "راسلنا عبر واتساب" : "Chat on WhatsApp",
-                })}
-              >
-                <FaWhatsapp
-                  className="size-3.5 shrink-0 text-success"
-                  aria-hidden="true"
-                />
-                <span>
-                  {t("footer.chatOnWhatsApp", {
+            {whatsappUrl && (
+              <div className="pt-0.5">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  aria-label={t("footer.chatOnWhatsApp", {
                     ns: "footer",
-                    defaultValue: isAr
-                      ? "راسلنا عبر واتساب"
-                      : "Chat on WhatsApp",
+                    defaultValue: isAr ? "راسلنا عبر واتساب" : "Chat on WhatsApp",
                   })}
-                </span>
-              </a>
-            </div>
+                >
+                  <FaWhatsapp
+                    className="size-3.5 shrink-0 text-success"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t("footer.chatOnWhatsApp", {
+                      ns: "footer",
+                      defaultValue: isAr
+                        ? "راسلنا عبر واتساب"
+                        : "Chat on WhatsApp",
+                    })}
+                  </span>
+                </a>
+              </div>
+            )}
 
             {/* Social Media Row */}
-            <div className="flex items-center gap-2 pt-0.5">
-              <span className="me-1 text-xs font-medium text-muted-foreground">
-                {t("footer.socialMedia", {
-                  ns: "footer",
-                  defaultValue: isAr ? "تابعنا" : "Follow Us",
-                })}
-                :
-              </span>
+            {hasSocialRow && (
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="me-1 text-xs font-medium text-muted-foreground">
+                  {t("footer.socialMedia", {
+                    ns: "footer",
+                    defaultValue: isAr ? "تابعنا" : "Follow Us",
+                  })}
+                  :
+                </span>
 
-              {/* Instagram */}
-              <a
-                href="https://instagram.com/muftahy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label={`Instagram ${socialHandle}`}
-              >
-                <FaInstagram className="size-3.5" aria-hidden="true" />
-              </a>
+                {/* Instagram */}
+                {instagramUrl && (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    aria-label={socialHandle ? `Instagram ${socialHandle}` : "Instagram"}
+                  >
+                    <FaInstagram className="size-3.5" aria-hidden="true" />
+                  </a>
+                )}
 
-              {/* Facebook */}
-              <a
-                href="https://facebook.com/muftahy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label={`Facebook ${socialHandle}`}
-              >
-                <FaFacebook className="size-3.5" aria-hidden="true" />
-              </a>
+                {/* Facebook */}
+                {facebookUrl && (
+                  <a
+                    href={facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    aria-label={socialHandle ? `Facebook ${socialHandle}` : "Facebook"}
+                  >
+                    <FaFacebook className="size-3.5" aria-hidden="true" />
+                  </a>
+                )}
 
-              {/* WhatsApp icon */}
-              <a
-                href={`https://wa.me/${phoneRaw}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label="WhatsApp"
-              >
-                <FaWhatsapp className="size-3.5" aria-hidden="true" />
-              </a>
+                {/* WhatsApp icon */}
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    aria-label="WhatsApp"
+                  >
+                    <FaWhatsapp className="size-3.5" aria-hidden="true" />
+                  </a>
+                )}
 
-              {/* Handle Tag */}
-              <span
-                dir="ltr"
-                className="ms-1 text-xs font-medium text-muted-foreground select-all"
-              >
-                {socialHandle}
-              </span>
-            </div>
+                {/* Handle Tag */}
+                {socialHandle && (
+                  <span
+                    dir="ltr"
+                    className="ms-1 text-xs font-medium text-muted-foreground select-all"
+                  >
+                    {socialHandle}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 2-Column Grid on Mobile for Categories & Support */}
@@ -237,8 +272,8 @@ export function SiteFooter({ className = "" }: SiteFooterProps) {
                     {item.isExternal ? (
                       <a
                         href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target={item.href.startsWith("mailto:") ? undefined : "_blank"}
+                        rel={item.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
                         className="rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >
                         {t(item.labelKey as never, {

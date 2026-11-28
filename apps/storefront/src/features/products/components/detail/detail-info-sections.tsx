@@ -1,5 +1,6 @@
 import { Check, MessageCircle, ShieldCheck, Zap } from 'lucide-react'
 import type { ProductResponse } from '@workspace/domain/schemas/product'
+import { buildWhatsAppUrl } from '../../../../lib/env'
 
 export interface DetailInfoSectionsProps {
   product: ProductResponse
@@ -9,12 +10,10 @@ export interface DetailInfoSectionsProps {
 export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
   const isRtl = lang === 'ar'
 
-  const encodedMessage = encodeURIComponent(
-    isRtl
-      ? `مرحباً، لدي استفسار بخصوص ${product.name}`
-      : `Hi, I have a question about ${product.name}`,
-  )
-  const whatsappUrl = `https://wa.me/201158172869?text=${encodedMessage}`
+  const message = isRtl
+    ? `مرحباً، لدي استفسار بخصوص ${product.name}`
+    : `Hi, I have a question about ${product.name}`
+  const whatsappUrl = buildWhatsAppUrl(message)
 
   return (
     <div className="max-w-3xl w-full text-start space-y-10">
@@ -105,27 +104,29 @@ export function DetailInfoSections({ product, lang }: DetailInfoSectionsProps) {
       </section>
 
       {/* 3. Need Help / WhatsApp */}
-      <section aria-labelledby="heading-support" className="p-5 rounded-2xl border border-border/40 bg-secondary/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h3 id="heading-support" className="font-semibold text-foreground text-base">
-            {lang === 'ar' ? 'هل لديك أي استفسار؟' : 'Have a question?'}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {lang === 'ar'
-              ? 'فريق الدعم الفني متواجد عبر واتساب للمساعدة في خطوات التفعيل والطلب.'
-              : 'Our support team is available on WhatsApp to assist with order and activation steps.'}
-          </p>
-        </div>
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm transition-colors cursor-pointer shrink-0"
-        >
-          <MessageCircle className="size-4" />
-          <span>{lang === 'ar' ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}</span>
-        </a>
-      </section>
+      {whatsappUrl && (
+        <section aria-labelledby="heading-support" className="p-5 rounded-2xl border border-border/40 bg-secondary/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 id="heading-support" className="font-semibold text-foreground text-base">
+              {lang === 'ar' ? 'هل لديك أي استفسار؟' : 'Have a question?'}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {lang === 'ar'
+                ? 'فريق الدعم الفني متواجد عبر واتساب للمساعدة في خطوات التفعيل والطلب.'
+                : 'Our support team is available on WhatsApp to assist with order and activation steps.'}
+            </p>
+          </div>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm transition-colors cursor-pointer shrink-0"
+          >
+            <MessageCircle className="size-4" />
+            <span>{lang === 'ar' ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}</span>
+          </a>
+        </section>
+      )}
     </div>
   )
 }

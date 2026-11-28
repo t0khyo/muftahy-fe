@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { FaWhatsapp } from 'react-icons/fa'
 import { cn } from '@workspace/ui/lib/utils'
+import { getWhatsAppNumber } from '../../../lib/env'
 import type { SupportSectionConfig } from '../home.config'
 
 export interface SupportSectionProps {
@@ -38,7 +39,10 @@ export function SupportSection({ config, className = '' }: SupportSectionProps) 
   const isRtl = i18n.dir() === 'rtl'
 
   const rawNumber = config.whatsappNumber?.trim()
-  const cleanNumber = rawNumber ? rawNumber.replace(/[^0-9]/g, '') : null
+  const cleanNumber =
+    config.whatsappNumber !== undefined
+      ? (rawNumber ? rawNumber.replace(/[^0-9]/g, '') : '') || null
+      : getWhatsAppNumber()
 
   // If WhatsApp is not configured, do not render an empty shell
   if (!cleanNumber) {

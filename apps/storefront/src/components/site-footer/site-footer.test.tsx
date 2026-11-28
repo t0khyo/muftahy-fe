@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@workspace/i18n/config'
@@ -25,6 +25,18 @@ function renderSiteFooter(initialRoute = '/en/products') {
 }
 
 describe('SiteFooter Component', () => {
+  beforeEach(() => {
+    vi.stubEnv('VITE_WHATSAPP_NUMBER', '201158172869')
+    vi.stubEnv('VITE_SOCIAL_INSTAGRAM_URL', 'https://instagram.com/muftahy')
+    vi.stubEnv('VITE_SOCIAL_FACEBOOK_URL', 'https://facebook.com/muftahy')
+    vi.stubEnv('VITE_SOCIAL_HANDLE', '@muftahy')
+    vi.stubEnv('VITE_SUPPORT_EMAIL', '')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('renders copyright and theme & language controls in English', () => {
     renderSiteFooter('/en/products')
 
@@ -135,5 +147,23 @@ describe('SiteFooter Component', () => {
     expect(screen.getByRole('group', { name: /وسائل الدفع المتاحة/i })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'فودافون كاش' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'إنستاباي' })).toBeInTheDocument()
+  })
+
+  it('hides WhatsApp and social links when env vars are unset and shows support email when configured', () => {
+    vi.stubEnv('VITE_WHATSAPP_NUMBER', '')
+    vi.stubEnv('VITE_SOCIAL_INSTAGRAM_URL', '')
+    vi.stubEnv('VITE_SOCIAL_FACEBOOK_URL', '')
+    vi.stubEnv('VITE_SOCIAL_HANDLE', '')
+    vi.stubEnv('VITE_SUPPORT_EMAIL', 'support@example.com')
+
+    renderSiteFooter('/en/products')
+
+    expect(screen.queryByRole('link', { name: /chat on whatsapp/i })).toBeNull()
+    expect(screen.queryByRole('link', { name: /instagram/i })).toBeNull()
+    expect(screen.queryByRole('link', { name: /facebook/i })).toBeNull()
+    expect(screen.queryByText('@muftahy')).toBeNull()
+
+    const emailLink = screen.getByRole('link', { name: 'support@example.com' })
+    expect(emailLink).toHaveAttribute('href', 'mailto:support@example.com')
   })
 })

@@ -103,11 +103,15 @@ export function AdminDashboardRoute() {
         description={
           <span className="flex flex-wrap items-center gap-1.5">
             <span>{t('admin:dashboard.subtitle', 'Live storefront overview and store operations')}</span>
-            <span className="text-muted-foreground/60 hidden sm:inline">·</span>
-            <span className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              {user?.email || 'admin@muftahy.com'}
-            </span>
+            {user?.email && (
+              <>
+                <span className="text-muted-foreground/60 hidden sm:inline">·</span>
+                <span className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  {user.email}
+                </span>
+              </>
+            )}
           </span>
         }
       >

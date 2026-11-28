@@ -219,7 +219,6 @@ export const DEFAULT_HOME_CONFIG: HomeConfig = {
       enabled: true,
       titleKey: 'support.title',
       subtitleKey: 'support.subtitle',
-      whatsappNumber: '1234567890',
     },
   ],
 }

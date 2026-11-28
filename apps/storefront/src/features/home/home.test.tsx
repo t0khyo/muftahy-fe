@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider, type UseQueryResult } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
@@ -163,8 +163,13 @@ function renderHomePage(
 }
 
 describe('Home Page Skeleton', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.stubEnv('VITE_WHATSAPP_NUMBER', '1234567890')
     vi.spyOn(apiFactory, 'getProductService').mockReturnValue({
       getProducts: vi.fn().mockResolvedValue(mockProducts),
       getPublicCategories: vi.fn().mockResolvedValue([
@@ -538,6 +543,7 @@ describe('Home Page Skeleton', () => {
   })
 
   it('does not render support section when whatsappNumber is not configured', () => {
+    vi.stubEnv('VITE_WHATSAPP_NUMBER', '')
     const customConfig: HomeConfig = {
       sections: [
         {
